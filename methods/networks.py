@@ -1,11 +1,11 @@
-import spynnaker8 as p
-from spynnaker.pyNN.connections. \
-    spynnaker_live_spikes_connection import SpynnakerLiveSpikesConnection
-from spinn_front_end_common.utilities.globals_variables import get_simulator
-
-import pylab
-from spynnaker.pyNN.spynnaker_external_device_plugin_manager import \
-    SpynnakerExternalDevicePluginManager as ex
+# import spynnaker8 as p
+# from spynnaker.pyNN.connections. \
+#     spynnaker_live_spikes_connection import SpynnakerLiveSpikesConnection
+# from spinn_front_end_common.utilities.globals_variables import get_simulator
+#
+# import pylab
+# from spynnaker.pyNN.spynnaker_external_device_plugin_manager import \
+#     SpynnakerExternalDevicePluginManager as ex
 import sys, os
 import time
 import socket
@@ -29,9 +29,9 @@ class motif_population(object):
                  initial_weight=0,
                  weight_stdev=0.02,
                  delays=True,
-                 delay_range=(0, 25),
+                 delay_range=(0.0, 25.0),
                  no_delay_bins = 7,
-                 delay_stdev=3,
+                 delay_stdev=3.0,
                  initial_hierarchy_depth=1,
                  selection_metric='fitness',  # fixed, population based, fitness based
                  starting_weight='uniform',
@@ -65,7 +65,7 @@ class motif_population(object):
         self.io_config = io_config
         self.multi_synapse = multi_synapse
 
-        self.motif_configs = []  # Tuple of tuples(node types, node i/o P(), connections, selection weight)
+        self.motif_configs = {}  # Tuple of tuples(node types, node i/o P(), connections, selection weight)
 
         true_or_false = [True, False]
 
@@ -73,7 +73,7 @@ class motif_population(object):
             print "generating population"
             if self.population_seed is not None:
                 for seed in self.population_seed:
-                    self.motif_configs.append(seed)
+                    self.motif_configs.update(seed)
                 start_point = len(self.population_seed)
             else:
                 start_point = 0
@@ -81,29 +81,32 @@ class motif_population(object):
                 maximum_number_of_motifs = 0
                 for i in range(self.min_motif_size, self.max_motif_size + 1):
                     maximum_number_of_motifs += math.pow(i, 2)  # possible connections
-                    if self.io_config == 'fixed':
-                        maximum_number_of_motifs += i * 4       # io configs
                 if self.weights:
                     maximum_number_of_motifs *= self.no_weight_bins
                 if self.delays:
                     maximum_number_of_motifs *= self.no_delay_bins
+                if self.io_config == 'fixed':
+                    maximum_number_of_motifs *= i * 4           # possible io configs
+                maximum_number_of_motifs *= i * 2
             if self.population_size > maximum_number_of_motifs:
                 print "\nPopulation size is bigger than the full spectrum of possible motifs.\n" \
                       "Repeats will be allowed during generation.\n"
                 repeats = True
             else:
                 repeats = False
-            for i in range(start_point, self.population_size):
+            i = start_point
+            while i < population_size:
+                motif = {}
                 node_types = []
                 io_properties = []
-                connections = []
+                synapses = []
                 if self.selection_metric == 'fitness':
-                    motif_weight = 1
+                    motif['weight'] = 1
                 number_of_neurons = np.random.randint(self.min_motif_size, self.max_motif_size+1)
                 for j in range(number_of_neurons):
                     node_types.append(np.random.choice(self.neuron_types))
                     if self.io_config == 'fixed':
-                        io_properties.append(np.random.choice(true_or_false), np.random.choice(true_or_false))
+                        io_properties.append((np.random.choice(true_or_false), np.random.choice(true_or_false)))
                     else:
                         print "incompatible io config"
                         # todo figure out how to error out
@@ -117,7 +120,23 @@ class motif_population(object):
                                 conn.append(bin * self.weight_bin_width)
                                 bin = np.random.randint(0, self.no_delay_bins)
                                 conn.append(bin * self.delay_bin_width)
-                                connections.append(conn)
+                                synapses.append(conn)
+                motif['types'] = node_types
+                motif['io'] = io_properties
+                motif['conn'] = conn
+                if not repeats:
+                    done = 0
+                    for config in self.motif_configs:
+                        if self.motif_configs[config] == motif:
+                            done += 1
+                            print "found a samey", i, "done:", done
+                    if done == 0:
+                        self.motif_configs['{}'.format(i)] = motif
+                    else:
+                        i -= 1
+                else:
+                    self.motif_configs['{}'.format(i)] = motif
+                i += 1
                 # check if it's the same as other motifs and poss erase depending on config
 
         else:
