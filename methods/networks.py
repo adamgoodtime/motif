@@ -11,6 +11,7 @@ import time
 import socket
 import numpy as np
 import math
+# import random
 
 
 class motif_population(object):
@@ -21,16 +22,22 @@ class motif_population(object):
                  static_population=True,
                  population_seed=None,
                  read_entire_population=False,
+                 discrete_params=True,
                  weights=True,
                  weight_range=(-0.1, 0.1),
+                 no_weight_bins = 7,
                  initial_weight=0,
                  weight_stdev=0.02,
                  delays=True,
                  delay_range=(0, 25),
+                 no_delay_bins = 7,
                  delay_stdev=3,
                  initial_hierarchy_depth=1,
+                 selection_metric='fitness',  # fixed, population based, fitness based
+                 starting_weight='uniform',
+                 neuron_types=['excitatory', 'inhibitory'],
                  io_config='fixed',  # fixed, dynamic/coded probabilistic, uniform
-                 multi_synapse=True):
+                 multi_synapse=False):
 
         self.max_motif_size = max_motif_size
         self.min_motif_size = min_motif_size
@@ -38,18 +45,80 @@ class motif_population(object):
         self.static_population = static_population
         self.population_seed = population_seed
         # self.read_entire_population = read_entire_population
+        self.discrete_params = discrete_params
         self.weights = weights
         self.weight_range = weight_range
+        self.no_weight_bins = no_weight_bins
+        weight_bin_range = self.weight_range[1] - self.weight_range[0]
+        self.weight_bin_width = weight_bin_range / (self.no_weight_bins - 1)
         self.initial_weight = initial_weight
         self.weight_stdev = weight_stdev
         self.delays = delays
         self.delay_range = delay_range
+        self.no_delay_bins = no_delay_bins
+        delay_bin_range = self.delay_range[1] - self.delay_range[0]
+        self.delay_bin_width = delay_bin_range / (self.no_delay_bins - 1)
         self.delay_stdev = delay_stdev
         self.initial_hierarchy_depth = initial_hierarchy_depth
+        self.selection_metric = selection_metric
+        self.neuron_types = neuron_types
         self.io_config = io_config
         self.multi_synapse = multi_synapse
 
-        self.motif_configs = []# Tuple of tuples(node types, node i/o P(), connections, selection weight)
+        self.motif_configs = []  # Tuple of tuples(node types, node i/o P(), connections, selection weight)
 
-        if read_entire_population == False:
-            print "gen population"
+        true_or_false = [True, False]
+
+        if not read_entire_population:
+            print "generating population"
+            if self.population_seed is not None:
+                for seed in self.population_seed:
+                    self.motif_configs.append(seed)
+                start_point = len(self.population_seed)
+            else:
+                start_point = 0
+            if self.discrete_params and not self.multi_synapse:
+                maximum_number_of_motifs = 0
+                for i in range(self.min_motif_size, self.max_motif_size + 1):
+                    maximum_number_of_motifs += math.pow(i, 2)  # possible connections
+                    if self.io_config == 'fixed':
+                        maximum_number_of_motifs += i * 4       # io configs
+                if self.weights:
+                    maximum_number_of_motifs *= self.no_weight_bins
+                if self.delays:
+                    maximum_number_of_motifs *= self.no_delay_bins
+            if self.population_size > maximum_number_of_motifs:
+                print "\nPopulation size is bigger than the full spectrum of possible motifs.\n" \
+                      "Repeats will be allowed during generation.\n"
+                repeats = True
+            else:
+                repeats = False
+            for i in range(start_point, self.population_size):
+                node_types = []
+                io_properties = []
+                connections = []
+                if self.selection_metric == 'fitness':
+                    motif_weight = 1
+                number_of_neurons = np.random.randint(self.min_motif_size, self.max_motif_size+1)
+                for j in range(number_of_neurons):
+                    node_types.append(np.random.choice(self.neuron_types))
+                    if self.io_config == 'fixed':
+                        io_properties.append(np.random.choice(true_or_false), np.random.choice(true_or_false))
+                    else:
+                        print "incompatible io config"
+                        # todo figure out how to error out
+                    for k in range(number_of_neurons):
+                        if np.random.choice(true_or_false):
+                            if self.discrete_params:
+                                conn = []
+                                conn.append(j)
+                                conn.append(k)
+                                bin = np.random.randint(0, self.no_weight_bins)
+                                conn.append(bin * self.weight_bin_width)
+                                bin = np.random.randint(0, self.no_delay_bins)
+                                conn.append(bin * self.delay_bin_width)
+                                connections.append(conn)
+                # check if it's the same as other motifs and poss erase depending on config
+
+        else:
+            print "reading from file"
