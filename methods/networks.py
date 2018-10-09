@@ -11,6 +11,7 @@ import time
 import socket
 import numpy as np
 import math
+from copy import deepcopy
 
 
 # import random
@@ -84,16 +85,16 @@ class motif_population(object):
             else:
                 start_point = 0
             if self.discrete_params and not self.multi_synapse:
-                maximum_number_of_motifs = 0
+                maximum_number_of_motifs = 1
                 for i in range(self.min_motif_size, self.max_motif_size + 1):
-                    maximum_number_of_motifs += math.pow(i, 2)  # possible connections
+                    maximum_number_of_motifs *= math.pow(4, i)  # possible connections
                 if self.weights:
                     maximum_number_of_motifs *= self.no_weight_bins
                 if self.delays:
                     maximum_number_of_motifs *= self.no_delay_bins
                 if self.io_config == 'fixed':
-                    maximum_number_of_motifs *= i * 4  # possible io configs
-                maximum_number_of_motifs *= i * 2
+                    maximum_number_of_motifs *= math.pow(4, i)  # possible io configs
+                maximum_number_of_motifs *= math.pow(2, i)     # exit/inhib
             if self.population_size > maximum_number_of_motifs:
                 print "\nPopulation size is bigger than the full spectrum of possible motifs.\n" \
                       "Repeats will be allowed during generation.\n"
@@ -121,33 +122,39 @@ class motif_population(object):
                                 conn.append(j)
                                 conn.append(k)
                                 bin = np.random.randint(0, self.no_weight_bins)
-                                conn.append(bin * self.weight_bin_width)
+                                conn.append(weight_range[0] + (bin * self.weight_bin_width))
                                 bin = np.random.randint(0, self.no_delay_bins)
-                                conn.append(bin * self.delay_bin_width)
+                                conn.append(delay_range[0] + (bin * self.delay_bin_width))
                                 synapses.append(conn)
                 motif['node'] = node_types
                 motif['io'] = io_properties
-                motif['conn'] = conn
+                motif['conn'] = synapses
                 motif['depth'] = 1
-                motif['id'] = self.motifs_generated
+                # motif['id'] = self.motifs_generated
                 if self.selection_metric == 'fitness':
                     motif['weight'] = 1
-                if not repeats:
-                    done = 0
-                    for config in self.motif_configs:
-                        if self.motif_configs[config] == motif:
-                            done += 1
-                            print "found a samey", i, "done:", done
-                    if done == 0:
-                        self.insert_motif(motif)
-                    else:
-                        i -= 1
-                else:
+                # if not repeats:
+                if not self.id_check(motif):
+                    # print self.id_check(motif)
                     self.insert_motif(motif)
+                else:
+                    print "repeated ", i, self.id_check(motif)
+                    i -= 1
+                # else:
+                #     self.insert_motif(motif)
                 i += 1
 
         else:
             print "reading from file"
+        print "done generating motif pop"
+
+    def id_check(self, motif):
+        motif_id = False
+        for config in self.motif_configs:
+            if self.motif_configs[config] == motif:
+                motif_id = config
+                break
+        return motif_id
 
     def select_motif(self):
         if self.total_weight == 0:
@@ -158,21 +165,47 @@ class motif_population(object):
             choice -= self.motif_configs[motif]['weight']
             if choice < 0:
                 break
-        return self.motif_configs[motif]
+        # return self.motif_configs[motif]
+        return motif
 
     def insert_motif(self, motif):
-        self.motif_configs['{}'.format(self.motifs_generated)] = motif
-        self.motifs_generated += 1
+        check = self.id_check(motif)
+        if not check:
+            self.motif_configs['{}'.format(self.motifs_generated)] = motif
+            self.motifs_generated += 1
+            return '{}'.format(self.motifs_generated-1)
+        else:
+            return check
 
-    def motif_of_motif(self, motif, min_layer, max_layer):
+    def motif_of_motif(self, motif_id, config):
+        # add layer at lowest level
+        # add layer at specific level
+        # add motif with a certain probability
+        # possibly combine with a mutate operation?
+        motif = deepcopy(self.motif_configs[motif_id])
         i = 0
         layer = 0
-        for node in motif['node']:
-            if node == 'excitatory' or node == 'inhibitory':
-                selected_motif = self.select_motif()
-                motif['node'][i] = selected_motif['id']
-                motif['depth'] += 1
+        if config == 'lowest':
+            None
+        elif config <= 1:
+            for node in motif['node']:
+                if node == 'excitatory' or node == 'inhibitory':
+                    if np.random.random() < config:
+                        # sub_motif = self.select_motif()
+                        # motif['node'][i] = self.id_check(sub_motif)
+                        motif['node'][i] = self.select_motif()
+                        motif['depth'] += 1 #depth calculation is wrong
+                else:
+                    sub_motif = self.motif_of_motif(node, config)
+                    # sub_motif_id = self.insert_motif(sub_motif)
+                    # motif['node'][i] = sub_motif[sub_motif_id]
+                    motif['node'][i] = self.insert_motif(sub_motif)
+                    motif['depth'] += 1 #again depth is probs wrong
                 i += 1
+        else:
+            # go to a certain depth
+            None
+        return motif
 
     def generate_agents(self,
                         pop_size=200,
@@ -191,21 +224,9 @@ class motif_population(object):
                 if motif is None:
                     motif = self.select_motif()
                 else:
-                    # if motif['depth'] >= depth-j:
-                    #     agent = motif['id']
-                    # else:
-
-                    # select a motif and iterate through the desired number of times to generate agent depth
-                    index = 0
-                    for node in motif['node']:
-                        if node == 'excitatory' or node == 'inhibitory':
-                            selected_motif = self.select_motif()
-                            motif['node'][index] = selected_motif['id']
-                        else:
-                            if motif['depth']+j > depth:
-                                None
-                            else:
-                                for
+                    motif = self.motif_of_motif(motif, 1)
+                    motif = self.insert_motif(motif)
+            agent = motif
 
 
         return 0
