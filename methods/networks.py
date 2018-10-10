@@ -143,7 +143,7 @@ class motif_population(object):
                                 conn.append(delay_range[0] + (bin * self.delay_bin_width))
                                 synapses.append(conn)
                 motif['node'] = node_types
-                motif['io'] = io_properties
+                # motif['io'] = io_properties
                 motif['conn'] = synapses
                 motif['coords'] = coords
                 motif['depth'] = 1
@@ -169,7 +169,7 @@ class motif_population(object):
         motif_id = False
         for config in self.motif_configs:
             if self.motif_configs[config]['node'] == motif['node'] and \
-                    self.motif_configs[config]['io'] == motif['io'] and \
+                    self.motif_configs[config]['coords'] == motif['coords'] and \
                     self.motif_configs[config]['conn'] == motif['conn']:
                 motif_id = config
                 break
