@@ -11,6 +11,7 @@ import time
 import socket
 import numpy as np
 import math
+import itertools
 from copy import deepcopy
 
 
@@ -87,23 +88,23 @@ class motif_population(object):
                 start_point = len(self.population_seed)
             else:
                 start_point = 0
-            # if self.discrete_params and not self.multi_synapse:
-            #     maximum_number_of_motifs = 1
-            #     for i in range(self.min_motif_size, self.max_motif_size + 1):
-            #         maximum_number_of_motifs *= math.pow(4, i)  # possible connections
-            #     if self.weights:
-            #         maximum_number_of_motifs *= self.no_weight_bins
-            #     if self.delays:
-            #         maximum_number_of_motifs *= self.no_delay_bins
-            #     if self.io_config == 'fixed':
-            #         maximum_number_of_motifs *= math.pow(4, i)  # possible io configs
-            #     maximum_number_of_motifs *= math.pow(2, i)     # exit/inhib
-            # if self.population_size > maximum_number_of_motifs:
-            #     print "\nPopulation size is bigger than the full spectrum of possible motifs.\n" \
-            #           "Repeats will be allowed during generation.\n"
-            #     repeats = True
-            # else:
-            #     repeats = False
+            if self.discrete_params and not self.multi_synapse:
+                maximum_number_of_motifs = 1
+                for i in range(self.min_motif_size, self.max_motif_size + 1):
+                    maximum_number_of_motifs *= math.pow(4, i)  # possible connections
+                if self.weights:
+                    maximum_number_of_motifs *= self.no_weight_bins
+                if self.delays:
+                    maximum_number_of_motifs *= self.no_delay_bins
+                if self.io_config == 'fixed':
+                    maximum_number_of_motifs *= math.pow(4, i)  # possible io configs
+                maximum_number_of_motifs *= math.pow(2, i)     # exit/inhib
+            if self.population_size > maximum_number_of_motifs:
+                print "\nPopulation size is bigger than the full spectrum of possible motifs.\n" \
+                      "Repeats will be allowed during generation.\n"
+                repeats = True
+            else:
+                repeats = False
             i = start_point
             while i < population_size:
                 motif = {}
@@ -139,7 +140,7 @@ class motif_population(object):
                 # if not repeats:
                 if not self.id_check(motif):
                     # print self.id_check(motif)
-                    self.insert_motif(motif, weight)
+                    self.insert_motif(motif, weight, False)
                 else:
                     print "repeated ", i, self.id_check(motif)
                     i -= 1
@@ -151,15 +152,38 @@ class motif_population(object):
             print "reading from file"
         print "done generating motif pop"
 
+    def permutations(self, motif):
+        motif_size = len(motif['node'])
+        connections = len(motif['conn'])
+        permutations = list(itertools.permutations(range(len(motif['node']))))
+        motif_array = []
+        for i in range(len(permutations)):
+            motif_array.append(deepcopy(motif))
+            for j in range(motif_size):
+                motif_array[i]['node'][j] = motif['node'][permutations[i][j]]
+                motif_array[i]['io'][j] = motif['io'][permutations[i][j]]
+            for j in range(connections):
+                motif_array[i]['conn'][j][0] = permutations[i][motif_array[i]['conn'][j][0]]
+                motif_array[i]['conn'][j][1] = permutations[i][motif_array[i]['conn'][j][1]]
+        return motif_array
+
     def id_check(self, motif):
         motif_id = False
+        motif_array = self.permutations(motif)
         for config in self.motif_configs:
-            #compare each element and return rotations with which they are similar
-            if self.motif_configs[config]['node'] == motif['node'] and \
-                    self.motif_configs[config]['io'] == motif['io'] and \
-                    self.motif_configs[config]['conn'] == motif['conn']:
-                motif_id = config
-                break
+            if len(self.motif_configs[config]['node']) == len(motif['node']):
+                if len(self.motif_configs[config]['conn']) == len(motif['conn']):
+                    # for orig_node in self.motif_configs[config]['node']:
+                    #     for check_node in motif['node']:
+                    for isomer in motif_array:
+                        #compare each element and return rotations with which they are similar
+                        if self.motif_configs[config]['node'] == isomer['node'] and \
+                                self.motif_configs[config]['io'] == isomer['io'] and \
+                                self.motif_configs[config]['conn'] == isomer['conn']:
+                            motif_id = config
+                            break
+                    if motif_id:
+                        break
         return motif_id
 
     def select_motif(self):
@@ -174,8 +198,9 @@ class motif_population(object):
         # return self.motif_configs[motif]
         return motif
 
-    def insert_motif(self, motif, weight=0):
-        check = self.id_check(motif)
+    def insert_motif(self, motif, weight=0, check=True):
+        if check == True:
+            check = self.id_check(motif)
         if not check:
             motif_id = self.motifs_generated
             self.motif_configs['{}'.format(motif_id)] = motif
@@ -241,16 +266,28 @@ class motif_population(object):
             self.agent_pop.append(motif)
         return self.agent_pop
 
-    def read_motif(self, motif_id, e2e=[], e2i=[], excit_count=0, i2i=[], i2e=[], inhib_count=0, top_layer=True):
+    def collect_IO(self, motif, layer, upper):
+        print "this function will explore the motif (possibly recursively) to find the node ids which are the inputs " \
+              "and outputs of a motif"
+
+    def read_motif(self, motif_id, e2e=[], e2i=[], excit_count=0, i2i=[], i2e=[], inhib_count=0, layer=0, upper=0):
+        # id counter 'from which node, which node are you, layer'
+        # array of id counters as indexes with label as contents
         motif = self.motif_configs[motif_id]
-        for node in motif['node']:
-            if node == 'excitatory':
-                excit_count += 1
-            elif node == 'inhibitory':
-                inhib_count += 1
+        for conn in motif['conn']:
+            pre = conn[0]
+            post = conn[1]
+            pre_node = motif['node'][pre]
+            post_node = motif['node'][post]
+        # for node in motif['node']:
+            if pre_node == 'excitatory' or pre_node == 'inhibitory':
+                print "pre id = {}{}{}".format(layer, upper, pre)
+                if post_node == 'excitatory' or post_node == 'inhibitory':
+                    print "post id = {}{}{}".format(layer, upper, pre)
+                    # append the dict/list with the connection + connection ids
             else:
-                self.read_motif(node, e2e, e2i, excit_count, i2i, i2e, inhib_count, False)
-        if top_layer:
+                self.read_motif(pre_node, e2e, e2i, excit_count, i2i, i2e, inhib_count, layer+1)
+        if layer == 0:
             return e2e, e2i, i2i, i2e
         else:
             return e2e, e2i, excit_count, i2i, i2e, inhib_count
