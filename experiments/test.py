@@ -35,5 +35,6 @@ figure out mapping to inputs
     force a motif which represents the io 'substrate'
 should a motif of motifs become a motif in it's own right
     store original motif and child motifs in agent if successful create new motif, label level it was useful?
+    store new motifs in a separate population and transfer if useful
 figure out the disparity between expected possible combinations and actual
 '''
