@@ -36,7 +36,7 @@ class motif_population(object):
                  delay_range=(0.0, 25.0),
                  no_delay_bins=7,
                  delay_stdev=3.0,
-                 initial_hierarchy_depth=2,
+                 initial_hierarchy_depth=1,
                  max_hierarchy_depth=4,
                  selection_metric='fitness',  # fixed, population based, fitness based
                  # starting_weight='uniform',
@@ -72,6 +72,9 @@ class motif_population(object):
         self.multi_synapse = multi_synapse
 
         self.motif_configs = {}  # Tuple of tuples(node types, node i/o P(), connections, selection weight)
+        # for types in self.neuron_types:
+        #     self.motif_configs[types] = {}
+        #     self.motif_configs[types]['depth'] = 0
         self.motifs_generated = 0
         self.total_weight = 0
         self.agent_pop = []
@@ -224,26 +227,35 @@ class motif_population(object):
             if config == 'lowest':
                 None
             elif config <= 1:
+                increased_depth = False
+                picked_bigger = False
                 for node in motif['node']:
                     if node == 'excitatory' or node == 'inhibitory':
                         if np.random.random() < config:
                             # sub_motif = self.select_motif()
                             # motif['node'][i] = self.id_check(sub_motif)
                             motif['node'][i] = self.select_motif()
-                            motif['depth'] += 1  # depth calculation is wrong
+                            increased_depth = True
+                            # motif['depth'] += 1  # depth calculation is wrong
                     else:
                         sub_motif = self.motif_of_motif(node, config, max_depth, current_depth + 1)
                         # sub_motif_id = self.insert_motif(sub_motif)
                         # motif['node'][i] = sub_motif[sub_motif_id]
                         motif['node'][i] = self.insert_motif(sub_motif)
-                        motif['depth'] += 1  # again depth is probs wrong
+                        new_depth = sub_motif['depth']
+                        if new_depth >= motif['depth']:
+                            motif['depth'] = new_depth + 1
+                            picked_bigger = True
+                        # motif['depth'] += 1  # again depth is probs wrong
                     i += 1
+                if increased_depth and not picked_bigger:
+                    motif['depth'] += 1
             else:
                 # go to a certain depth
                 None
         return motif
 
-    def generate_agents(self, inputs, outputs, pop_size=200, start_small=False, max_depth=2):
+    def generate_agents(self, inputs, outputs, pop_size=200, connfig=1, start_small=False, max_depth=2):
         print "constructing population of agents"
         self.agent_pop = []
         for i in range(pop_size):
@@ -261,30 +273,82 @@ class motif_population(object):
                 motif = self.select_motif()
             else:
                 for i in range(depth):
-                    motif = self.motif_of_motif(motif, 1, depth, i)
+                    motif = self.motif_of_motif(motif, connfig, depth, i)
                     motif = self.insert_motif(motif)
             self.agent_pop.append(motif)
         return self.agent_pop
 
-    def collect_IO(self, motif, layer, upper):
+    def collect_IO(self, node, prepost, upper, layer, node_array=[]):
         print "this function will explore the motif (possibly recursively) to find the node ids which are the inputs " \
               "and outputs of a motif"
+        # if pre_node == 'excitatory' or pre_node == 'inhibitory':
+        #     print
+        # for node in motif['node']
+        #     if node == 'excitatory' or node == 'inhibitory':
+        motif = self.motif_configs(node)
+        node_count = 0
+        for io in motif['io']:
+            if prepost == 'pre' and motif['io'][1]:
+                pre_node = motif['node'][node_count]
+                if pre_node == 'excitatory' or pre_node == 'inhibitory':
+                    node_array.append([pre_node, node_count, upper, layer])
+                else:
+                    node_array += self.collect_IO(pre_node, prepost, node_count, layer+1, node_array)
+            if prepost == 'post' and motif['io'][0]:
+                post_node = motif['node'][node_count]
+                if post_node == 'excitatory' or post_node == 'inhibitory':
+                    node_array.append([post_node, node_count, upper, layer])
+                else:
+                    node_array += self.collect_IO(post_node, prepost, node_count, layer+1, node_array)
+        return node_array
+
+
+    def connect_nodes(self, pre_node, pre_count, post_node, post_count, layer, upper, pre_ids=[], post_ids=[]):
+        # for pre_node in pre_node:
+        if pre_node == 'excitatory' or pre_node == 'inhibitory':
+            pre_ids.append([pre_node, pre_count, upper, layer])
+        else:
+            pre_ids += self.collect_IO(pre_node, 'pre', pre_count, layer+1)
+        if post_node == 'excitatory' or post_node == 'inhibitory':
+            post_ids.append([post_node, post_count, upper, layer])
+        else:
+            post_ids += self.collect_IO(post_node, 'pre', post_count, layer+1)
+        print "do something with pre and post ids"
+
 
     def read_motif(self, motif_id, e2e=[], e2i=[], excit_count=0, i2i=[], i2e=[], inhib_count=0, layer=0, upper=0):
         # id counter 'from which node, which node are you, layer'
         # array of id counters as indexes with label as contents
         motif = self.motif_configs[motif_id]
+        # if motif['depth'] > 1:
+        #     print "need to inspect further"
+        #     node_count = 0
+        #     for node in motif['node']:
+        #         if node == 'excitatory' or node == 'inhibitory':
+        #             print "found a leaf node"
+        #         else:
+        #             self.read_motif(node, layer=layer+1, upper=node_count)
+        #         node_count += 1
+        # else:
+        #     print "reached the bottom"
+        # io_and_node = zip(motif['io'], motif['node'])
+        # for (io, node) in io_and_node:
+        #     print "this fuckign sucs"
         for conn in motif['conn']:
             pre = conn[0]
             post = conn[1]
             pre_node = motif['node'][pre]
             post_node = motif['node'][post]
+            self.connect_nodes(pre_node, pre, post_node, post, layer, upper)
         # for node in motif['node']:
+        #     pre_node = self.collect_IO(pre_node, 'pre', layer, upper)
             if pre_node == 'excitatory' or pre_node == 'inhibitory':
                 print "pre id = {}{}{}".format(layer, upper, pre)
-                if post_node == 'excitatory' or post_node == 'inhibitory':
-                    print "post id = {}{}{}".format(layer, upper, pre)
-                    # append the dict/list with the connection + connection ids
+            else:
+                pre_node = self.collect_IO(pre_node)
+            if post_node == 'excitatory' or post_node == 'inhibitory':
+                print "post id = {}{}{}".format(layer, upper, pre)
+                # append the dict/list with the connection + connection ids
             else:
                 self.read_motif(pre_node, e2e, e2i, excit_count, i2i, i2e, inhib_count, layer+1)
         if layer == 0:
