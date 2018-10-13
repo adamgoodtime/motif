@@ -279,12 +279,6 @@ class motif_population(object):
         return self.agent_pop
 
     def collect_IO(self, node, prepost, upper, layer, node_array=[]):
-        print "this function will explore the motif (possibly recursively) to find the node ids which are the inputs " \
-              "and outputs of a motif"
-        # if pre_node == 'excitatory' or pre_node == 'inhibitory':
-        #     print
-        # for node in motif['node']
-        #     if node == 'excitatory' or node == 'inhibitory':
         motif = self.motif_configs[node]
         node_count = 0
         for io in motif['io']:
@@ -325,24 +319,8 @@ class motif_population(object):
 
 
 
-    def read_motif(self, motif_id, e2e=[], e2i=[], excit_count=0, i2i=[], i2e=[], inhib_count=0, layer=0, upper=0):
-        # id counter 'from which node, which node are you, layer'
-        # array of id counters as indexes with label as contents
+    def read_motif(self, motif_id, layer=0, upper=0):
         motif = self.motif_configs[motif_id]
-        # if motif['depth'] > 1:
-        #     print "need to inspect further"
-        #     node_count = 0
-        #     for node in motif['node']:
-        #         if node == 'excitatory' or node == 'inhibitory':
-        #             print "found a leaf node"
-        #         else:
-        #             self.read_motif(node, layer=layer+1, upper=node_count)
-        #         node_count += 1
-        # else:
-        #     print "reached the bottom"
-        # io_and_node = zip(motif['io'], motif['node'])
-        # for (io, node) in io_and_node:
-        #     print "this fuckign sucs"
         all_connections = []
         for conn in motif['conn']:
             pre = conn[0]
@@ -350,25 +328,20 @@ class motif_population(object):
             pre_node = motif['node'][pre]
             post_node = motif['node'][post]
             all_connections += self.connect_nodes(pre_node, pre, post_node, post, layer, upper)
-        # for node in motif['node']:
-        #     pre_node = self.collect_IO(pre_node, 'pre', layer, upper)
-            if pre_node == 'excitatory' or pre_node == 'inhibitory':
-                print "pre id = {}{}{}".format(layer, upper, pre)
-            else:
-                pre_node = self.collect_IO(pre_node)
-            if post_node == 'excitatory' or post_node == 'inhibitory':
-                print "post id = {}{}{}".format(layer, upper, pre)
-                # append the dict/list with the connection + connection ids
-            else:
-                self.read_motif(pre_node, e2e, e2i, excit_count, i2i, i2e, inhib_count, layer+1)
-        if layer == 0:
-            return e2e, e2i, i2i, i2e
-        else:
-            return e2e, e2i, excit_count, i2i, i2e, inhib_count
+            print "add the connection properties here"
+        node_count = 0
+        for node in motif['node']:
+            if node != 'excitatory' and node != 'inhibitory':
+                all_connections += self.read_motif(node, layer+1, node_count)
+            node_count += 1
+        return all_connections
 
     def convert_population(self):
+        agent_connections = []
         for agent in self.agent_pop:
-            [e2e, e2i, i2i, i2e] = self.read_motif(agent)
+            agent_connections.append(self.read_motif(agent))
+            print "convert the connections into a spinn_net"
+
 
 
 class species(object):
