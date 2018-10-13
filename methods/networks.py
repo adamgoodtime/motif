@@ -285,35 +285,44 @@ class motif_population(object):
         #     print
         # for node in motif['node']
         #     if node == 'excitatory' or node == 'inhibitory':
-        motif = self.motif_configs(node)
+        motif = self.motif_configs[node]
         node_count = 0
         for io in motif['io']:
-            if prepost == 'pre' and motif['io'][1]:
+            if prepost == 'pre' and io[1]:
                 pre_node = motif['node'][node_count]
                 if pre_node == 'excitatory' or pre_node == 'inhibitory':
                     node_array.append([pre_node, node_count, upper, layer])
                 else:
                     node_array += self.collect_IO(pre_node, prepost, node_count, layer+1, node_array)
-            if prepost == 'post' and motif['io'][0]:
+            if prepost == 'post' and io[0]:
                 post_node = motif['node'][node_count]
                 if post_node == 'excitatory' or post_node == 'inhibitory':
                     node_array.append([post_node, node_count, upper, layer])
                 else:
                     node_array += self.collect_IO(post_node, prepost, node_count, layer+1, node_array)
+            node_count += 1
         return node_array
 
 
-    def connect_nodes(self, pre_node, pre_count, post_node, post_count, layer, upper, pre_ids=[], post_ids=[]):
+    def connect_nodes(self, pre_node, pre_count, post_node, post_count, layer, upper):#, pre_ids=[], post_ids=[]):
         # for pre_node in pre_node:
+        pre_ids = []
+        post_ids = []
+        connections = []
         if pre_node == 'excitatory' or pre_node == 'inhibitory':
             pre_ids.append([pre_node, pre_count, upper, layer])
         else:
-            pre_ids += self.collect_IO(pre_node, 'pre', pre_count, layer+1)
+            self.collect_IO(pre_node, 'pre', pre_count, layer+1, pre_ids)
         if post_node == 'excitatory' or post_node == 'inhibitory':
             post_ids.append([post_node, post_count, upper, layer])
         else:
-            post_ids += self.collect_IO(post_node, 'pre', post_count, layer+1)
+            self.collect_IO(post_node, 'post', post_count, layer+1, post_ids)
         print "do something with pre and post ids"
+        for pre in pre_ids:
+            for post in post_ids:
+                connections.append([pre, post])
+        return connections
+
 
 
     def read_motif(self, motif_id, e2e=[], e2i=[], excit_count=0, i2i=[], i2e=[], inhib_count=0, layer=0, upper=0):
@@ -334,12 +343,13 @@ class motif_population(object):
         # io_and_node = zip(motif['io'], motif['node'])
         # for (io, node) in io_and_node:
         #     print "this fuckign sucs"
+        all_connections = []
         for conn in motif['conn']:
             pre = conn[0]
             post = conn[1]
             pre_node = motif['node'][pre]
             post_node = motif['node'][post]
-            self.connect_nodes(pre_node, pre, post_node, post, layer, upper)
+            all_connections += self.connect_nodes(pre_node, pre, post_node, post, layer, upper)
         # for node in motif['node']:
         #     pre_node = self.collect_IO(pre_node, 'pre', layer, upper)
             if pre_node == 'excitatory' or pre_node == 'inhibitory':
