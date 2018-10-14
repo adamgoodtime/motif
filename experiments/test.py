@@ -6,9 +6,9 @@ print "starting"
 motif_pop = motif_population(max_motif_size=3,
                              no_weight_bins=2,
                              no_delay_bins=2,
-                             population_size=200)
+                             population_size=100)
 
-motif_pop.generate_agents(inputs=6, outputs=2, max_depth=3)
+motif_pop.generate_agents(inputs=6, outputs=2, max_depth=3, pop_size=100)
 
 # convert motifs to networks
 agent_pop = motif_pop.convert_population()
@@ -26,6 +26,7 @@ print "done"
 
 #ToDo
 '''
+shifting of upper reference needs to be careful of layers larger than 10
 figure out mapping to inputs
     have a fixed network but synaptic plasticity on IO
     have a IO metric attached to each motif
@@ -36,5 +37,6 @@ figure out mapping to inputs
 should a motif of motifs become a motif in it's own right - doesn't because weight = 1
     store original motif and child motifs in agent if successful create new motif, label level it was useful?
     store new motifs in a separate population and transfer if useful
+create a function to generate random motifs from initial settings
 figure out the disparity between expected possible combinations and actual
 '''

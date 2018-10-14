@@ -318,11 +318,7 @@ class motif_population(object):
         all_connections = []
         for conn in motif['conn']:
             pre = conn[0]
-            pre_up = []
-            pre_up.append(pre)
             post = conn[1]
-            post_up = []
-            post_up.append(post)
             weight = conn[2]
             delay = conn[3]
             pre_node = motif['node'][pre]
