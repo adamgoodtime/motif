@@ -28,7 +28,7 @@ class motif_population(object):
                  read_entire_population=False,
                  discrete_params=True,
                  weights=True,
-                 weight_range=(-0.1, 0.1),
+                 weight_range=(0, 0.1),
                  no_weight_bins=7,
                  initial_weight=0,
                  weight_stdev=0.02,
@@ -101,7 +101,7 @@ class motif_population(object):
                     maximum_number_of_motifs *= self.no_delay_bins
                 if self.io_config == 'fixed':
                     maximum_number_of_motifs *= math.pow(4, i)  # possible io configs
-                maximum_number_of_motifs *= math.pow(2, i)     # exit/inhib
+                maximum_number_of_motifs *= math.pow(2, i)  # exit/inhib
             if self.population_size > maximum_number_of_motifs:
                 print "\nPopulation size is bigger than the full spectrum of possible motifs.\n" \
                       "Repeats will be allowed during generation.\n"
@@ -179,10 +179,10 @@ class motif_population(object):
                     # for orig_node in self.motif_configs[config]['node']:
                     #     for check_node in motif['node']:
                     for isomer in motif_array:
-                        #compare each element and return rotations with which they are similar
+                        # compare each element and return rotations with which they are similar
                         if self.motif_configs[config]['node'] == isomer['node'] and \
-                                self.motif_configs[config]['io'] == isomer['io'] and \
-                                self.motif_configs[config]['conn'] == isomer['conn']:
+                                        self.motif_configs[config]['io'] == isomer['io'] and \
+                                        self.motif_configs[config]['conn'] == isomer['conn']:
                             motif_id = config
                             break
                     if motif_id:
@@ -232,11 +232,8 @@ class motif_population(object):
                 for node in motif['node']:
                     if node == 'excitatory' or node == 'inhibitory':
                         if np.random.random() < config:
-                            # sub_motif = self.select_motif()
-                            # motif['node'][i] = self.id_check(sub_motif)
                             motif['node'][i] = self.select_motif()
                             increased_depth = True
-                            # motif['depth'] += 1  # depth calculation is wrong
                     else:
                         sub_motif = self.motif_of_motif(node, config, max_depth, current_depth + 1)
                         # sub_motif_id = self.insert_motif(sub_motif)
@@ -246,7 +243,6 @@ class motif_population(object):
                         if new_depth >= motif['depth']:
                             motif['depth'] = new_depth + 1
                             picked_bigger = True
-                        # motif['depth'] += 1  # again depth is probs wrong
                     i += 1
                 if increased_depth and not picked_bigger:
                     motif['depth'] += 1
@@ -266,9 +262,6 @@ class motif_population(object):
                 depth = self.initial_hierarchy_depth
             # motif = None
             motif = self.select_motif()
-            # generate the agent
-            # for j in range(depth):
-            # check if it's the first iteration
             if motif is None:
                 motif = self.select_motif()
             else:
@@ -282,66 +275,124 @@ class motif_population(object):
         motif = self.motif_configs[node]
         node_count = 0
         for io in motif['io']:
+            local_upper = deepcopy(upper)
             if prepost == 'pre' and io[1]:
                 pre_node = motif['node'][node_count]
                 if pre_node == 'excitatory' or pre_node == 'inhibitory':
-                    node_array.append([pre_node, node_count, upper, layer])
+                    node_array.append([pre_node, node_count, local_upper, layer])
                 else:
-                    node_array += self.collect_IO(pre_node, prepost, node_count, layer+1, node_array)
+                    local_upper.append(node_count)
+                    self.collect_IO(pre_node, prepost, local_upper, layer + 1, node_array)
             if prepost == 'post' and io[0]:
                 post_node = motif['node'][node_count]
                 if post_node == 'excitatory' or post_node == 'inhibitory':
-                    node_array.append([post_node, node_count, upper, layer])
+                    node_array.append([post_node, node_count, local_upper, layer])
                 else:
-                    node_array += self.collect_IO(post_node, prepost, node_count, layer+1, node_array)
+                    local_upper.append(node_count)
+                    self.collect_IO(post_node, prepost, local_upper, layer + 1, node_array)
             node_count += 1
         return node_array
 
-
-    def connect_nodes(self, pre_node, pre_count, post_node, post_count, layer, upper):#, pre_ids=[], post_ids=[]):
-        # for pre_node in pre_node:
+    def connect_nodes(self, pre_node, pre_count, post_node, post_count, layer, upper, weight,
+                      delay):
         pre_ids = []
         post_ids = []
         connections = []
         if pre_node == 'excitatory' or pre_node == 'inhibitory':
             pre_ids.append([pre_node, pre_count, upper, layer])
         else:
-            self.collect_IO(pre_node, 'pre', pre_count, layer+1, pre_ids)
+            new_pre_count = upper + [pre_count]
+            self.collect_IO(pre_node, 'pre', new_pre_count, layer + 1, pre_ids)
         if post_node == 'excitatory' or post_node == 'inhibitory':
             post_ids.append([post_node, post_count, upper, layer])
         else:
-            self.collect_IO(post_node, 'post', post_count, layer+1, post_ids)
-        print "do something with pre and post ids"
+            new_post_count = upper + [post_count]
+            self.collect_IO(post_node, 'post', new_post_count, layer + 1, post_ids)
         for pre in pre_ids:
             for post in post_ids:
-                connections.append([pre, post])
+                connections.append([pre, post, weight, delay])
         return connections
 
-
-
-    def read_motif(self, motif_id, layer=0, upper=0):
+    def read_motif(self, motif_id, layer=0, upper=[]):
         motif = self.motif_configs[motif_id]
         all_connections = []
         for conn in motif['conn']:
             pre = conn[0]
+            pre_up = []
+            pre_up.append(pre)
             post = conn[1]
+            post_up = []
+            post_up.append(post)
+            weight = conn[2]
+            delay = conn[3]
             pre_node = motif['node'][pre]
             post_node = motif['node'][post]
-            all_connections += self.connect_nodes(pre_node, pre, post_node, post, layer, upper)
-            print "add the connection properties here"
+            all_connections += self.connect_nodes(pre_node, pre, post_node, post, layer,
+                                                  upper, weight, delay)
         node_count = 0
         for node in motif['node']:
             if node != 'excitatory' and node != 'inhibitory':
-                all_connections += self.read_motif(node, layer+1, node_count)
+                local_upper = deepcopy(upper)
+                local_upper.append(node_count)
+                all_connections += self.read_motif(node, layer + 1, local_upper)
             node_count += 1
         return all_connections
+
+    def construct_connections(self, agent_connections):
+        indexed_ex = []
+        indexed_in = []
+        e2e = []
+        e2i = []
+        i2e = []
+        i2i = []
+        pre_ex = True
+        post_ex = True
+        for conn in agent_connections:
+            if conn[0][0] == 'excitatory':
+                pre_ex = True
+                try:
+                    pre_index = indexed_ex.index(conn[0])
+                except:
+                    indexed_ex.append(conn[0])
+                    pre_index = indexed_ex.index(conn[0])
+            else:
+                pre_ex = False
+                try:
+                    pre_index = indexed_in.index(conn[0])
+                except:
+                    indexed_in.append(conn[0])
+                    pre_index = indexed_in.index(conn[0])
+            if conn[1][0] == 'excitatory':
+                post_ex = True
+                try:
+                    post_index = indexed_ex.index(conn[1])
+                except:
+                    indexed_ex.append(conn[1])
+                    post_index = indexed_ex.index(conn[1])
+            else:
+                post_ex = False
+                try:
+                    post_index = indexed_in.index(conn[1])
+                except:
+                    indexed_in.append(conn[1])
+                    post_index = indexed_in.index(conn[1])
+            if pre_ex and post_ex:
+                e2e.append((pre_index, post_index, conn[2], conn[3]))
+            elif pre_ex and not post_ex:
+                e2i.append((pre_index, post_index, conn[2], conn[3]))
+            elif not pre_ex and post_ex:
+                i2e.append((pre_index, post_index, conn[2], conn[3]))
+            elif not pre_ex and not post_ex:
+                i2i.append((pre_index, post_index, conn[2], conn[3]))
+        return e2e, e2i, i2e, i2i
 
     def convert_population(self):
         agent_connections = []
         for agent in self.agent_pop:
-            agent_connections.append(self.read_motif(agent))
+            # agent_connections.append(self.read_motif(agent))
+            agent_conn = self.read_motif(agent)
+            [e2e, e2i, i2e, i2i] = self.construct_connections(agent_conn)
             print "convert the connections into a spinn_net"
-
 
 
 class species(object):
