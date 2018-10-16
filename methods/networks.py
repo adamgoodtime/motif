@@ -13,6 +13,7 @@ import numpy as np
 import math
 import itertools
 from copy import deepcopy
+import operator
 
 
 # import random
@@ -42,6 +43,7 @@ class motif_population(object):
                  # starting_weight='uniform',
                  neuron_types=['excitatory', 'inhibitory'],
                  io_config='fixed',  # fixed, dynamic/coded probabilistic, uniform
+                 global_io=('highest', 'seeded'), # highest, seeded, random, average
                  multi_synapse=False):
 
         self.max_motif_size = max_motif_size
@@ -69,6 +71,7 @@ class motif_population(object):
         self.selection_metric = selection_metric
         self.neuron_types = neuron_types
         self.io_config = io_config
+        self.global_io = global_io
         self.multi_synapse = multi_synapse
 
         self.motif_configs = {}  # Tuple of tuples(node types, node i/o P(), connections, selection weight)
@@ -251,7 +254,7 @@ class motif_population(object):
                 None
         return motif
 
-    def generate_agents(self, inputs, outputs, pop_size=200, connfig=1, start_small=False, max_depth=2):
+    def generate_agents(self, pop_size=200, connfig=1, start_small=False, max_depth=2):
         print "constructing population of agents"
         self.agent_pop = []
         for i in range(pop_size):
@@ -268,7 +271,7 @@ class motif_population(object):
                 for i in range(depth):
                     motif = self.motif_of_motif(motif, connfig, depth, i)
                     motif = self.insert_motif(motif)
-            self.agent_pop.append(motif)
+            self.agent_pop.append((motif, np.random.randint(pop_size)))
         return self.agent_pop
 
     def collect_IO(self, node, prepost, upper, layer, node_array=[]):
@@ -334,44 +337,64 @@ class motif_population(object):
             node_count += 1
         return all_connections
 
-    def construct_connections(self, agent_connections):
+    def construct_connections(self, agent_connections, seed, inputs, outputs):
         indexed_ex = []
         indexed_in = []
+        input_count = {}
+        output_count = {}
         e2e = []
         e2i = []
         i2e = []
         i2i = []
-        pre_ex = True
-        post_ex = True
         for conn in agent_connections:
             if conn[0][0] == 'excitatory':
                 pre_ex = True
                 try:
                     pre_index = indexed_ex.index(conn[0])
+                    try:
+                        output_count['{}'.format(conn[0])] += 1
+                    except:
+                        output_count['{}'.format(conn[0])] = 1
                 except:
                     indexed_ex.append(conn[0])
+                    output_count['{}'.format(conn[0])] = 1
                     pre_index = indexed_ex.index(conn[0])
             else:
                 pre_ex = False
                 try:
                     pre_index = indexed_in.index(conn[0])
+                    try:
+                        output_count['{}'.format(conn[0])] += 1
+                    except:
+                        output_count['{}'.format(conn[0])] = 1
                 except:
                     indexed_in.append(conn[0])
                     pre_index = indexed_in.index(conn[0])
+                    output_count['{}'.format(conn[0])] = 1
             if conn[1][0] == 'excitatory':
                 post_ex = True
                 try:
                     post_index = indexed_ex.index(conn[1])
+                    try:
+                        input_count['{}'.format(conn[1])] += 1
+                    except:
+                        input_count['{}'.format(conn[1])] = 1
                 except:
                     indexed_ex.append(conn[1])
                     post_index = indexed_ex.index(conn[1])
+                    input_count['{}'.format(conn[1])] = 1
             else:
                 post_ex = False
                 try:
                     post_index = indexed_in.index(conn[1])
+                    try:
+                        input_count['{}'.format(conn[1])] += 1
+                    except:
+                        input_count['{}'.format(conn[1])] = 1
                 except:
                     indexed_in.append(conn[1])
                     post_index = indexed_in.index(conn[1])
+                    input_count['{}'.format(conn[1])] = 1
             if pre_ex and post_ex:
                 e2e.append((pre_index, post_index, conn[2], conn[3]))
             elif pre_ex and not post_ex:
@@ -380,15 +403,72 @@ class motif_population(object):
                 i2e.append((pre_index, post_index, conn[2], conn[3]))
             elif not pre_ex and not post_ex:
                 i2i.append((pre_index, post_index, conn[2], conn[3]))
-        return e2e, e2i, i2e, i2i
+        pre_ex_count = [[0, 'e', j] for j in range(len(indexed_ex))]
+        post_ex_count = [[0, 'e', j] for j in range(len(indexed_ex))]
+        pre_in_count = [[0, 'i', j] for j in range(len(indexed_in))]
+        post_in_count = [[0, 'i', j] for j in range(len(indexed_in))]
+        for e in e2e:
+            pre_ex_count[e[0]][0] += 1
+            post_ex_count[e[1]][0] += 1
+        for e in e2i:
+            pre_ex_count[e[0]][0] += 1
+            post_in_count[e[1]][0] += 1
+        for e in i2e:
+            pre_in_count[e[0]][0] += 1
+            post_ex_count[e[1]][0] += 1
+        for e in i2i:
+            pre_in_count[e[0]][0] += 1
+            post_in_count[e[1]][0] += 1
+        pre_ex_count.sort(reverse=True)
+        pre_in_count.sort(key=lambda x: x[0], reverse=True)
+        post_ex_count.sort(reverse=True)
+        post_in_count.sort(reverse=True)
+        pre_count = pre_ex_count + pre_in_count
+        pre_count.sort(reverse=True)
+        post_count = post_in_count + post_ex_count
+        post_count.sort(reverse=True)
+        in2e = []
+        in2i = []
+        out2e = []
+        out2i = []
+        if self.global_io[0] == 'highest':
+            if self.global_io[1] == 'seeded':
+                np.random.seed(seed)
+                input_order = range(inputs)
+                np.random.shuffle(input_order)
+                output_order = range(outputs)
+                np.random.shuffle(output_order)
+                io_index = 0
+                for node in pre_count:
+                    if node[1] == 'e':
+                        in2e.append([io_index, node[2], 0.1, 2])
+                    else:
+                        in2i.append([io_index, node[2], 0.1, 2])
+                    io_index += 1
+                    if io_index == inputs:
+                        break
+                io_index = 0
+                for node in post_count:
+                    if node[1] == 'e':
+                        out2e.append([io_index, node[2], 0.1, 2])
+                    else:
+                        out2i.append([io_index, node[2], 0.1, 2])
+                    io_index += 1
+                    if io_index == outputs:
+                        break
 
-    def convert_population(self):
+        return in2e, in2i, e2e, e2i, i2e, i2i, out2e, out2i
+
+    def convert_population(self, inputs, outputs):
         agent_connections = []
         for agent in self.agent_pop:
             # agent_connections.append(self.read_motif(agent))
-            agent_conn = self.read_motif(agent)
-            [e2e, e2i, i2e, i2i] = self.construct_connections(agent_conn)
-            print "convert the connections into a spinn_net"
+            agent_conn = self.read_motif(agent[0])
+            [in2e, in2i, e2e, e2i, i2e, i2i, out2e, out2i] = \
+                self.construct_connections(agent_conn, agent[1], inputs, outputs)
+            agent_connections.append([in2e, in2i, e2e, e2i, i2e, i2i, out2e, out2i])
+        print "return all th from_list food"
+        return agent_connections
 
 
 class species(object):

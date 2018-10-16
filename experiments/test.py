@@ -8,12 +8,14 @@ motif_pop = motif_population(max_motif_size=3,
                              no_delay_bins=2,
                              population_size=100)
 
-motif_pop.generate_agents(inputs=6, outputs=2, max_depth=3, pop_size=100)
+motif_pop.generate_agents(max_depth=3, pop_size=100)
 
 # convert motifs to networks
-agent_pop = motif_pop.convert_population()
+agent_pop_conn = motif_pop.convert_population(inputs=6, outputs=2) # [in2e, in2i, e2e, e2i, i2e, i2i, out2e, out2i]
 
 # evaluate
+    # pass the agent pop connections into a fucntion which tests the networks and returns fitnesses
+
 
 # adjust population weights and clean up unused motifs
 
@@ -26,6 +28,7 @@ print "done"
 
 #ToDo
 '''
+create a motif for the input/output population that is connected to the reservoir network
 shifting of upper reference needs to be careful of layers larger than 10
 figure out mapping to inputs
     have a fixed network but synaptic plasticity on IO
