@@ -1,4 +1,4 @@
-# import spynnaker8 as p
+import spynnaker8 as p
 # from spynnaker.pyNN.connections. \
 #     spynnaker_live_spikes_connection import SpynnakerLiveSpikesConnection
 # from spinn_front_end_common.utilities.globals_variables import get_simulator
@@ -14,6 +14,8 @@ import math
 import itertools
 from copy import deepcopy
 import operator
+from spinn_front_end_common.utilities.globals_variables import get_simulator
+import traceback
 
 
 # import random
@@ -429,8 +431,8 @@ class motif_population(object):
         post_count.sort(reverse=True)
         in2e = []
         in2i = []
-        out2e = []
-        out2i = []
+        e2out = []
+        i2out = []
         if self.global_io[0] == 'highest':
             if self.global_io[1] == 'seeded':
                 np.random.seed(seed)
@@ -450,25 +452,95 @@ class motif_population(object):
                 io_index = 0
                 for node in post_count:
                     if node[1] == 'e':
-                        out2e.append([io_index, node[2], 0.1, 2])
+                        e2out.append([node[2], io_index, 0.1, 2])
                     else:
-                        out2i.append([io_index, node[2], 0.1, 2])
+                        i2out.append([node[2], io_index, 0.1, 2])
                     io_index += 1
                     if io_index == outputs:
                         break
 
-        return in2e, in2i, e2e, e2i, i2e, i2i, out2e, out2i
+        return in2e, in2i, len(indexed_ex), e2e, e2i, len(indexed_in), i2e, i2i, e2out, i2out
 
     def convert_population(self, inputs, outputs):
         agent_connections = []
         for agent in self.agent_pop:
             # agent_connections.append(self.read_motif(agent))
             agent_conn = self.read_motif(agent[0])
-            [in2e, in2i, e2e, e2i, i2e, i2i, out2e, out2i] = \
+            [in2e, in2i, e2e, e2i, i2e, i2i, e2out, i2out] = \
                 self.construct_connections(agent_conn, agent[1], inputs, outputs)
-            agent_connections.append([in2e, in2i, e2e, e2i, i2e, i2i, out2e, out2i])
+            agent_connections.append([in2e, in2i, e2e, e2i, i2e, i2i, e2out, i2out])
         print "return all th from_list food"
         return agent_connections
+
+    def get_scores(breakout_pop, simulator):
+        b_vertex = breakout_pop._vertex
+        scores = b_vertex.get_data(
+            'score', simulator.no_machine_time_steps, simulator.placements,
+            simulator.graph_mapper, simulator.buffer_manager, simulator.machine_time_step)
+
+        return scores.tolist()
+
+    def bandit_test(self, connections, arms, exposure_time=200):
+        max_attempts = 5
+        try_except = 0
+        while try_except < max_attempts:
+            bandit = []
+            excite = []
+            excite_count = 0
+            inhib = []
+            inhib_count = 0
+            p.setup(timestep=1.0)
+            p.set_number_of_neurons_per_core(p.IF_cond_exp, 100)
+            for i in range(len(connections)):
+                [in2e, in2i, e_size, e2e, e2i, i_size, i2e, i2i, e2out, i2out] = connections[i]
+                bandit.append(p.Population(1, p.Bandit(arms, exposure_time, label='bandit_pop_{}'.format(i))))
+                if e_size > 0:
+                    excite.append(p.Population(e_size, p.IF_cond_exp(), label='excite_pop_{}-{}'.format(excite_count, i)))
+                    excite_count += 1
+                if i_size > 0:
+                    inhib.append(p.Population(i_size, p.IF_cond_exp(), label='inhib_pop_{}-{}'.format(inhib_count, i)))
+                    inhib_count += 1
+                if len(in2e) != 0:
+                    p.Projection(bandit[i], excite[excite_count-1], p.FromListConnector(in2e), receptor_type='excitatory')
+                if len(in2i) != 0:
+                    p.Projection(bandit[i], excite[inhib_count-1], p.FromListConnector(in2i), receptor_type='excitatory')
+                if len(e2e) != 0:
+                    p.Projection(excite[excite_count-1], excite[excite_count-1], p.FromListConnector(e2e),
+                                 receptor_type='excitatory')
+                if len(e2i) != 0:
+                    p.Projection(excite[excite_count-1], inhib[inhib_count-1], p.FromListConnector(e2i),
+                                 receptor_type='excitatory')
+                if len(i2e) != 0:
+                    p.Projection(inhib[inhib_count-1], excite[excite_count-1], p.FromListConnector(i2e),
+                                 receptor_type='inhibitory')
+                if len(i2i) != 0:
+                    p.Projection(inhib[inhib_count-1], inhib[inhib_count-1], p.FromListConnector(i2e),
+                                 receptor_type='inhibitory')
+                if len(e2out) != 0:
+                    p.Projection(excite[excite_count-1], bandit[i], p.FromListConnector(e2out),
+                                 receptor_type='excitatory')
+                if len(i2out) != 0:
+                    p.Projection(inhib[inhib_count-1], bandit[i], p.FromListConnector(e2out),
+                                 receptor_type='inhibitory')
+
+            simulator = get_simulator()
+            try:
+                p.run(len(arms)*exposure_time)
+                try_except = max_attempts
+                break
+            except:
+                traceback.print_exc()
+                try_except += 1
+                print "failed to run on attempt ", try_except, "\n"#. total fails: ", all_fails, "\n"
+
+        scores = []
+        agent_fitness = []
+        for i in range(len(connections)):
+            scores.append(self.get_scores(breakout_pop=bandit[i], simulator=simulator))
+           # pop[i].stats = {'fitness': scores[i][len(scores[i]) - 1][0]}  # , 'steps': 0}
+            agent_fitness.append(scores[i][len(scores[i]) - 1][0])
+
+        return agent_fitness
 
 
 class species(object):
