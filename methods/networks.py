@@ -45,7 +45,7 @@ class motif_population(object):
                  # starting_weight='uniform',
                  neuron_types=['excitatory', 'inhibitory'],
                  io_config='fixed',  # fixed, dynamic/coded probabilistic, uniform
-                 global_io=('highest', 'seeded'), # highest, seeded, random, average
+                 global_io=('highest', 'unseeded'), # highest, seeded, random, average
                  multi_synapse=False):
 
         self.max_motif_size = max_motif_size
@@ -257,6 +257,22 @@ class motif_population(object):
                 None
         return motif
 
+    def generate_individual(self, connfig=1, start_small=False, max_depth=2):
+        # select depth of the agent
+        if not start_small:  # this is broke af
+            depth = np.random.randint(self.initial_hierarchy_depth, max_depth + 1)
+        else:
+            depth = self.initial_hierarchy_depth
+        # motif = None
+        motif = self.select_motif()
+        if motif is None:
+            motif = self.select_motif()
+        else:
+            for i in range(depth):
+                motif = self.motif_of_motif(motif, connfig, depth, i)
+                motif = self.insert_motif(motif)
+        return ((motif, np.random.randint(200)))
+
     def generate_agents(self, pop_size=200, connfig=1, start_small=False, max_depth=2):
         print "constructing population of agents"
         self.agent_pop = []
@@ -444,6 +460,25 @@ class motif_population(object):
                 io_index = 0
                 for node in pre_count:
                     if node[1] == 'e':
+                        in2e.append((input_order[io_index], node[2], 0.1, 1))
+                    else:
+                        in2i.append((input_order[io_index], node[2], 0.1, 1))
+                    io_index += 1
+                    if io_index == inputs:
+                        break
+                io_index = 0
+                for node in post_count:
+                    if node[1] == 'e':
+                        e2out.append((node[2], output_order[io_index], 0.1, 1))
+                    else:
+                        i2out.append((node[2], output_order[io_index], 0.1, 1))
+                    io_index += 1
+                    if io_index == outputs:
+                        break
+            elif self.global_io[1] == 'unseeded':
+                io_index = 0
+                for node in pre_count:
+                    if node[1] == 'e':
                         in2e.append((io_index, node[2], 0.1, 1))
                     else:
                         in2i.append((io_index, node[2], 0.1, 1))
@@ -481,7 +516,7 @@ class motif_population(object):
 
         return scores.tolist()
 
-    def bandit_test(self, connections, arms, runtime=2000, exposure_time=200):
+    def bandit_test(self, connections, arms, runtime=2000, exposure_time=200, noise_rate=1, noise_weight=1):
         max_attempts = 5
         try_except = 0
         while try_except < max_attempts:
@@ -505,9 +540,15 @@ class motif_population(object):
                     if e_size > 0:
                         excite_count += 1
                         excite.append(p.Population(e_size, p.IF_cond_exp(), label='excite_pop_{}-{}'.format(excite_count, i)))
+                        excite_noise = p.Population(e_size, p.SpikeSourcePoisson(rate=noise_rate))
+                        p.Projection(excite_noise, excite[excite_count], p.OneToOneConnector(),
+                                     p.StaticSynapse(weight=noise_weight), receptor_type='excitatory')
                     if i_size > 0:
                         inhib_count += 1
                         inhib.append(p.Population(i_size, p.IF_cond_exp(), label='inhib_pop_{}-{}'.format(inhib_count, i)))
+                        inhib_noise = p.Population(i_size, p.SpikeSourcePoisson(rate=noise_rate))
+                        p.Projection(inhib_noise, inhib[inhib_count], p.OneToOneConnector(),
+                                     p.StaticSynapse(weight=noise_weight), receptor_type='excitatory')
                     if len(in2e) != 0:
                         p.Projection(bandit[bandit_count], excite[excite_count], p.FromListConnector(in2e),
                                      receptor_type='excitatory')
