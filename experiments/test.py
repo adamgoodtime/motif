@@ -10,12 +10,14 @@ motif_pop = motif_population(max_motif_size=3,
 
 motif_pop.generate_agents(max_depth=3, pop_size=100)
 
+arms = [0.1, 0.9]
+
 # convert motifs to networks
-agent_pop_conn = motif_pop.convert_population(inputs=6, outputs=2) # [in2e, in2i, e2e, e2i, i2e, i2i, out2e, out2i]
+agent_pop_conn = motif_pop.convert_population(inputs=1, outputs=len(arms)) # [in2e, in2i, e2e, e2i, i2e, i2i, out2e, out2i]
 
 # evaluate
     # pass the agent pop connections into a fucntion which tests the networks and returns fitnesses
-
+fitnesses = motif_pop.bandit_test(agent_pop_conn, arms, runtime=20000)
 
 # adjust population weights and clean up unused motifs
 
