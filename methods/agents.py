@@ -16,209 +16,49 @@ from copy import deepcopy
 import operator
 from spinn_front_end_common.utilities.globals_variables import get_simulator
 import traceback
+from methods.networks import motif_population
 
 class agent_pop(object):
     def __init__(self,
-                 motifs,
-                 max_motif_size=4,
-                 min_motif_size=2,
-                 population_size=200,
-                 static_population=True,
-                 population_seed=None,
-                 read_entire_population=False,
-                 discrete_params=True,
-                 weights=True,
-                 weight_range=(0, 0.1),
-                 no_weight_bins=7,
-                 initial_weight=0,
-                 weight_stdev=0.02,
-                 delays=True,
-                 delay_range=(1.0, 25.0),
-                 no_delay_bins=7,
-                 delay_stdev=3.0,
-                 initial_hierarchy_depth=1,
-                 max_hierarchy_depth=4,
-                 selection_metric='fitness',  # fixed, population based, fitness based
-                 # starting_weight='uniform',
-                 neuron_types=['excitatory', 'inhibitory'],
-                 io_config='fixed',  # fixed, dynamic/coded probabilistic, uniform
-                 global_io=('highest', 'seeded'), # highest, seeded, random, average
-                 multi_synapse=False):
+                 motif,
+                 inputs=1,
+                 outputs=2,
+                 pop_size=100):
 
-        self.max_motif_size = max_motif_size
-        self.min_motif_size = min_motif_size
-        self.population_size = population_size
-        self.static_population = static_population
-        self.population_seed = population_seed
-        # self.read_entire_population = read_entire_population
-        self.discrete_params = discrete_params
-        self.weights = weights
-        self.weight_range = weight_range
-        self.no_weight_bins = no_weight_bins
-        weight_bin_range = self.weight_range[1] - self.weight_range[0]
-        self.weight_bin_width = weight_bin_range / (self.no_weight_bins - 1)
-        self.initial_weight = initial_weight
-        self.weight_stdev = weight_stdev
-        self.delays = delays
-        self.delay_range = delay_range
-        self.no_delay_bins = no_delay_bins
-        delay_bin_range = self.delay_range[1] - self.delay_range[0]
-        self.delay_bin_width = delay_bin_range / (self.no_delay_bins - 1)
-        self.delay_stdev = delay_stdev
-        self.initial_hierarchy_depth = initial_hierarchy_depth
-        self.max_hierarchy_depth = max_hierarchy_depth
-        self.selection_metric = selection_metric
-        self.neuron_types = neuron_types
-        self.io_config = io_config
-        self.global_io = global_io
-        self.multi_synapse = multi_synapse
+        self.motifs = motif
+        self.pop_size = pop_size
+        self.inputs = inputs
+        self.outputs = outputs
 
-        self.motif_configs = {}  # Tuple of tuples(node types, node i/o P(), connections, selection weight)
-        # for types in self.neuron_types:
-        #     self.motif_configs[types] = {}
-        #     self.motif_configs[types]['depth'] = 0
-        self.motifs_generated = 0
-        self.total_weight = 0
         self.agent_pop = []
         self.agent_nets = {}
 
+    def generate_spinn_nets(self, input=None, output=None, create=True):
+        if input is None:
+            input = self.inputs
+        if output is None:
+            output = self.outputs
+        agent_connections = []
+        if create:
+            self.generate_population()
+        for agent in self.agent_pop:
+            agent_connections.append(self.convert_agent(agent, input, output))
+
+        return agent_connections
+
+    def generate_population(self):
+        for i in range(self.pop_size):
+            self.agent_pop.append(self.new_individual())
+
 
     def new_individual(self):
-        motifs.
-
-    def construct_connections(self, agent_connections, seed, inputs, outputs):
-        indexed_ex = []
-        indexed_in = []
-        input_count = {}
-        output_count = {}
-        e2e = []
-        e2i = []
-        i2e = []
-        i2i = []
-        for conn in agent_connections:
-            if conn[0][0] == 'excitatory':
-                pre_ex = True
-                try:
-                    pre_index = indexed_ex.index(conn[0])
-                    try:
-                        output_count['{}'.format(conn[0])] += 1
-                    except:
-                        output_count['{}'.format(conn[0])] = 1
-                except:
-                    indexed_ex.append(conn[0])
-                    output_count['{}'.format(conn[0])] = 1
-                    pre_index = indexed_ex.index(conn[0])
-            else:
-                pre_ex = False
-                try:
-                    pre_index = indexed_in.index(conn[0])
-                    try:
-                        output_count['{}'.format(conn[0])] += 1
-                    except:
-                        output_count['{}'.format(conn[0])] = 1
-                except:
-                    indexed_in.append(conn[0])
-                    pre_index = indexed_in.index(conn[0])
-                    output_count['{}'.format(conn[0])] = 1
-            if conn[1][0] == 'excitatory':
-                post_ex = True
-                try:
-                    post_index = indexed_ex.index(conn[1])
-                    try:
-                        input_count['{}'.format(conn[1])] += 1
-                    except:
-                        input_count['{}'.format(conn[1])] = 1
-                except:
-                    indexed_ex.append(conn[1])
-                    post_index = indexed_ex.index(conn[1])
-                    input_count['{}'.format(conn[1])] = 1
-            else:
-                post_ex = False
-                try:
-                    post_index = indexed_in.index(conn[1])
-                    try:
-                        input_count['{}'.format(conn[1])] += 1
-                    except:
-                        input_count['{}'.format(conn[1])] = 1
-                except:
-                    indexed_in.append(conn[1])
-                    post_index = indexed_in.index(conn[1])
-                    input_count['{}'.format(conn[1])] = 1
-            if pre_ex and post_ex:
-                e2e.append((pre_index, post_index, conn[2], conn[3]))
-            elif pre_ex and not post_ex:
-                e2i.append((pre_index, post_index, conn[2], conn[3]))
-            elif not pre_ex and post_ex:
-                i2e.append((pre_index, post_index, conn[2], conn[3]))
-            elif not pre_ex and not post_ex:
-                i2i.append((pre_index, post_index, conn[2], conn[3]))
-        pre_ex_count = [[0, 'e', j] for j in range(len(indexed_ex))]
-        post_ex_count = [[0, 'e', j] for j in range(len(indexed_ex))]
-        pre_in_count = [[0, 'i', j] for j in range(len(indexed_in))]
-        post_in_count = [[0, 'i', j] for j in range(len(indexed_in))]
-        for e in e2e:
-            pre_ex_count[e[0]][0] += 1
-            post_ex_count[e[1]][0] += 1
-        for e in e2i:
-            pre_ex_count[e[0]][0] += 1
-            post_in_count[e[1]][0] += 1
-        for e in i2e:
-            pre_in_count[e[0]][0] += 1
-            post_ex_count[e[1]][0] += 1
-        for e in i2i:
-            pre_in_count[e[0]][0] += 1
-            post_in_count[e[1]][0] += 1
-        pre_ex_count.sort(reverse=True)
-        pre_in_count.sort(key=lambda x: x[0], reverse=True)
-        post_ex_count.sort(reverse=True)
-        post_in_count.sort(reverse=True)
-        pre_count = pre_ex_count + pre_in_count
-        pre_count.sort(reverse=True)
-        post_count = post_in_count + post_ex_count
-        post_count.sort(reverse=True)
-        in2e = []
-        in2i = []
-        e2out = []
-        i2out = []
-        if self.global_io[0] == 'highest':
-            if self.global_io[1] == 'seeded':
-                np.random.seed(seed)
-                input_order = range(inputs)
-                np.random.shuffle(input_order)
-                output_order = range(outputs)
-                np.random.shuffle(output_order)
-                io_index = 0
-                for node in pre_count:
-                    if node[1] == 'e':
-                        in2e.append((io_index, node[2], 0.1, 1))
-                    else:
-                        in2i.append((io_index, node[2], 0.1, 1))
-                    io_index += 1
-                    if io_index == inputs:
-                        break
-                io_index = 0
-                for node in post_count:
-                    if node[1] == 'e':
-                        e2out.append((node[2], io_index, 0.1, 1))
-                    else:
-                        i2out.append((node[2], io_index, 0.1, 1))
-                    io_index += 1
-                    if io_index == outputs:
-                        break
-
-        return in2e, in2i, len(indexed_ex), e2e, e2i, len(indexed_in), i2e, i2i, e2out, i2out
+        agent = self.motifs.generate_individual()
+        return agent
 
 
-    def convert_population(self, inputs, outputs):
-        agent_connections = []
-        for agent in self.agent_pop:
-            # agent_connections.append(self.read_motif(agent))
-            agent_conn = self.read_motif(agent[0])
-            spinn_conn = \
-                self.construct_connections(agent_conn, agent[1], inputs, outputs)
-            agent_connections.append(spinn_conn)
-        print "return all the from_list food"
-        return agent_connections
+    def convert_agent(self, agent, inputs, outputs):
+        SpiNN_connections = self.motifs.convert_individual(agent, inputs, outputs)
+        return SpiNN_connections
 
 
     def get_scores(self, game_pop, simulator):
@@ -226,7 +66,6 @@ class agent_pop(object):
         scores = g_vertex.get_data(
             'score', simulator.no_machine_time_steps, simulator.placements,
             simulator.graph_mapper, simulator.buffer_manager, simulator.machine_time_step)
-
         return scores.tolist()
 
 
@@ -241,7 +80,8 @@ class agent_pop(object):
             inhib = []
             inhib_count = -1
             failures = []
-            p.setup(timestep=1.0, min_delay=self.delay_range[0], max_delay=self.delay_range[1])
+            # p.setup(timestep=1.0, min_delay=self.delay_range[0], max_delay=self.delay_range[1])
+            p.setup(timestep=1.0, min_delay=1, max_delay=127)
             p.set_number_of_neurons_per_core(p.IF_cond_exp, 100)
             for i in range(len(connections)):
                 [in2e, in2i, e_size, e2e, e2i, i_size, i2e, i2i, e2out, i2out] = connections[i]

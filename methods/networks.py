@@ -211,6 +211,7 @@ class motif_population(object):
         if check == True:
             check = self.id_check(motif)
         if not check:
+            self.total_weight += weight
             motif_id = self.motifs_generated
             self.motif_configs['{}'.format(motif_id)] = motif
             self.motif_configs['{}'.format(motif_id)]['weight'] = weight
@@ -507,6 +508,13 @@ class motif_population(object):
             agent_connections.append(spinn_conn)
         print "return all the from_list food"
         return agent_connections
+
+    def convert_individual(self, agent, inputs, outputs):
+            # agent_connections.append(self.read_motif(agent))
+        agent_conn = self.read_motif(agent[0])
+        spinn_conn = \
+            self.construct_connections(agent_conn, agent[1], inputs, outputs)
+        return spinn_conn
 
     def get_scores(self, game_pop, simulator):
         g_vertex = game_pop._vertex
