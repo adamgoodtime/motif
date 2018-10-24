@@ -21,6 +21,7 @@ from methods.networks import motif_population
 class agent_pop(object):
     def __init__(self,
                  motif,
+                 # max_depth=2,
                  inputs=1,
                  outputs=2,
                  pop_size=100):
@@ -33,26 +34,26 @@ class agent_pop(object):
         self.agent_pop = []
         self.agent_nets = {}
 
-    def generate_spinn_nets(self, input=None, output=None, create=True):
+    def generate_spinn_nets(self, input=None, output=None, create=True, max_depth=2):
         if input is None:
             input = self.inputs
         if output is None:
             output = self.outputs
         agent_connections = []
         if create:
-            self.generate_population()
+            self.generate_population(max_depth)
         for agent in self.agent_pop:
             agent_connections.append(self.convert_agent(agent, input, output))
 
         return agent_connections
 
-    def generate_population(self):
+    def generate_population(self, max_depth):
         for i in range(self.pop_size):
-            self.agent_pop.append(self.new_individual())
+            self.agent_pop.append(self.new_individual(max_depth))
 
 
-    def new_individual(self):
-        agent = self.motifs.generate_individual()
+    def new_individual(self, max_depth):
+        agent = self.motifs.generate_individual(max_depth=max_depth)
         return agent
 
 
@@ -68,8 +69,13 @@ class agent_pop(object):
             simulator.graph_mapper, simulator.buffer_manager, simulator.machine_time_step)
         return scores.tolist()
 
+    def pass_fitnesses(self, fitnesses):
+        for i in range(len(self.agent_pop)):
+            self.agent_pop[i].append(fitnesses[i])
 
-    def bandit_test(self, connections, arms, runtime=2000, exposure_time=200, noise_rate=1, noise_weight=1):
+
+
+    def bandit_test(self, connections, arms, runtime=2000, exposure_time=200, noise_rate=50, noise_weight=1):
         max_attempts = 5
         try_except = 0
         while try_except < max_attempts:
@@ -83,6 +89,7 @@ class agent_pop(object):
             # p.setup(timestep=1.0, min_delay=self.delay_range[0], max_delay=self.delay_range[1])
             p.setup(timestep=1.0, min_delay=1, max_delay=127)
             p.set_number_of_neurons_per_core(p.IF_cond_exp, 100)
+            starting_pistol = p.Population(len(arms), p.SpikeSourceArray(spike_times=[0]))
             for i in range(len(connections)):
                 [in2e, in2i, e_size, e2e, e2i, i_size, i2e, i2i, e2out, i2out] = connections[i]
                 if (len(in2e) == 0 and len(in2i) == 0) or (len(e2out) == 0 and len(i2out) == 0):
@@ -108,8 +115,12 @@ class agent_pop(object):
                     if len(in2e) != 0:
                         p.Projection(bandit[bandit_count], excite[excite_count], p.FromListConnector(in2e),
                                      receptor_type='excitatory')
+                        p.Projection(starting_pistol, excite[excite_count], p.FromListConnector(in2e),
+                                     receptor_type='excitatory')
                     if len(in2i) != 0:
                         p.Projection(bandit[bandit_count], inhib[inhib_count], p.FromListConnector(in2i),
+                                     receptor_type='excitatory')
+                        p.Projection(starting_pistol, inhib[inhib_count], p.FromListConnector(in2i),
                                      receptor_type='excitatory')
                     if len(e2e) != 0:
                         p.Projection(excite[excite_count], excite[excite_count], p.FromListConnector(e2e),

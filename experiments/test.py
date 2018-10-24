@@ -1,5 +1,6 @@
 from methods.networks import motif_population
 from methods.agents import agent_pop
+import numpy as np
 
 print "starting"
 
@@ -9,7 +10,7 @@ motif_pop = motif_population(max_motif_size=3,
                              no_delay_bins=2,
                              population_size=100)
 
-motif_pop.generate_agents(max_depth=3, pop_size=100)
+# motif_pop.generate_agents(max_depth=3, pop_size=100)
 
 arms = [0.1, 0.9]
 
@@ -18,11 +19,16 @@ arms = [0.1, 0.9]
 
 agents = agent_pop(motif_pop)
 
-connections = agents.generate_spinn_nets(input=1, output=len(arms))
+connections = agents.generate_spinn_nets(input=1, output=len(arms), max_depth=3)
 
 # evaluate
     # pass the agent pop connections into a fucntion which tests the networks and returns fitnesses
-fitnesses = agents.bandit_test(connections, arms, runtime=20000)
+# fitnesses = agents.bandit_test(connections, arms, runtime=20000)
+fitnesses = np.random.randint(0, 100, len(agents.agent_pop))
+
+agents.pass_fitnesses(fitnesses)
+
+
 
 # adjust population weights and clean up unused motifs
 
