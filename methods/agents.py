@@ -21,6 +21,8 @@ from methods.networks import motif_population
 class agent_pop(object):
     def __init__(self,
                  motif,
+                 conn_weight=0.5,
+                 # motif_weight=0.5,
                  elitism=10, #%
                  asexual=0.5,
                  weight_mutate=0.8,
@@ -29,12 +31,15 @@ class agent_pop(object):
                  motif_mutate=0.03,
                  motif_switch=0.03,
                  similarity_threshold=0.4,
+                 stagnation_age=25,
                  inputs=1,
                  outputs=2,
                  pop_size=100):
 
         self.motifs = motif
         self.pop_size = pop_size
+        self.conn_weight = conn_weight
+        self.motif_weight = 1 - conn_weight
         self.elitism = elitism
         self.asexual = asexual
         self.weight_mutate = weight_mutate
@@ -43,6 +48,7 @@ class agent_pop(object):
         self.motif_mutate = motif_mutate
         self.motif_switch = motif_switch
         self.similarity_threshold = similarity_threshold
+        self.stagnation_age = stagnation_age
         self.inputs = inputs
         self.outputs = outputs
 
@@ -82,7 +88,8 @@ class agent_pop(object):
             self.agent_pop[i].append(fitnesses[i])
 
     def reset(self):
-        self.species = []
+        for specie in self.species:
+            specie.has_best = False
 
     def similarity(self, a, b):
         if isinstance(a, list):
@@ -101,17 +108,29 @@ class agent_pop(object):
         for motif in b_list:
             if motif in copy_a:
                 list_similarity[0] += 1
-                del b[b_list.index(motif)]
+                del b_list[b_list.index(motif)]
             list_similarity[1] += 1
         for motif in copy_a:
             list_similarity[1] += 1
 
         list_similarity = list_similarity[0] / list_similarity[1]
 
-        print "its done comparing"
+        conn_similarity = [0, 0]
+        copy_a = deepcopy(a_conn)
+        for conn in b_conn:
+            if conn in copy_a:
+                conn_similarity[0] += 1
+                del b_conn[b_conn.index(conn)]
+            conn_similarity[1] += 1
+        for conn in copy_a:
+            conn_similarity[1] += 1
 
+        conn_similarity = conn_similarity[0] / conn_similarity[1]
 
-    def evolve(self):
+        similarity = (self.conn_weight * conn_similarity) + (self.motif_weight * list_similarity)
+        return 1 - similarity
+
+    def generate_species(self):
         self.reset()
         print "evolve them here"
         for agent in self.agent_pop:
@@ -123,6 +142,29 @@ class agent_pop(object):
             if not belongs:
                 self.species.append(agent_species(agent))
 
+        highest_fitness = None
+        for specie in self.species:
+            specie.calc_metrics()
+            if highest_fitness is not None:
+                if specie.max_fitness > highest_fitness:
+                    highest_fitness = specie.max_fitness
+                    best_specie = specie
+            else:
+                highest_fitness = specie.max_fitness
+                best_specie = specie
+        self.species[self.species.index(best_specie)].has_best = True
+
+        self.species = filter(lambda s: s.no_improvement_age < self.stagnation_age or s.has_best, self.species)
+
+        print "species are formed and quantified, now to add young and old age modifiers to quantify the amount of offspring generated"
+
+    def evolve(self, species=True):
+        if species:
+            self.generate_species()
+
+
+    def generate_children(self):
+        print "here is where the children are created for both a species and for the entire population if required"
 
     def get_scores(self, game_pop, simulator):
         g_vertex = game_pop._vertex
@@ -240,7 +282,7 @@ class agent_species(object):
         total_fitness = 0
         max_fitness = None
         for member in self.members:
-            fitness = [3]
+            fitness = member[2]
             if max_fitness is None:
                 max_fitness = fitness
             else:
