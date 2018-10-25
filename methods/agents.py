@@ -21,13 +21,26 @@ from methods.networks import motif_population
 class agent_pop(object):
     def __init__(self,
                  motif,
-                 # max_depth=2,
+                 elitism=10, #%
+                 asexual=0.5,
+                 weight_mutate=0.8,
+                 synapse_mutate=0.03,
+                 node_mutate=0.03,
+                 motif_mutate=0.03,
+                 motif_switch=0.03,
                  inputs=1,
                  outputs=2,
                  pop_size=100):
 
         self.motifs = motif
         self.pop_size = pop_size
+        self.elitism = elitism
+        self.asexual = asexual
+        self.weight_mutate = weight_mutate
+        self.synapse_mutate = synapse_mutate
+        self.node_mutate = node_mutate
+        self.motif_mutate = motif_mutate
+        self.motif_switch = motif_switch
         self.inputs = inputs
         self.outputs = outputs
 
@@ -61,6 +74,12 @@ class agent_pop(object):
         SpiNN_connections = self.motifs.convert_individual(agent, inputs, outputs)
         return SpiNN_connections
 
+    def pass_fitnesses(self, fitnesses):
+        for i in range(len(self.agent_pop)):
+            self.agent_pop[i].append(fitnesses[i])
+
+    def evolve(self):
+        print "evolve them here"
 
     def get_scores(self, game_pop, simulator):
         g_vertex = game_pop._vertex
@@ -68,12 +87,6 @@ class agent_pop(object):
             'score', simulator.no_machine_time_steps, simulator.placements,
             simulator.graph_mapper, simulator.buffer_manager, simulator.machine_time_step)
         return scores.tolist()
-
-    def pass_fitnesses(self, fitnesses):
-        for i in range(len(self.agent_pop)):
-            self.agent_pop[i].append(fitnesses[i])
-
-
 
     def bandit_test(self, connections, arms, runtime=2000, exposure_time=200, noise_rate=50, noise_weight=1):
         max_attempts = 5

@@ -506,7 +506,6 @@ class motif_population(object):
             spinn_conn = \
                 self.construct_connections(agent_conn, agent[1], inputs, outputs)
             agent_connections.append(spinn_conn)
-        print "return all the from_list food"
         return agent_connections
 
     def convert_individual(self, agent, inputs, outputs):
@@ -517,17 +516,48 @@ class motif_population(object):
         return spinn_conn
 
     def list_motifs(self, motif_id, list=[]):
+        list.append(motif_id)
         motif = self.motif_configs[motif_id]
         for node in motif['node']:
             if node != 'excitatory' and node != 'inhibitory':
-                local_list = deepcopy(list)
-                list += self.list_motifs(node, local_list)
+                # local_list = deepcopy(list)
+                self.list_motifs(node, list)
         return list
 
-    def adjust_weights(self, agents):
-        print "adjusting weights of motifs"
+    def reset_weights(self, full_reset=True):
+        if full_reset == True:
+            self.total_weight = 0
+            for motif_id in self.motif_configs:
+                self.motif_configs['{}'.format(motif_id)]['weight'] = 0
+
+    def update_weight(self, motif_ids, weight):
+        for motif_id in motif_ids:
+            self.motif_configs['{}'.format(motif_id)]['weight'] = weight
+
+    def delete_motif(self, motif_id):
+        del self.motif_configs['{}'.format(motif_id)]
+
+    def clean_population(self):
+        to_be_deleted = []
+        for motif_id in self.motif_configs:
+            if self.motif_configs['{}'.format(motif_id)]['weight'] == 0:
+                to_be_deleted.append(motif_id)
+        for id in to_be_deleted:
+            self.delete_motif(id)
+
+    def adjust_weights(self, agents, clean=True, fitness_shaping=True):
+        self.reset_weights()
+        agents.sort(key=lambda x: x[2])#, reverse=True)
+        i=1
         for agent in agents:
-            print "list grab here"
+            components = []
+            components = self.list_motifs(agent[0], components)
+            if fitness_shaping:
+                self.update_weight(components, i)
+            i += 1
+        if clean:
+            self.clean_population()
+
 
 
     # def get_scores(self, game_pop, simulator):

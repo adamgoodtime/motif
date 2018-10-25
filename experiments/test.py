@@ -28,6 +28,8 @@ fitnesses = np.random.randint(0, 100, len(agents.agent_pop))
 
 agents.pass_fitnesses(fitnesses)
 
+motif_pop.adjust_weights(agents.agent_pop)
+
 
 
 # adjust population weights and clean up unused motifs
