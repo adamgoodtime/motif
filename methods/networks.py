@@ -652,15 +652,3 @@ class motif_population(object):
     #
     #     return agent_fitness
 
-
-class species(object):
-    def __init__(self, initial_member):
-        self.members = [initial_member]
-        self.representative = initial_member
-        self.offspring = 0
-        self.age = 0
-        self.avg_fitness = 0.
-        self.max_fitness = 0.
-        self.max_fitness_prev = 0.
-        self.no_improvement_age = 0
-        self.has_best = False

@@ -28,6 +28,7 @@ class agent_pop(object):
                  node_mutate=0.03,
                  motif_mutate=0.03,
                  motif_switch=0.03,
+                 similarity_threshold=0.4,
                  inputs=1,
                  outputs=2,
                  pop_size=100):
@@ -41,9 +42,11 @@ class agent_pop(object):
         self.node_mutate = node_mutate
         self.motif_mutate = motif_mutate
         self.motif_switch = motif_switch
+        self.similarity_threshold = similarity_threshold
         self.inputs = inputs
         self.outputs = outputs
 
+        self.species = []
         self.agent_pop = []
         self.agent_nets = {}
 
@@ -78,8 +81,48 @@ class agent_pop(object):
         for i in range(len(self.agent_pop)):
             self.agent_pop[i].append(fitnesses[i])
 
+    def reset(self):
+        self.species = []
+
+    def similarity(self, a, b):
+        if isinstance(a, list):
+            a = a[0]
+        if isinstance(b, list):
+            b = b[0]
+        a_list = []
+        self.motifs.list_motifs(a, a_list)
+        a_conn = self.motifs.read_motif(a)
+        b_list = []
+        self.motifs.list_motifs(b, b_list)
+        b_conn = self.motifs.read_motif(b)
+
+        list_similarity = [0, 0]
+        copy_a = deepcopy(a_list)
+        for motif in b_list:
+            if motif in copy_a:
+                list_similarity[0] += 1
+                del b[b_list.index(motif)]
+            list_similarity[1] += 1
+        for motif in copy_a:
+            list_similarity[1] += 1
+
+        list_similarity = list_similarity[0] / list_similarity[1]
+
+        print "its done comparing"
+
+
     def evolve(self):
+        self.reset()
         print "evolve them here"
+        for agent in self.agent_pop:
+            belongs = False
+            for specie in self.species:
+                if self.similarity(specie.representative, agent) < self.similarity_threshold:
+                    specie.members.append(agent)
+                    belongs = True
+            if not belongs:
+                self.species.append(agent_species(agent))
+
 
     def get_scores(self, game_pop, simulator):
         g_vertex = game_pop._vertex
@@ -179,3 +222,35 @@ class agent_pop(object):
                 agent_fitness.append(scores[i][len(scores[i]) - 1][0])
 
         return agent_fitness
+
+class agent_species(object):
+    def __init__(self, initial_member):
+        self.members = [initial_member]
+        self.representative = initial_member
+        self.offspring = 0
+        self.age = 0
+        self.avg_fitness = None
+        self.max_fitness = None
+        self.max_fitness_prev = None
+        self.no_improvement_age = 0
+        self.has_best = False
+
+    def calc_metrics(self):
+        self.max_fitness_prev = self.max_fitness
+        total_fitness = 0
+        max_fitness = None
+        for member in self.members:
+            fitness = [3]
+            if max_fitness is None:
+                max_fitness = fitness
+            else:
+                if fitness > max_fitness:
+                    max_fitness = fitness
+            total_fitness += fitness
+        self.avg_fitness = total_fitness / len(self.members)
+        self.max_fitness = max_fitness
+        if self.max_fitness_prev is not None:
+            if self.max_fitness > self.max_fitness_prev:
+                self.no_improvement_age = 0
+            else:
+                self.no_improvement_age += 1

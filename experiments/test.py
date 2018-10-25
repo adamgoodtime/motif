@@ -30,7 +30,7 @@ agents.pass_fitnesses(fitnesses)
 
 motif_pop.adjust_weights(agents.agent_pop)
 
-
+agents.evolve()
 
 # adjust population weights and clean up unused motifs
 
