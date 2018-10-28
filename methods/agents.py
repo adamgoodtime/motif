@@ -24,15 +24,15 @@ class agent_pop(object):
                  motif,
                  conn_weight=0.5,
                  # motif_weight=0.5,
-                 elitism=0.1, #%
+                 elitism=0.1,
                  asexual=0.5,
-                 conn_param_mutate=0.8,
-                 conn_add=1,#0.03,
-                 conn_gone=1,#0.03,
-                 io_mutate=1,#0.03,
-                 node_mutate=1,#0.03,
-                 motif_add=1,#0.03,
-                 motif_gone=1,#0.03,
+                 conn_param_mutate=0.1,
+                 conn_add=0.03,
+                 conn_gone=0.03,
+                 io_mutate=0.03,
+                 node_mutate=0.03,
+                 motif_add=0.03,
+                 motif_gone=0.03,
                  motif_switch=0.03,
                  similarity_threshold=0.4,
                  stagnation_age=25,
@@ -211,7 +211,7 @@ class agent_pop(object):
                         new_io = (np.random.choice((True, False)), np.random.choice((True, False)))
                         config_copy['io'][i] = new_io
                         mutate_key['io'] += 1
-        if np.random.random() < self.conn_add and len(config_copy['conn']) > 0:
+        if np.random.random() < self.cone_gone and len(config_copy['conn']) > 0:
             del config_copy['conn'][np.random.randint(len(config_copy['conn']))]
             mutate_key['c_gone'] += 1
         if np.random.random() < self.conn_add:
@@ -256,8 +256,8 @@ class agent_pop(object):
             motif_id = self.motifs.insert_motif(copy_copy)
         return motif_id
 
-
-
+    def mate(self, mum, dad):
+        print "mate the parents and create the child"
 
     # here is where the children are created for both a species and for the entire population if required
     def generate_children(self, pop, birthing, fitness_shaping=True):
@@ -276,6 +276,13 @@ class agent_pop(object):
                 mutate_key = {}
                 child = self.mutate(parent, mutate_key)
                 print "child mutated"
+            else:
+                if fitness_shaping:
+                    mum = parents[self.select_shaped(len(parents))]
+                    dad = parents[self.select_shaped(len(parents))]
+                else:
+                    print "use a function to determine the parent based on fitness"
+                child = self.mate(mum, dad)
 
     def select_shaped(self, list_size, best_first=True):
         list_total = 0
