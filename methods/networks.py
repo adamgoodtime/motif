@@ -524,6 +524,9 @@ class motif_population(object):
                 self.list_motifs(node, list)
         return list
 
+    def return_motif(self, motif_id):
+        return self.motif_configs[motif_id]
+
     def reset_weights(self, full_reset=True):
         if full_reset == True:
             self.total_weight = 0
@@ -547,14 +550,15 @@ class motif_population(object):
 
     def adjust_weights(self, agents, clean=True, fitness_shaping=True):
         self.reset_weights()
-        agents.sort(key=lambda x: x[2])#, reverse=True)
-        i=1
-        for agent in agents:
-            components = []
-            components = self.list_motifs(agent[0], components)
-            if fitness_shaping:
-                self.update_weight(components, i)
-            i += 1
+        if fitness_shaping:
+            agents.sort(key=lambda x: x[2])#, reverse=True)
+            i = 1
+            for agent in agents:
+                components = []
+                components = self.list_motifs(agent[0], components)
+                if fitness_shaping:
+                    self.update_weight(components, i)
+                i += 1
         if clean:
             self.clean_population()
 

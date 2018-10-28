@@ -16,6 +16,7 @@ from copy import deepcopy
 import operator
 from spinn_front_end_common.utilities.globals_variables import get_simulator
 import traceback
+import math
 from methods.networks import motif_population
 
 class agent_pop(object):
@@ -23,12 +24,15 @@ class agent_pop(object):
                  motif,
                  conn_weight=0.5,
                  # motif_weight=0.5,
-                 elitism=10, #%
+                 elitism=0.1, #%
                  asexual=0.5,
-                 weight_mutate=0.8,
-                 synapse_mutate=0.03,
-                 node_mutate=0.03,
-                 motif_mutate=0.03,
+                 conn_param_mutate=0.8,
+                 conn_add=1,#0.03,
+                 conn_gone=1,#0.03,
+                 io_mutate=1,#0.03,
+                 node_mutate=1,#0.03,
+                 motif_add=1,#0.03,
+                 motif_gone=1,#0.03,
                  motif_switch=0.03,
                  similarity_threshold=0.4,
                  stagnation_age=25,
@@ -42,10 +46,13 @@ class agent_pop(object):
         self.motif_weight = 1 - conn_weight
         self.elitism = elitism
         self.asexual = asexual
-        self.weight_mutate = weight_mutate
-        self.synapse_mutate = synapse_mutate
+        self.conn_param_mutate = conn_param_mutate
+        self.conn_add = conn_add
+        self.conn_gone = conn_gone
+        self.io_mutate = io_mutate
         self.node_mutate = node_mutate
-        self.motif_mutate = motif_mutate
+        self.motif_add = motif_add
+        self.motif_gone = motif_gone
         self.motif_switch = motif_switch
         self.similarity_threshold = similarity_threshold
         self.stagnation_age = stagnation_age
@@ -130,7 +137,7 @@ class agent_pop(object):
         similarity = (self.conn_weight * conn_similarity) + (self.motif_weight * list_similarity)
         return 1 - similarity
 
-    def generate_species(self):
+    def iterate_species(self):
         self.reset()
         print "evolve them here"
         for agent in self.agent_pop:
@@ -154,17 +161,135 @@ class agent_pop(object):
                 best_specie = specie
         self.species[self.species.index(best_specie)].has_best = True
 
+        # remove old species unless they're the best
         self.species = filter(lambda s: s.no_improvement_age < self.stagnation_age or s.has_best, self.species)
 
         print "species are formed and quantified, now to add young and old age modifiers to quantify the amount of offspring generated"
 
     def evolve(self, species=True):
         if species:
-            self.generate_species()
+            self.iterate_species()
+        else:
+            self.generate_children(self.agent_pop, len(self.agent_pop))
+
+    def mutate(self, parent, mutate_key={}):
+        # mutate_key = {}
+        if mutate_key == {}:
+            mutate_key['motif'] = 0
+            mutate_key['node'] = 0
+            mutate_key['io'] = 0
+            mutate_key['m_add'] = 0
+            mutate_key['m_gone'] = 0
+            mutate_key['c_add'] = 0
+            mutate_key['c_gone'] = 0
+            mutate_key['param_w'] = 0
+            mutate_key['param_d'] = 0
+            mutate_key['parent_f'] = parent[2]
+            mutate_key['sex'] = 1
+        motif_config = self.motifs.return_motif(parent[0])
+        config_copy = deepcopy(motif_config)
+        motif_size = len(config_copy['node'])
+        for i in range(motif_size):
+            if np.random.random() < self.motif_switch:
+                config_copy['node'][i] = np.random.choice(self.motifs.motif_configs.keys())
+                new_depth = self.motifs.motif_configs[config_copy['node'][i]]['depth']
+                if new_depth >= config_copy['depth']:
+                    config_copy['depth'] = new_depth + 1
+                mutate_key['motif'] += 1
+            else:
+                if np.random.random() < self.node_mutate:
+                    mutate_key['node'] += 1
+                    if config_copy['node'][i] == 'excitatory':
+                        config_copy['node'][i] = 'inhibitory'
+                    elif config_copy['node'][i] == 'inhibitory':
+                        config_copy['node'][i] = 'excitatory'
+                    else:
+                        mutate_key['node'] -= 1
+                if np.random.random() < self.io_mutate:
+                    old_io = config_copy['io'][i]
+                    while config_copy['io'][i] == old_io:
+                        new_io = (np.random.choice((True, False)), np.random.choice((True, False)))
+                        config_copy['io'][i] = new_io
+                        mutate_key['io'] += 1
+        if np.random.random() < self.conn_add and len(config_copy['conn']) > 0:
+            del config_copy['conn'][np.random.randint(len(config_copy['conn']))]
+            mutate_key['c_gone'] += 1
+        if np.random.random() < self.conn_add:
+            new_conn = False
+            while not new_conn:
+                conn = []
+                conn.append(np.random.randint(motif_size))
+                conn.append(np.random.randint(motif_size))
+                bin = np.random.randint(0, self.motifs.no_weight_bins)
+                conn.append(self.motifs.weight_range[0] + (bin * self.motifs.weight_bin_width))
+                bin = np.random.randint(0, self.motifs.no_delay_bins)
+                conn.append(self.motifs.delay_range[0] + (bin * self.motifs.delay_bin_width))
+                if conn[2]:
+                    new_conn = True
+            config_copy['conn'].append(conn)
+            mutate_key['c_add'] += 1
+        for i in range(len(config_copy['conn'])):
+            # weight
+            if np.random.random() < self.conn_param_mutate:
+                old_weight = config_copy['conn'][i][2]
+                while old_weight == config_copy['conn'][i][2]:
+                    bin = np.random.randint(0, self.motifs.no_weight_bins)
+                    new_weight = self.motifs.weight_range[0] + (bin * self.motifs.weight_bin_width)
+                    config_copy['conn'][i][2] = new_weight
+                mutate_key['param_w'] += 1
+            # delay
+            if np.random.random() < self.conn_param_mutate:
+                old_delay = config_copy['conn'][i][3]
+                while old_delay == config_copy['conn'][i][3]:
+                    bin = np.random.randint(0, self.motifs.no_weight_bins)
+                    new_delay = self.motifs.delay_range[0] + (bin * self.motifs.delay_bin_width)
+                    config_copy['conn'][i][3] = new_delay
+                mutate_key['param_d'] += 1
+        motif_id = self.motifs.insert_motif(config_copy)
+        copy_copy = deepcopy(config_copy)
+        node_count = 0
+        for node in config_copy['node']:
+            if node != 'excitatory' and node != 'inhibitory':
+                copy_copy['node'][node_count] = self.mutate([node], mutate_key)
+            node_count += 1
+        if copy_copy != config_copy:
+            motif_id = self.motifs.insert_motif(copy_copy)
+        return motif_id
 
 
-    def generate_children(self):
-        print "here is where the children are created for both a species and for the entire population if required"
+
+
+    # here is where the children are created for both a species and for the entire population if required
+    def generate_children(self, pop, birthing, fitness_shaping=True):
+        parents = deepcopy(pop)
+        children = []
+        elite = int(math.ceil(len(pop) * self.elitism))
+        parents.sort(key=lambda x: x[2], reverse=True)
+        for i in range(elite):
+            children.append(parents[i])
+        for i in range(elite, birthing):
+            if np.random.random() < self.asexual:
+                if fitness_shaping:
+                    parent = parents[self.select_shaped(len(parents))]
+                else:
+                    print "use a function to determine the parent based on fitness"
+                mutate_key = {}
+                child = self.mutate(parent, mutate_key)
+                print "child mutated"
+
+    def select_shaped(self, list_size, best_first=True):
+        list_total = 0
+        for i in range(list_size):
+            list_total += i
+        selection = np.random.randint(list_total)
+        for i in range(list_size):
+            if best_first:
+                selection -= (list_size - i)
+            else:
+                selection -= i
+            if selection < 0:
+                break
+        return i
 
     def get_scores(self, game_pop, simulator):
         g_vertex = game_pop._vertex

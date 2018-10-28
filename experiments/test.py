@@ -6,8 +6,8 @@ print "starting"
 
 #check max motif count
 motif_pop = motif_population(max_motif_size=3,
-                             no_weight_bins=2,
-                             no_delay_bins=2,
+                             no_weight_bins=3,
+                             no_delay_bins=3,
                              population_size=100)
 
 # motif_pop.generate_agents(max_depth=3, pop_size=100)
@@ -30,7 +30,7 @@ agents.pass_fitnesses(fitnesses)
 
 motif_pop.adjust_weights(agents.agent_pop)
 
-agents.evolve()
+agents.evolve(species=False)
 
 # adjust population weights and clean up unused motifs
 
