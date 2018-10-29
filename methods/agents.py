@@ -24,6 +24,7 @@ class agent_pop(object):
                  motif,
                  conn_weight=0.5,
                  # motif_weight=0.5,
+                 crossover=0.5,
                  elitism=0.1,
                  asexual=0.5,
                  conn_param_mutate=0.1,
@@ -44,6 +45,7 @@ class agent_pop(object):
         self.pop_size = pop_size
         self.conn_weight = conn_weight
         self.motif_weight = 1 - conn_weight
+        self.crossover = crossover
         self.elitism = elitism
         self.asexual = asexual
         self.conn_param_mutate = conn_param_mutate
@@ -170,10 +172,9 @@ class agent_pop(object):
         if species:
             self.iterate_species()
         else:
-            self.generate_children(self.agent_pop, len(self.agent_pop))
+            self.agent_pop = self.generate_children(self.agent_pop, len(self.agent_pop))
 
     def mutate(self, parent, mutate_key={}):
-        # mutate_key = {}
         if mutate_key == {}:
             mutate_key['motif'] = 0
             mutate_key['node'] = 0
@@ -211,7 +212,7 @@ class agent_pop(object):
                         new_io = (np.random.choice((True, False)), np.random.choice((True, False)))
                         config_copy['io'][i] = new_io
                         mutate_key['io'] += 1
-        if np.random.random() < self.cone_gone and len(config_copy['conn']) > 0:
+        if np.random.random() < self.conn_gone and len(config_copy['conn']) > 0:
             del config_copy['conn'][np.random.randint(len(config_copy['conn']))]
             mutate_key['c_gone'] += 1
         if np.random.random() < self.conn_add:
@@ -257,7 +258,21 @@ class agent_pop(object):
         return motif_id
 
     def mate(self, mum, dad):
-        print "mate the parents and create the child"
+        # maybe the crossover should be more than just random, incorporating depth or some other dad decision metric
+            #
+        child_id = mum[0]
+        mum_motif = deepcopy(self.motifs.motif_configs[mum[0]])
+        dad_list = self.motifs.list_motifs(dad[0])
+        for i in range(len(mum_motif['node'])):
+            if np.random.random() < self.crossover:
+                mum_motif['node'][i] = np.random.choice(dad_list)
+            elif mum_motif['node'][i] != 'inhibitory' and mum_motif['node'][i] != 'excitatory':
+                mum_motif['node'][i] = self.mate([mum_motif['node'][i]], dad)
+        if self.motifs.motif_configs[mum[0]] != mum_motif:
+            child_id = self.motifs.insert_motif(mum_motif)
+        # for i in range(len(mum_motif['node'])):
+        #     self.mate()
+        return child_id
 
     # here is where the children are created for both a species and for the entire population if required
     def generate_children(self, pop, birthing, fitness_shaping=True):
@@ -266,7 +281,7 @@ class agent_pop(object):
         elite = int(math.ceil(len(pop) * self.elitism))
         parents.sort(key=lambda x: x[2], reverse=True)
         for i in range(elite):
-            children.append(parents[i])
+            children.append(parents[i][0])
         for i in range(elite, birthing):
             if np.random.random() < self.asexual:
                 if fitness_shaping:
@@ -283,6 +298,8 @@ class agent_pop(object):
                 else:
                     print "use a function to determine the parent based on fitness"
                 child = self.mate(mum, dad)
+            children.append(child)
+        return children
 
     def select_shaped(self, list_size, best_first=True):
         list_total = 0
