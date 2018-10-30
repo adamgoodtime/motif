@@ -10,6 +10,7 @@ import sys, os
 import time
 import socket
 import numpy as np
+from bandit.spinn_bandit.python_models.bandit import Bandit
 import math
 import itertools
 from copy import deepcopy
@@ -305,7 +306,7 @@ class agent_pop(object):
             simulator.graph_mapper, simulator.buffer_manager, simulator.machine_time_step)
         return scores.tolist()
 
-    def bandit_test(self, connections, arms, runtime=2000, exposure_time=200, noise_rate=50, noise_weight=1):
+    def bandit_test(self, connections, arms, runtime=2000, exposure_time=200, noise_rate=100, noise_weight=0.01):
         max_attempts = 5
         try_except = 0
         while try_except < max_attempts:
@@ -319,7 +320,7 @@ class agent_pop(object):
             # p.setup(timestep=1.0, min_delay=self.delay_range[0], max_delay=self.delay_range[1])
             p.setup(timestep=1.0, min_delay=1, max_delay=127)
             p.set_number_of_neurons_per_core(p.IF_cond_exp, 100)
-            starting_pistol = p.Population(len(arms), p.SpikeSourceArray(spike_times=[0]))
+            # starting_pistol = p.Population(len(arms), p.SpikeSourceArray(spike_times=[0]))
             for i in range(len(connections)):
                 [in2e, in2i, e_size, e2e, e2i, i_size, i2e, i2i, e2out, i2out] = connections[i]
                 if (len(in2e) == 0 and len(in2i) == 0) or (len(e2out) == 0 and len(i2out) == 0):
@@ -328,7 +329,7 @@ class agent_pop(object):
                 else:
                     bandit_count += 1
                     bandit.append(
-                        p.Population(1, p.Bandit(arms, exposure_time, label='bandit_pop_{}-{}'.format(bandit_count, i))))
+                        p.Population(len(arms), Bandit(arms, exposure_time, label='bandit_pop_{}-{}'.format(bandit_count, i))))
                     if e_size > 0:
                         excite_count += 1
                         excite.append(
@@ -345,13 +346,13 @@ class agent_pop(object):
                     if len(in2e) != 0:
                         p.Projection(bandit[bandit_count], excite[excite_count], p.FromListConnector(in2e),
                                      receptor_type='excitatory')
-                        p.Projection(starting_pistol, excite[excite_count], p.FromListConnector(in2e),
-                                     receptor_type='excitatory')
+                        # p.Projection(starting_pistol, excite[excite_count], p.FromListConnector(in2e),
+                        #              receptor_type='excitatory')
                     if len(in2i) != 0:
                         p.Projection(bandit[bandit_count], inhib[inhib_count], p.FromListConnector(in2i),
                                      receptor_type='excitatory')
-                        p.Projection(starting_pistol, inhib[inhib_count], p.FromListConnector(in2i),
-                                     receptor_type='excitatory')
+                        # p.Projection(starting_pistol, inhib[inhib_count], p.FromListConnector(in2i),
+                        #              receptor_type='excitatory')
                     if len(e2e) != 0:
                         p.Projection(excite[excite_count], excite[excite_count], p.FromListConnector(e2e),
                                      receptor_type='excitatory')
