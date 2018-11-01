@@ -93,9 +93,12 @@ class agent_pop(object):
         SpiNN_connections = self.motifs.convert_individual(agent, inputs, outputs)
         return SpiNN_connections
 
-    def pass_fitnesses(self, fitnesses):
+    def pass_fitnesses(self, fitnesses, fitness_shaping=True):
         for i in range(len(self.agent_pop)):
-            self.agent_pop[i].append(fitnesses[i])
+            if not isinstance(fitnesses[i], list):
+                if fitness_shaping
+                self.agent_pop[i].append(fitnesses[i])
+
 
     def reset(self):
         for specie in self.species:
@@ -331,8 +334,10 @@ class agent_pop(object):
             bandit_count = -1
             excite = []
             excite_count = -1
+            excite_marker = []
             inhib = []
             inhib_count = -1
+            inhib_marker = []
             failures = []
             # p.setup(timestep=1.0, min_delay=self.delay_range[0], max_delay=self.delay_range[1])
             p.setup(timestep=1.0, min_delay=1, max_delay=127)
@@ -354,12 +359,16 @@ class agent_pop(object):
                         excite_noise = p.Population(e_size, p.SpikeSourcePoisson(rate=noise_rate))
                         p.Projection(excite_noise, excite[excite_count], p.OneToOneConnector(),
                                      p.StaticSynapse(weight=noise_weight), receptor_type='excitatory')
+                        excite.record('spikes')
+                        excite_marker.append(i)
                     if i_size > 0:
                         inhib_count += 1
                         inhib.append(p.Population(i_size, p.IF_cond_exp(), label='inhib_pop_{}-{}'.format(inhib_count, i)))
                         inhib_noise = p.Population(i_size, p.SpikeSourcePoisson(rate=noise_rate))
                         p.Projection(inhib_noise, inhib[inhib_count], p.OneToOneConnector(),
                                      p.StaticSynapse(weight=noise_weight), receptor_type='excitatory')
+                        inhib.record('spikes')
+                        inhib_marker.append(i)
                     if len(in2e) != 0:
                         p.Projection(bandit[bandit_count], excite[excite_count], p.FromListConnector(in2e),
                                      receptor_type='excitatory')
