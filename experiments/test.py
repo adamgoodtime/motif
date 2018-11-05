@@ -21,9 +21,11 @@ agents = agent_pop(motif_pop)
 
 connections = agents.generate_spinn_nets(input=1, output=len(arms), max_depth=3)
 
+agents.motifs.reward_shape()
+
 # evaluate
     # pass the agent pop connections into a fucntion which tests the networks and returns fitnesses
-# fitnesses = agents.bandit_test(connections, arms, runtime=20000)
+# fitnesses = agents.bandit_test(connections, arms, runtime=21000)
 fitnesses = np.random.randint(0, 100, len(agents.agent_pop))
 
 agents.pass_fitnesses(fitnesses)

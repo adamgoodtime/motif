@@ -115,51 +115,94 @@ class motif_population(object):
                 repeats = False
             i = start_point
             while i < population_size:
-                motif = {}
-                node_types = []
-                io_properties = []
-                synapses = []
-                number_of_neurons = np.random.randint(self.min_motif_size, self.max_motif_size + 1)
-                for j in range(number_of_neurons):
-                    node_types.append(np.random.choice(self.neuron_types))
-                    if self.io_config == 'fixed':
-                        io_properties.append((np.random.choice(true_or_false), np.random.choice(true_or_false)))
-                    else:
-                        print "incompatible io config"
-                        # todo figure out how to error out
-                    for k in range(number_of_neurons):
-                        if np.random.choice(true_or_false):
-                            if self.discrete_params:
-                                conn = []
-                                conn.append(j)
-                                conn.append(k)
-                                bin = np.random.randint(0, self.no_weight_bins)
-                                conn.append(weight_range[0] + (bin * self.weight_bin_width))
-                                bin = np.random.randint(0, self.no_delay_bins)
-                                conn.append(delay_range[0] + (bin * self.delay_bin_width))
-                                if conn[2] != 0:
-                                    synapses.append(conn)
-                motif['node'] = node_types
-                motif['io'] = io_properties
-                motif['conn'] = synapses
-                motif['depth'] = 1
-                # motif['id'] = self.motifs_generated
-                if self.selection_metric == 'fitness':
-                    weight = 1
-                # if not repeats:
-                if not self.id_check(motif):
-                    # print self.id_check(motif)
-                    self.insert_motif(motif, weight, False)
-                else:
-                    print "repeated ", i, self.id_check(motif)
-                    i -= 1
+                # motif = {}
+                # node_types = []
+                # io_properties = []
+                # synapses = []
+                # number_of_neurons = np.random.randint(self.min_motif_size, self.max_motif_size + 1)
+                # for j in range(number_of_neurons):
+                #     node_types.append(np.random.choice(self.neuron_types))
+                #     if self.io_config == 'fixed':
+                #         io_properties.append((np.random.choice(true_or_false), np.random.choice(true_or_false)))
+                #     else:
+                #         print "incompatible io config"
+                #         # todo figure out how to error out
+                #     for k in range(number_of_neurons):
+                #         if np.random.choice(true_or_false):
+                #             if self.discrete_params:
+                #                 conn = []
+                #                 conn.append(j)
+                #                 conn.append(k)
+                #                 bin = np.random.randint(0, self.no_weight_bins)
+                #                 conn.append(weight_range[0] + (bin * self.weight_bin_width))
+                #                 bin = np.random.randint(0, self.no_delay_bins)
+                #                 conn.append(delay_range[0] + (bin * self.delay_bin_width))
+                #                 if conn[2] != 0:
+                #                     synapses.append(conn)
+                # motif['node'] = node_types
+                # motif['io'] = io_properties
+                # motif['conn'] = synapses
+                # motif['depth'] = 1
+                # # motif['id'] = self.motifs_generated
+                # if self.selection_metric == 'fitness':
+                #     weight = 1
+                # # if not repeats:
+                # if not self.id_check(motif):
+                #     # print self.id_check(motif)
+                #     self.insert_motif(motif, weight, False)
                 # else:
-                #     self.insert_motif(motif)
+                #     print "repeated ", i, self.id_check(motif)
+                #     i -= 1
+                # # else:
+                # #     self.insert_motif(motif)
+                # i += 1
+                self.generate_motif()
                 i += 1
 
         else:
             print "reading from file"
         print "done generating motif pop"
+
+    def generate_motif(self):
+        true_or_false = [True, False]
+        motif = {}
+        node_types = []
+        io_properties = []
+        synapses = []
+        number_of_neurons = np.random.randint(self.min_motif_size, self.max_motif_size + 1)
+        for j in range(number_of_neurons):
+            node_types.append(np.random.choice(self.neuron_types))
+            if self.io_config == 'fixed':
+                io_properties.append((np.random.choice(true_or_false), np.random.choice(true_or_false)))
+            else:
+                print "incompatible io config"
+                # todo figure out how to error out
+            for k in range(number_of_neurons):
+                if np.random.choice(true_or_false):
+                    if self.discrete_params:
+                        conn = []
+                        conn.append(j)
+                        conn.append(k)
+                        bin = np.random.randint(0, self.no_weight_bins)
+                        conn.append(self.weight_range[0] + (bin * self.weight_bin_width))
+                        bin = np.random.randint(0, self.no_delay_bins)
+                        conn.append(self.delay_range[0] + (bin * self.delay_bin_width))
+                        if conn[2] != 0:
+                            synapses.append(conn)
+        motif['node'] = node_types
+        motif['io'] = io_properties
+        motif['conn'] = synapses
+        motif['depth'] = 1
+        # motif['id'] = self.motifs_generated
+        if self.selection_metric == 'fitness':
+            weight = 1
+        # if not repeats:
+        if not self.id_check(motif):
+            # print self.id_check(motif)
+            id = self.insert_motif(motif, weight, False)
+        else:
+            id = self.generate_motif()
+        return id
 
     def permutations(self, motif):
         motif_size = len(motif['node'])
@@ -237,7 +280,7 @@ class motif_population(object):
                 increased_depth = False
                 picked_bigger = False
                 for node in motif['node']:
-                    if node == 'excitatory' or node == 'inhibitory':
+                    if node in self.neuron_types:
                         if np.random.random() < config:
                             motif['node'][i] = self.select_motif()
                             increased_depth = True
@@ -301,14 +344,14 @@ class motif_population(object):
             local_upper = deepcopy(upper)
             if prepost == 'pre' and io[1]:
                 pre_node = motif['node'][node_count]
-                if pre_node == 'excitatory' or pre_node == 'inhibitory':
+                if pre_node in self.neuron_types:
                     node_array.append([pre_node, node_count, local_upper, layer])
                 else:
                     local_upper.append(node_count)
                     self.collect_IO(pre_node, prepost, local_upper, layer + 1, node_array)
             if prepost == 'post' and io[0]:
                 post_node = motif['node'][node_count]
-                if post_node == 'excitatory' or post_node == 'inhibitory':
+                if post_node in self.neuron_types:
                     node_array.append([post_node, node_count, local_upper, layer])
                 else:
                     local_upper.append(node_count)
@@ -316,17 +359,16 @@ class motif_population(object):
             node_count += 1
         return node_array
 
-    def connect_nodes(self, pre_node, pre_count, post_node, post_count, layer, upper, weight,
-                      delay):
+    def connect_nodes(self, pre_node, pre_count, post_node, post_count, layer, upper, weight, delay):
         pre_ids = []
         post_ids = []
         connections = []
-        if pre_node == 'excitatory' or pre_node == 'inhibitory':
+        if pre_node in self.neuron_types:
             pre_ids.append([pre_node, pre_count, upper, layer])
         else:
             new_pre_count = upper + [pre_count]
             self.collect_IO(pre_node, 'pre', new_pre_count, layer + 1, pre_ids)
-        if post_node == 'excitatory' or post_node == 'inhibitory':
+        if post_node in self.neuron_types:
             post_ids.append([post_node, post_count, upper, layer])
         else:
             new_post_count = upper + [post_count]
@@ -350,7 +392,7 @@ class motif_population(object):
                                                   upper, weight, delay)
         node_count = 0
         for node in motif['node']:
-            if node != 'excitatory' and node != 'inhibitory':
+            if node not in self.neuron_types:
                 local_upper = deepcopy(upper)
                 local_upper.append(node_count)
                 all_connections += self.read_motif(node, layer + 1, local_upper)
@@ -519,7 +561,7 @@ class motif_population(object):
         list.append(motif_id)
         motif = self.motif_configs[motif_id]
         for node in motif['node']:
-            if node != 'excitatory' and node != 'inhibitory':
+            if node not in self.neuron_types:
                 # local_list = deepcopy(list)
                 self.list_motifs(node, list)
         return list
@@ -540,15 +582,66 @@ class motif_population(object):
     def delete_motif(self, motif_id):
         del self.motif_configs['{}'.format(motif_id)]
 
-    def clean_population(self):
+    def depth_read(self, motif_id, best_depth=0, current_depth=1):
+        if current_depth > best_depth:
+            best_depth = current_depth
+        motif = self.motif_configs[motif_id]['node']
+        for node in self.motif_configs[motif_id]['node']:
+            if node not in self.neuron_types:
+                best_depth = self.depth_read(node, best_depth, current_depth+1)
+        return best_depth
+
+    def depth_fix(self):
+        for motif_id in self.motif_configs:
+            self.motif_configs[motif_id]['depth'] = self.depth_read(motif_id)
+
+    def shape_check(self, motif_id):
+        base_motif = True
+        motif = self.motif_configs[motif_id]
+        motif_id = False
+        motif_array = self.permutations(motif)
+        for config in self.motif_configs:
+            if config == motif['id']:
+                print "shouldn't be"
+            if len(self.motif_configs[config]['node']) == len(motif['node']):
+                if len(self.motif_configs[config]['conn']) == len(motif['conn']):
+                    for node in self.motif_configs[config]['node']:
+                        if node not in self.neuron_types:
+                            motif_array = []
+                            base_motif = False
+                            break
+                    # for orig_node in self.motif_configs[config]['node']:
+                    #     for check_node in motif['node']:
+                    for isomer in motif_array:
+                        # compare each element and return rotations with which they are similar
+                        if self.motif_configs[config]['io'] == isomer['io'] and \
+                                        self.motif_configs[config]['conn'] == isomer['conn']:
+                            motif_id = config
+                            break
+                    if motif_id or not base_motif:
+                        break
+        return motif_id
+
+    def reward_shape(self):
+        for motif_id in self.motif_configs:
+            if self.depth_read(motif_id) > 1:
+                id = self.shape_check(motif_id)
+                if id:
+                    self.motif_configs[id]['weight'] += self.motif_configs[motif_id]['weight']
+
+
+    def clean_population(self, reward_shape):
+        if reward_shape:
+            self.reward_shape()
         to_be_deleted = []
         for motif_id in self.motif_configs:
             if self.motif_configs['{}'.format(motif_id)]['weight'] == 0:
                 to_be_deleted.append(motif_id)
         for id in to_be_deleted:
             self.delete_motif(id)
+        self.depth_fix()
 
-    def adjust_weights(self, agents, clean=True, fitness_shaping=True):
+    def adjust_weights(self, agents, clean=True, fitness_shaping=True, reward_shape=True):
         self.reset_weights()
         if fitness_shaping:
             agents.sort(key=lambda x: x[2])#, reverse=True)
@@ -560,7 +653,7 @@ class motif_population(object):
                     self.update_weight(components, i)
                 i += 1
         if clean:
-            self.clean_population()
+            self.clean_population(reward_shape)
 
 
 

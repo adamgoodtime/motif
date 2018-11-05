@@ -36,6 +36,7 @@ class agent_pop(object):
                  motif_add=0.03,
                  motif_gone=0.03,
                  motif_switch=0.03,
+                 new_motif=0.03,
                  similarity_threshold=0.4,
                  stagnation_age=25,
                  inputs=1,
@@ -57,6 +58,7 @@ class agent_pop(object):
         self.motif_add = motif_add
         self.motif_gone = motif_gone
         self.motif_switch = motif_switch
+        self.new_motif = new_motif
         self.similarity_threshold = similarity_threshold
         self.stagnation_age = stagnation_age
         self.inputs = inputs
@@ -93,11 +95,34 @@ class agent_pop(object):
         SpiNN_connections = self.motifs.convert_individual(agent, inputs, outputs)
         return SpiNN_connections
 
+    def fitness_shape(self, fitnesses):
+        if isinstance(fitnesses[0], list):
+            shaped_fitnesses = [0 for i in range(fitnesses[0])]
+            indexed_fitness = []
+            for i in range(len(fitnesses)):
+                new_indexes = []
+                for j in range(len(fitnesses[i])):
+                    new_indexes.append([fitnesses[i][j], j])
+                new_indexes.sort()
+                indexed_fitness.append(new_indexes)
+            for metric in indexed_fitness:
+                for i in range(len(metric)):
+                    shaped_fitnesses[metric[i][1]] += i  # maybe add some weighting here but I dunno
+        else:
+            shaped_fitnesses = [0 for i in range(len(fitnesses))]
+            new_indexes = []
+            for i in range(len(fitnesses)):
+                new_indexes.append([fitnesses[i], i])
+            new_indexes.sort()
+            for i in range(len(fitnesses)):
+                shaped_fitnesses[new_indexes[i][1]] += i
+        return shaped_fitnesses
+
     def pass_fitnesses(self, fitnesses, fitness_shaping=True):
+        if fitness_shaping:
+            fitnesses = self.fitness_shape(fitnesses)
         for i in range(len(self.agent_pop)):
-            if not isinstance(fitnesses[i], list):
-                if fitness_shaping
-                self.agent_pop[i].append(fitnesses[i])
+            self.agent_pop[i].append(fitnesses[i])
 
 
     def reset(self):
@@ -181,6 +206,7 @@ class agent_pop(object):
     def mutate(self, parent, mutate_key={}):
         if mutate_key == {}:
             mutate_key['motif'] = 0
+            mutate_key['new'] = 0
             mutate_key['node'] = 0
             mutate_key['io'] = 0
             mutate_key['m_add'] = 0
@@ -201,6 +227,12 @@ class agent_pop(object):
                 if new_depth >= config_copy['depth']:
                     config_copy['depth'] = new_depth + 1
                 mutate_key['motif'] += 1
+            elif np.random.random() < self.new_motif:
+                config_copy['node'][i] = self.motifs.generate_motif()
+                new_depth = self.motifs.motif_configs[config_copy['node'][i]]['depth']
+                if new_depth >= config_copy['depth']:
+                    config_copy['depth'] = new_depth + 1
+                mutate_key['new'] += 1
             else:
                 if np.random.random() < self.node_mutate:
                     mutate_key['node'] += 1
@@ -254,7 +286,7 @@ class agent_pop(object):
         copy_copy = deepcopy(config_copy)
         node_count = 0
         for node in config_copy['node']:
-            if node != 'excitatory' and node != 'inhibitory':
+            if node not in self.motifs.neuron_types:
                 copy_copy['node'][node_count] = self.mutate([node], mutate_key)
             node_count += 1
         if copy_copy != config_copy:
@@ -270,7 +302,7 @@ class agent_pop(object):
         for i in range(len(mum_motif['node'])):
             if np.random.random() < self.crossover:
                 mum_motif['node'][i] = np.random.choice(dad_list)
-            elif mum_motif['node'][i] != 'inhibitory' and mum_motif['node'][i] != 'excitatory':
+            elif mum_motif['node'][i] not in self.motifs.neuron_types:
                 mum_motif['node'][i] = self.mate([mum_motif['node'][i]], dad)
         if self.motifs.motif_configs[mum[0]] != mum_motif:
             child_id = self.motifs.insert_motif(mum_motif)
@@ -294,7 +326,6 @@ class agent_pop(object):
                     print "use a function to determine the parent based on fitness"
                 mutate_key = {}
                 child = self.mutate(parent, mutate_key)
-                print "child mutated"
             else:
                 if fitness_shaping:
                     mum = parents[self.select_shaped(len(parents))]
