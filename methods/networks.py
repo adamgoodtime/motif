@@ -156,7 +156,7 @@ class motif_population(object):
 
     '''Generates a random motif within the allowable configurations and attempts to enter it into the population. If it
     already exists within the population the function will be called again until a novel motif is added.'''
-    def generate_motif(self):
+    def generate_motif(self, weight=None):
         true_or_false = [True, False]
         motif = {}
         node_types = []
@@ -191,14 +191,16 @@ class motif_population(object):
         motif['conn'] = synapses
         motif['depth'] = 1
         # gives the motifs a particular weight altering it's chance of being chosen later
-        if self.selection_metric == 'fitness':
+        if self.selection_metric == 'fitness' and weight is None:
             weight = 1
+        else:
+            weight = weight
         # attempts to insert the motif
         if not self.id_check(motif):
             # print self.id_check(motif)
             id = self.insert_motif(motif, weight, False)
         else:
-            id = self.generate_motif()
+            id = self.generate_motif(weight)
         return id
 
     '''Creates an array of all possible orientations of a motifs which have the same dynamic and structural properties 
@@ -284,7 +286,7 @@ class motif_population(object):
 
     '''Creates a hierachical motif of specified depth. Mainly used in agent generation. Selects a motif and replaces 
     each node in the motif with a pointer to another motif. Each motifs and submotif etc is inserted into the population'''
-    def motif_of_motif(self, motif_id, config, max_depth, already_chosen, current_depth=0):
+    def motif_of_motif(self, motif_id, config, max_depth, current_depth=0):
         # add layer at lowest level
         # add layer at specific level
         # add motif with a certain probability
@@ -304,14 +306,12 @@ class motif_population(object):
                     if node in self.neuron_types:
                         # with a certain P() add a new motif
                         if np.random.random() < config:
-                            selected_motif = np.random.choice(already_chosen)
-                            while selected_motif in already_chosen:
-                                selected_motif = self.select_motif()
+                            selected_motif = self.select_motif()
                             motif['node'][i] = selected_motif
                             increased_depth = True
                     # go another layer down if it's not a base node yet
                     else:
-                        sub_motif = self.motif_of_motif(node, config, max_depth, already_chosen, current_depth + 1)
+                        sub_motif = self.motif_of_motif(node, config, max_depth, current_depth + 1)
                         # sub_motif_id = self.insert_motif(sub_motif)
                         # motif['node'][i] = sub_motif[sub_motif_id]
                         motif['node'][i] = self.insert_motif(sub_motif)
@@ -340,34 +340,35 @@ class motif_population(object):
         # select an initial motif
         motif = self.select_motif()
         for i in range(depth):
-            already_chosen = []
-            already_chosen = self.list_motifs(motif, already_chosen)
-            motif = self.motif_of_motif(motif, connfig, depth, already_chosen, i)
+            motif = self.motif_of_motif(motif, connfig, depth, i)
             motif = self.insert_motif(motif)
         return [motif, np.random.randint(200)]
 
-    def generate_agents(self, pop_size=200, connfig=1, start_small=False, max_depth=2):
-        print "constructing population of agents"
-        self.agent_pop = []
-        for i in range(pop_size):
-            # select depth of the agent
-            if not start_small:  # this is broke af
-                depth = np.random.randint(self.initial_hierarchy_depth, max_depth + 1)
-            else:
-                depth = self.initial_hierarchy_depth
-            # motif = None
-            motif = self.select_motif()
-            if motif is None:
-                motif = self.select_motif()
-            else:
-                for i in range(depth):
-                    motif = self.motif_of_motif(motif, connfig, depth, i)
-                    motif = self.insert_motif(motif)
-            self.agent_pop.append((motif, np.random.randint(pop_size)))
-        return self.agent_pop
+    # def generate_agents(self, pop_size=200, connfig=1, start_small=False, max_depth=2):
+    #     print "constructing population of agents"
+    #     self.agent_pop = []
+    #     for i in range(pop_size):
+    #         # select depth of the agent
+    #         if not start_small:  # this is broke af
+    #             depth = np.random.randint(self.initial_hierarchy_depth, max_depth + 1)
+    #         else:
+    #             depth = self.initial_hierarchy_depth
+    #         # motif = None
+    #         motif = self.select_motif()
+    #         if motif is None:
+    #             motif = self.select_motif()
+    #         else:
+    #             for i in range(depth):
+    #                 motif = self.motif_of_motif(motif, connfig, depth, i)
+    #                 motif = self.insert_motif(motif)
+    #         self.agent_pop.append((motif, np.random.randint(pop_size)))
+    #     return self.agent_pop
 
     def collect_IO(self, node, prepost, upper, layer, node_array=[]):
-        motif = self.motif_configs[node]
+        try:
+            motif = self.motif_configs[node]
+        except:
+            print "mate I dunno"
         node_count = 0
         for io in motif['io']:
             local_upper = deepcopy(upper)
@@ -593,9 +594,27 @@ class motif_population(object):
         motif = self.motif_configs[motif_id]
         for node in motif['node']:
             if node not in self.neuron_types:
+                # if node in list:
+                #     list = False
+                #     break
                 # local_list = deepcopy(list)
                 self.list_motifs(node, list)
         return list
+
+    def recurse_check(self, motif_id, list=[]):
+        check = True
+        list.append(motif_id)
+        if isinstance(motif_id, int):
+            motif_id = '{}'.format(motif_id)
+        motif = self.motif_configs[motif_id]
+        for node in motif['node']:
+            if node not in self.neuron_types:
+                if node in list:
+                    check = False
+                self.recurse_check(node, list)
+                # del list[list.index(node)]
+        del list[list.index(motif_id)]
+        return check
 
     def return_motif(self, motif_id):
         return self.motif_configs[motif_id]

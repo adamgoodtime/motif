@@ -31,15 +31,23 @@ for i in range(1000):
     # fitnesses = agents.bandit_test(connections, arms, runtime=21000)
     fitnesses = np.random.randint(0, 100, len(agents.agent_pop))
 
+    print "1", motif_pop.total_weight
+
     agents.pass_fitnesses(fitnesses)
+
+    print "2", motif_pop.total_weight
 
     motif_pop.adjust_weights(agents.agent_pop)
 
+    print "3", motif_pop.total_weight
+
     motif_pop.save_motifs(i, 'conf')
+
+    print "4", motif_pop.total_weight
 
     agents.evolve(species=False)
 
-    print "finished", i
+    print "finished", i, motif_pop.total_weight
 
 # adjust population weights and clean up unused motifs
 

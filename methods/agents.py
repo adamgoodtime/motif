@@ -203,7 +203,11 @@ class agent_pop(object):
         else:
             self.agent_pop = self.generate_children(self.agent_pop, len(self.agent_pop))
 
+    '''Takes in a parent motif and mutates it in various ways, all sub-motifs are added with the final motif structure/
+    id being returned. A key is kept of each mutation used to generate a child for later analysis of appropriate 
+    mutation operators'''
     def mutate(self, parent, mutate_key={}):
+        # initialise mutation key
         if mutate_key == {}:
             mutate_key['motif'] = 0
             mutate_key['new'] = 0
@@ -217,27 +221,39 @@ class agent_pop(object):
             mutate_key['param_d'] = 0
             mutate_key['parent_f'] = parent[2]
             mutate_key['sex'] = 1
+        # acquire the motif of parent and copy it to avoid messing with both memory locations
         motif_config = self.motifs.return_motif(parent[0])
         config_copy = deepcopy(motif_config)
         motif_size = len(config_copy['node'])
+        # loop through each node and randomly mutate
         for i in range(motif_size):
+            # switch with a randomly selected motif
             if np.random.random() < self.motif_switch:
-                already_chosen = self.motifs.list_motifs(config_copy['id'])
-                selected_motif = np.random.choice(already_chosen)
-                while selected_motif in already_chosen:
-                    selected_motif = np.random.choice(self.motifs.motif_configs.keys())
+                selected = False
+                while not selected:
+                    selected_motif = self.motifs.select_motif()
+                    selected = self.motifs.recurse_check(selected_motif)
                 config_copy['node'][i] = selected_motif
                 new_depth = self.motifs.motif_configs[config_copy['node'][i]]['depth']
                 if new_depth >= config_copy['depth']:
                     config_copy['depth'] = new_depth + 1
                 mutate_key['motif'] += 1
+            # switch with a completely novel motif todo maybe add or make this a motif of motifs of w/e depth
             elif np.random.random() < self.new_motif:
-                config_copy['node'][i] = self.motifs.generate_motif()
+                config_copy['node'][i] = self.motifs.generate_motif(weight=0)
                 new_depth = self.motifs.motif_configs[config_copy['node'][i]]['depth']
                 if new_depth >= config_copy['depth']:
                     config_copy['depth'] = new_depth + 1
                 mutate_key['new'] += 1
+            # change the IO configurations
+            elif np.random.random() < self.io_mutate:
+                old_io = config_copy['io'][i]
+                while config_copy['io'][i] == old_io:
+                    new_io = (np.random.choice((True, False)), np.random.choice((True, False)))
+                    config_copy['io'][i] = new_io
+                mutate_key['io'] += 1
             else:
+                # switch the base node if it's a base node
                 if np.random.random() < self.node_mutate:
                     mutate_key['node'] += 1
                     if config_copy['node'][i] == 'excitatory':
@@ -245,16 +261,12 @@ class agent_pop(object):
                     elif config_copy['node'][i] == 'inhibitory':
                         config_copy['node'][i] = 'excitatory'
                     else:
-                        mutate_key['node'] -= 1
-                if np.random.random() < self.io_mutate:
-                    old_io = config_copy['io'][i]
-                    while config_copy['io'][i] == old_io:
-                        new_io = (np.random.choice((True, False)), np.random.choice((True, False)))
-                        config_copy['io'][i] = new_io
-                        mutate_key['io'] += 1
+                        mutate_key['node'] -= 0.0001
+        # delete a connection
         if np.random.random() < self.conn_gone and len(config_copy['conn']) > 0:
             del config_copy['conn'][np.random.randint(len(config_copy['conn']))]
             mutate_key['c_gone'] += 1
+        # ad a connection
         if np.random.random() < self.conn_add:
             new_conn = False
             while not new_conn:
@@ -269,6 +281,7 @@ class agent_pop(object):
                     new_conn = True
             config_copy['conn'].append(conn)
             mutate_key['c_add'] += 1
+        # mutate the weight or delay of a connection
         for i in range(len(config_copy['conn'])):
             # weight
             if np.random.random() < self.conn_param_mutate:
@@ -286,8 +299,14 @@ class agent_pop(object):
                     new_delay = self.motifs.delay_range[0] + (bin * self.motifs.delay_bin_width)
                     config_copy['conn'][i][3] = new_delay
                 mutate_key['param_d'] += 1
+        # insert the new motif and then go through the nodes and mutate them
         motif_id = self.motifs.insert_motif(config_copy)
-        copy_copy = deepcopy(config_copy)
+        if self.motifs.recurse_check(motif_id):
+            copy_copy = deepcopy(config_copy)
+        else:
+            self.motifs.delete_motif(motif_id)
+            print "That just tried to recurse"
+            copy_copy = deepcopy(motif_config)
         node_count = 0
         for node in config_copy['node']:
             if node not in self.motifs.neuron_types:
