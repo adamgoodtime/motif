@@ -222,7 +222,11 @@ class agent_pop(object):
         motif_size = len(config_copy['node'])
         for i in range(motif_size):
             if np.random.random() < self.motif_switch:
-                config_copy['node'][i] = np.random.choice(self.motifs.motif_configs.keys())
+                already_chosen = self.motifs.list_motifs(config_copy['id'])
+                selected_motif = np.random.choice(already_chosen)
+                while selected_motif in already_chosen:
+                    selected_motif = np.random.choice(self.motifs.motif_configs.keys())
+                config_copy['node'][i] = selected_motif
                 new_depth = self.motifs.motif_configs[config_copy['node'][i]]['depth']
                 if new_depth >= config_copy['depth']:
                     config_copy['depth'] = new_depth + 1
@@ -317,7 +321,7 @@ class agent_pop(object):
         elite = int(math.ceil(len(pop) * self.elitism))
         parents.sort(key=lambda x: x[2], reverse=True)
         for i in range(elite):
-            children.append(parents[i][0])
+            children.append([parents[i][0], parents[i][1]])
         for i in range(elite, birthing):
             if np.random.random() < self.asexual:
                 if fitness_shaping:
@@ -333,7 +337,7 @@ class agent_pop(object):
                 else:
                     print "use a function to determine the parent based on fitness"
                 child = self.mate(mum, dad)
-            children.append(child)
+            children.append([child, np.random.randint(200)])
         return children
 
     def select_shaped(self, list_size, best_first=True):

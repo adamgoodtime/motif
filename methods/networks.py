@@ -16,7 +16,8 @@ from copy import deepcopy
 import operator
 from spinn_front_end_common.utilities.globals_variables import get_simulator
 import traceback
-
+import csv
+from ast import literal_eval
 
 # import random
 
@@ -87,6 +88,10 @@ class motif_population(object):
 
         true_or_false = [True, False]
 
+        '''Generate the motif population, either by reading the entire population from a file, seeding the population
+        with a population of motifs and generating further motifs to fill the population or creating the entire 
+        population from scratch
+        '''
         if not read_entire_population:
             print "generating population"
             if self.population_seed is not None:
@@ -96,6 +101,7 @@ class motif_population(object):
                 start_point = len(self.population_seed)
             else:
                 start_point = 0
+            # attempt to calculate the maximum number of motifs although seems redundant now as max size is very large
             if self.discrete_params and not self.multi_synapse:
                 maximum_number_of_motifs = 1
                 for i in range(self.min_motif_size, self.max_motif_size + 1):
@@ -114,69 +120,59 @@ class motif_population(object):
             else:
                 repeats = False
             i = start_point
+            # create the remaining population
             while i < population_size:
-                # motif = {}
-                # node_types = []
-                # io_properties = []
-                # synapses = []
-                # number_of_neurons = np.random.randint(self.min_motif_size, self.max_motif_size + 1)
-                # for j in range(number_of_neurons):
-                #     node_types.append(np.random.choice(self.neuron_types))
-                #     if self.io_config == 'fixed':
-                #         io_properties.append((np.random.choice(true_or_false), np.random.choice(true_or_false)))
-                #     else:
-                #         print "incompatible io config"
-                #         # todo figure out how to error out
-                #     for k in range(number_of_neurons):
-                #         if np.random.choice(true_or_false):
-                #             if self.discrete_params:
-                #                 conn = []
-                #                 conn.append(j)
-                #                 conn.append(k)
-                #                 bin = np.random.randint(0, self.no_weight_bins)
-                #                 conn.append(weight_range[0] + (bin * self.weight_bin_width))
-                #                 bin = np.random.randint(0, self.no_delay_bins)
-                #                 conn.append(delay_range[0] + (bin * self.delay_bin_width))
-                #                 if conn[2] != 0:
-                #                     synapses.append(conn)
-                # motif['node'] = node_types
-                # motif['io'] = io_properties
-                # motif['conn'] = synapses
-                # motif['depth'] = 1
-                # # motif['id'] = self.motifs_generated
-                # if self.selection_metric == 'fitness':
-                #     weight = 1
-                # # if not repeats:
-                # if not self.id_check(motif):
-                #     # print self.id_check(motif)
-                #     self.insert_motif(motif, weight, False)
-                # else:
-                #     print "repeated ", i, self.id_check(motif)
-                #     i -= 1
-                # # else:
-                # #     self.insert_motif(motif)
-                # i += 1
                 self.generate_motif()
                 i += 1
 
         else:
-            print "reading from file"
+            with open(read_entire_population) as from_file:
+                csvFile = csv.reader(from_file)
+                motif = False
+                for row in csvFile:
+                    temp = row
+                    if temp[0] == 'node':
+                        if motif:
+                            self.insert_motif(deepcopy(motif), weight=motif['weight'], read=True)
+                        motif = {}
+                    atribute = temp[0]
+                    del temp[0]
+                    if atribute == 'depth':
+                        temp = int(temp[0])
+                    elif atribute == 'weight':
+                        temp = literal_eval(temp[0])
+                    elif atribute == 'conn' or atribute == 'io':
+                        for i in range(len(temp)):
+                            temp[i] = literal_eval(temp[i])
+                    elif atribute == 'id':
+                        temp = temp[0]
+                        if temp == '338':
+                            print "hola"
+                    motif['{}'.format(atribute)] = temp
+
+                self.insert_motif(deepcopy(motif), weight=motif['weight'], read=True)
+
         print "done generating motif pop"
 
+    '''Generates a random motif within the allowable configurations and attempts to enter it into the population. If it
+    already exists within the population the function will be called again until a novel motif is added.'''
     def generate_motif(self):
         true_or_false = [True, False]
         motif = {}
         node_types = []
         io_properties = []
         synapses = []
+        # selects motif size randomly
         number_of_neurons = np.random.randint(self.min_motif_size, self.max_motif_size + 1)
         for j in range(number_of_neurons):
             node_types.append(np.random.choice(self.neuron_types))
+            # sets the input/output dynamics of each neuron with 50% P() todo set this with a certain probability
             if self.io_config == 'fixed':
                 io_properties.append((np.random.choice(true_or_false), np.random.choice(true_or_false)))
             else:
                 print "incompatible io config"
-                # todo figure out how to error out
+                # todo enable erroring out
+            # connects the neurons with a 50% chance and sets random weights/delays within the allowed discrete range
             for k in range(number_of_neurons):
                 if np.random.choice(true_or_false):
                     if self.discrete_params:
@@ -189,14 +185,15 @@ class motif_population(object):
                         conn.append(self.delay_range[0] + (bin * self.delay_bin_width))
                         if conn[2] != 0:
                             synapses.append(conn)
+        # moves the generated motifs properties into a dict representing the motif
         motif['node'] = node_types
         motif['io'] = io_properties
         motif['conn'] = synapses
         motif['depth'] = 1
-        # motif['id'] = self.motifs_generated
+        # gives the motifs a particular weight altering it's chance of being chosen later
         if self.selection_metric == 'fitness':
             weight = 1
-        # if not repeats:
+        # attempts to insert the motif
         if not self.id_check(motif):
             # print self.id_check(motif)
             id = self.insert_motif(motif, weight, False)
@@ -204,6 +201,8 @@ class motif_population(object):
             id = self.generate_motif()
         return id
 
+    '''Creates an array of all possible orientations of a motifs which have the same dynamic and structural properties 
+    to allow the correct checking of whether a motif is already within the population'''
     def permutations(self, motif):
         motif_size = len(motif['node'])
         connections = len(motif['conn'])
@@ -219,53 +218,73 @@ class motif_population(object):
                 motif_array[i]['conn'][j][1] = permutations[i][motif_array[i]['conn'][j][1]]
         return motif_array
 
+    '''Compare a motif with all other motifs in the population and return the id of the similar motif or return false if
+    there are no identical motifs'''
     def id_check(self, motif):
         motif_id = False
+        # acquire the array of all similar permuation of the motif in question
         motif_array = self.permutations(motif)
         for config in self.motif_configs:
-            if len(self.motif_configs[config]['node']) == len(motif['node']):
-                if len(self.motif_configs[config]['conn']) == len(motif['conn']):
-                    # for orig_node in self.motif_configs[config]['node']:
-                    #     for check_node in motif['node']:
-                    for isomer in motif_array:
-                        # compare each element and return rotations with which they are similar
-                        if self.motif_configs[config]['node'] == isomer['node'] and \
-                                        self.motif_configs[config]['io'] == isomer['io'] and \
-                                        self.motif_configs[config]['conn'] == isomer['conn']:
-                            motif_id = config
-                            break
-                    if motif_id:
+            # do a simple check of motif dimesions first to skip checking through the whole array if possible
+            if len(self.motif_configs[config]['node']) == len(motif['node']) and \
+                    len(self.motif_configs[config]['conn']) == len(motif['conn']):
+                # if it passes initial check compare it with a possible permutations
+                for isomer in motif_array:
+                    # compare each element and return rotations with which they are similar
+                    if self.motif_configs[config]['node'] == isomer['node'] and \
+                                    self.motif_configs[config]['io'] == isomer['io'] and \
+                                    self.motif_configs[config]['conn'] == isomer['conn']:
+                        motif_id = config
                         break
+                if motif_id:
+                    break
         return motif_id
 
+    '''This function returns a random motif with probability relative to it's weight and the population total weight. If
+    the total population weight is set to 0 elsewhere in the program, indicating a unplanned change, the new weight is 
+    determined before selecting a motif'''
     def select_motif(self):
+        # ensure total weight is set
         if self.total_weight == 0:
             for motif in self.motif_configs:
                 self.total_weight += self.motif_configs[motif]['weight']
+        # select a random possition within the population weight range
         choice = np.random.uniform(0, self.total_weight)
+        # cycle through the motifs subtracting the motif weight until the value drops below 0 indicating the selection
         for motif in self.motif_configs:
             choice -= self.motif_configs[motif]['weight']
             if choice < 0:
                 break
-        # return self.motif_configs[motif]
         return motif
 
-    def insert_motif(self, motif, weight=0, check=True):
+    '''Inserts the motif into the population. First however the motif is compared with other motifs to ensure it does 
+    not already exist with the population. Return the new id if it is successful or false if not.'''
+    def insert_motif(self, motif, weight=0, check=True, read=False):
+        # check for repeats
         if check == True:
             check = self.id_check(motif)
+        # if it does not exist the insert the motif into the population
         if not check:
             self.total_weight += weight
-            motif_id = self.motifs_generated
+            if read:
+                motif_id = motif['id']
+            else:
+                motif_id = self.motifs_generated
             self.motif_configs['{}'.format(motif_id)] = motif
             self.motif_configs['{}'.format(motif_id)]['weight'] = weight
             self.motif_configs['{}'.format(motif_id)]['id'] = motif_id
             self.motifs_generated += 1
             # print motif_id
-            return '{}'.format(self.motifs_generated - 1)
+            if read:
+                return motif_id
+            else:
+                return '{}'.format(self.motifs_generated - 1)
         else:
             return check
 
-    def motif_of_motif(self, motif_id, config, max_depth, current_depth=0):
+    '''Creates a hierachical motif of specified depth. Mainly used in agent generation. Selects a motif and replaces 
+    each node in the motif with a pointer to another motif. Each motifs and submotif etc is inserted into the population'''
+    def motif_of_motif(self, motif_id, config, max_depth, already_chosen, current_depth=0):
         # add layer at lowest level
         # add layer at specific level
         # add motif with a certain probability
@@ -276,24 +295,33 @@ class motif_population(object):
             layer = 0
             if config == 'lowest':
                 None
+            # Check config is set to a P() of a new connection
             elif config <= 1:
                 increased_depth = False
                 picked_bigger = False
                 for node in motif['node']:
+                    # if it is a base node replace it with a motif
                     if node in self.neuron_types:
+                        # with a certain P() add a new motif
                         if np.random.random() < config:
-                            motif['node'][i] = self.select_motif()
+                            selected_motif = np.random.choice(already_chosen)
+                            while selected_motif in already_chosen:
+                                selected_motif = self.select_motif()
+                            motif['node'][i] = selected_motif
                             increased_depth = True
+                    # go another layer down if it's not a base node yet
                     else:
-                        sub_motif = self.motif_of_motif(node, config, max_depth, current_depth + 1)
+                        sub_motif = self.motif_of_motif(node, config, max_depth, already_chosen, current_depth + 1)
                         # sub_motif_id = self.insert_motif(sub_motif)
                         # motif['node'][i] = sub_motif[sub_motif_id]
                         motif['node'][i] = self.insert_motif(sub_motif)
                         new_depth = sub_motif['depth']
+                        # if the depth is bigger adjust it
                         if new_depth >= motif['depth']:
                             motif['depth'] = new_depth + 1
                             picked_bigger = True
                     i += 1
+                # check to make sure the depth is correct
                 if increased_depth and not picked_bigger:
                     motif['depth'] += 1
             else:
@@ -301,20 +329,21 @@ class motif_population(object):
                 None
         return motif
 
+    '''generates a individual which is a motif of motifs up to a certain depth. motif_of_motif is recursively called 
+    until the required depth is reached.'''
     def generate_individual(self, connfig=1, start_small=False, max_depth=2):
         # select depth of the agent
         if not start_small:  # this is super dysfunctional
             depth = np.random.randint(self.initial_hierarchy_depth, max_depth + 1)
         else:
             depth = self.initial_hierarchy_depth
-        # motif = None
+        # select an initial motif
         motif = self.select_motif()
-        if motif is None:
-            motif = self.select_motif()
-        else:
-            for i in range(depth):
-                motif = self.motif_of_motif(motif, connfig, depth, i)
-                motif = self.insert_motif(motif)
+        for i in range(depth):
+            already_chosen = []
+            already_chosen = self.list_motifs(motif, already_chosen)
+            motif = self.motif_of_motif(motif, connfig, depth, already_chosen, i)
+            motif = self.insert_motif(motif)
         return [motif, np.random.randint(200)]
 
     def generate_agents(self, pop_size=200, connfig=1, start_small=False, max_depth=2):
@@ -559,6 +588,8 @@ class motif_population(object):
 
     def list_motifs(self, motif_id, list=[]):
         list.append(motif_id)
+        if isinstance(motif_id, int):
+            motif_id = '{}'.format(motif_id)
         motif = self.motif_configs[motif_id]
         for node in motif['node']:
             if node not in self.neuron_types:
@@ -601,29 +632,28 @@ class motif_population(object):
         motif_id = False
         motif_array = self.permutations(motif)
         for config in self.motif_configs:
-            if config == motif['id']:
-                print "shouldn't be"
-            if len(self.motif_configs[config]['node']) == len(motif['node']):
-                if len(self.motif_configs[config]['conn']) == len(motif['conn']):
-                    for node in self.motif_configs[config]['node']:
-                        if node not in self.neuron_types:
-                            motif_array = []
-                            base_motif = False
-                            break
-                    # for orig_node in self.motif_configs[config]['node']:
-                    #     for check_node in motif['node']:
+            if int(config) != motif['id'] and len(self.motif_configs[config]['node']) == len(motif['node']) and \
+                    len(self.motif_configs[config]['conn']) == len(motif['conn']):
+                for node in self.motif_configs[config]['node']:
+                    if node not in self.neuron_types:
+                        base_motif = False
+                        break
+                    else:
+                        base_motif = True
+                if base_motif:
                     for isomer in motif_array:
                         # compare each element and return rotations with which they are similar
                         if self.motif_configs[config]['io'] == isomer['io'] and \
                                         self.motif_configs[config]['conn'] == isomer['conn']:
                             motif_id = config
                             break
-                    if motif_id or not base_motif:
-                        break
+                if motif_id:
+                    break
         return motif_id
 
     def reward_shape(self):
         for motif_id in self.motif_configs:
+            motif = self.motif_configs[motif_id]
             if self.depth_read(motif_id) > 1:
                 id = self.shape_check(motif_id)
                 if id:
@@ -641,6 +671,21 @@ class motif_population(object):
             self.delete_motif(id)
         self.depth_fix()
 
+    def save_motifs(self, iteration, config):
+        with open('motif population {}: {}.csv'.format(iteration, config), 'w') as file:
+            writer = csv.writer(file, delimiter=',', lineterminator='\n')
+            for motif_id in self.motif_configs:
+                motif = self.motif_configs[motif_id]
+                for atribute in motif:
+                    line = []
+                    line.append(atribute)
+                    if isinstance(motif[atribute], list):
+                        for var in motif[atribute]:
+                            line.append(var)
+                    else:
+                        line.append(motif[atribute])
+                    writer.writerow(line)
+
     def adjust_weights(self, agents, clean=True, fitness_shaping=True, reward_shape=True):
         self.reset_weights()
         if fitness_shaping:
@@ -654,98 +699,6 @@ class motif_population(object):
                 i += 1
         if clean:
             self.clean_population(reward_shape)
+        self.total_weight = 0
 
-
-
-    # def get_scores(self, game_pop, simulator):
-    #     g_vertex = game_pop._vertex
-    #     scores = g_vertex.get_data(
-    #         'score', simulator.no_machine_time_steps, simulator.placements,
-    #         simulator.graph_mapper, simulator.buffer_manager, simulator.machine_time_step)
-    #
-    #     return scores.tolist()
-    #
-    # def bandit_test(self, connections, arms, runtime=2000, exposure_time=200, noise_rate=1, noise_weight=1):
-    #     max_attempts = 5
-    #     try_except = 0
-    #     while try_except < max_attempts:
-    #         bandit = []
-    #         bandit_count = -1
-    #         excite = []
-    #         excite_count = -1
-    #         inhib = []
-    #         inhib_count = -1
-    #         failures = []
-    #         p.setup(timestep=1.0, min_delay=self.delay_range[0], max_delay=self.delay_range[1])
-    #         p.set_number_of_neurons_per_core(p.IF_cond_exp, 100)
-    #         for i in range(len(connections)):
-    #             [in2e, in2i, e_size, e2e, e2i, i_size, i2e, i2i, e2out, i2out] = connections[i]
-    #             if (len(in2e) == 0 and len(in2i) == 0) or (len(e2out) == 0 and len(i2out) == 0):
-    #                 failures.append(i)
-    #                 print "agent {} was not properly connected to the game".format(i)
-    #             else:
-    #                 bandit_count += 1
-    #                 bandit.append(p.Population(1, p.Bandit(arms, exposure_time, label='bandit_pop_{}-{}'.format(bandit_count, i))))
-    #                 if e_size > 0:
-    #                     excite_count += 1
-    #                     excite.append(p.Population(e_size, p.IF_cond_exp(), label='excite_pop_{}-{}'.format(excite_count, i)))
-    #                     excite_noise = p.Population(e_size, p.SpikeSourcePoisson(rate=noise_rate))
-    #                     p.Projection(excite_noise, excite[excite_count], p.OneToOneConnector(),
-    #                                  p.StaticSynapse(weight=noise_weight), receptor_type='excitatory')
-    #                 if i_size > 0:
-    #                     inhib_count += 1
-    #                     inhib.append(p.Population(i_size, p.IF_cond_exp(), label='inhib_pop_{}-{}'.format(inhib_count, i)))
-    #                     inhib_noise = p.Population(i_size, p.SpikeSourcePoisson(rate=noise_rate))
-    #                     p.Projection(inhib_noise, inhib[inhib_count], p.OneToOneConnector(),
-    #                                  p.StaticSynapse(weight=noise_weight), receptor_type='excitatory')
-    #                 if len(in2e) != 0:
-    #                     p.Projection(bandit[bandit_count], excite[excite_count], p.FromListConnector(in2e),
-    #                                  receptor_type='excitatory')
-    #                 if len(in2i) != 0:
-    #                     p.Projection(bandit[bandit_count], inhib[inhib_count], p.FromListConnector(in2i),
-    #                                  receptor_type='excitatory')
-    #                 if len(e2e) != 0:
-    #                     p.Projection(excite[excite_count], excite[excite_count], p.FromListConnector(e2e),
-    #                                  receptor_type='excitatory')
-    #                 if len(e2i) != 0:
-    #                     p.Projection(excite[excite_count], inhib[inhib_count], p.FromListConnector(e2i),
-    #                                  receptor_type='excitatory')
-    #                 if len(i2e) != 0:
-    #                     p.Projection(inhib[inhib_count], excite[excite_count], p.FromListConnector(i2e),
-    #                                  receptor_type='inhibitory')
-    #                 if len(i2i) != 0:
-    #                     p.Projection(inhib[inhib_count], inhib[inhib_count], p.FromListConnector(i2i),
-    #                                  receptor_type='inhibitory')
-    #                 if len(e2out) != 0:
-    #                     p.Projection(excite[excite_count], bandit[bandit_count], p.FromListConnector(e2out),
-    #                                  receptor_type='excitatory')
-    #                 if len(i2out) != 0:
-    #                     p.Projection(inhib[inhib_count], bandit[bandit_count], p.FromListConnector(i2out),
-    #                                  receptor_type='inhibitory')
-    #
-    #         simulator = get_simulator()
-    #         try:
-    #             p.run(runtime)
-    #             try_except = max_attempts
-    #             break
-    #         except:
-    #             traceback.print_exc()
-    #             try_except += 1
-    #             print "failed to run on attempt ", try_except, "\n"#. total fails: ", all_fails, "\n"
-    #
-    #     scores = []
-    #     agent_fitness = []
-    #     fails = 0
-    #     for i in range(len(connections)):
-    #         if i in failures:
-    #             fails += 1
-    #             scores.append(-100000)
-    #             agent_fitness.append(scores[i])
-    #             print "worst score for the failure"
-    #         else:
-    #             scores.append(self.get_scores(game_pop=bandit[i-fails], simulator=simulator))
-    #            # pop[i].stats = {'fitness': scores[i][len(scores[i]) - 1][0]}  # , 'steps': 0}
-    #             agent_fitness.append(scores[i][len(scores[i]) - 1][0])
-    #
-    #     return agent_fitness
 
