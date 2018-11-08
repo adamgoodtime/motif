@@ -19,6 +19,7 @@ from spinn_front_end_common.utilities.globals_variables import get_simulator
 import traceback
 import math
 from methods.networks import motif_population
+import traceback
 
 class agent_pop(object):
     def __init__(self,
@@ -318,10 +319,10 @@ class agent_pop(object):
 
     def mate(self, mum, dad):
         # maybe the crossover should be more than just random, incorporating depth or some other dad decision metric
-            #
         child_id = mum[0]
         mum_motif = deepcopy(self.motifs.motif_configs[mum[0]])
-        dad_list = self.motifs.list_motifs(dad[0])
+        dad_list = []
+        dad_list = self.motifs.list_motifs(dad[0], dad_list)
         for i in range(len(mum_motif['node'])):
             if np.random.random() < self.crossover:
                 mum_motif['node'][i] = np.random.choice(dad_list)

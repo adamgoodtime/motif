@@ -366,8 +366,9 @@ class motif_population(object):
 
     def collect_IO(self, node, prepost, upper, layer, node_array=[]):
         try:
-            motif = self.motif_configs[node]
+            motif = self.motif_configs[str(node)]
         except:
+            traceback.print_exc()
             print "mate I dunno"
         node_count = 0
         for io in motif['io']:

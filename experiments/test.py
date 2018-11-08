@@ -1,6 +1,7 @@
 from methods.networks import motif_population
 from methods.agents import agent_pop
 import numpy as np
+import traceback
 
 print "starting"
 
@@ -37,9 +38,19 @@ for i in range(1000):
 
     print "2", motif_pop.total_weight
 
-    motif_pop.adjust_weights(agents.agent_pop)
+    motif_pop.adjust_weights(agents.agent_pop, reward_shape=False)
 
     print "3", motif_pop.total_weight
+
+    # for parent in agents.agent_pop:
+    #     list_child = []
+    #     list_child = motif_pop.list_motifs(parent[0], list_child)
+    #     for item in list_child:
+    #         try:
+    #             motif = motif_pop.motif_configs[item]
+    #         except:
+    #             traceback.print_exc()
+    #             print "weights killed it 1"
 
     motif_pop.save_motifs(i, 'conf')
 
@@ -48,6 +59,7 @@ for i in range(1000):
     agents.evolve(species=False)
 
     print "finished", i, motif_pop.total_weight
+
 
 # adjust population weights and clean up unused motifs
 
