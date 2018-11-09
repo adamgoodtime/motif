@@ -20,8 +20,11 @@ import traceback
 import math
 from methods.networks import motif_population
 import traceback
+import csv
 
-class agent_pop(object):
+max_fail_score = -1000000
+
+class agent_population(object):
     def __init__(self,
                  motif,
                  conn_weight=0.5,
@@ -98,7 +101,7 @@ class agent_pop(object):
 
     def fitness_shape(self, fitnesses):
         if isinstance(fitnesses[0], list):
-            shaped_fitnesses = [0 for i in range(fitnesses[0])]
+            shaped_fitnesses = [0 for i in range(len(fitnesses[0]))]
             indexed_fitness = []
             for i in range(len(fitnesses)):
                 new_indexes = []
@@ -108,7 +111,10 @@ class agent_pop(object):
                 indexed_fitness.append(new_indexes)
             for metric in indexed_fitness:
                 for i in range(len(metric)):
-                    shaped_fitnesses[metric[i][1]] += i  # maybe add some weighting here but I dunno
+                    if metric[i][0] == max_fail_score:
+                        shaped_fitnesses[metric[i][1]] += 0
+                    else:
+                        shaped_fitnesses[metric[i][1]] += i  # maybe add some weighting here but I dunno
         else:
             shaped_fitnesses = [0 for i in range(len(fitnesses))]
             new_indexes = []
@@ -116,12 +122,17 @@ class agent_pop(object):
                 new_indexes.append([fitnesses[i], i])
             new_indexes.sort()
             for i in range(len(fitnesses)):
-                shaped_fitnesses[new_indexes[i][1]] += i
+                if new_indexes[i][0] == max_fail_score:
+                    shaped_fitnesses[new_indexes[i][1]] += 0
+                else:
+                    shaped_fitnesses[new_indexes[i][1]] += i
         return shaped_fitnesses
 
     def pass_fitnesses(self, fitnesses, fitness_shaping=True):
         if fitness_shaping:
             fitnesses = self.fitness_shape(fitnesses)
+        else:
+            print "check if its a list and what not then just bang it on"
         for i in range(len(self.agent_pop)):
             self.agent_pop[i].append(fitnesses[i])
 
@@ -374,6 +385,13 @@ class agent_pop(object):
                 break
         return i
 
+    def save_agents(self, iteration, config):
+        with open('agent population {}: {}.csv'.format(iteration, config), 'w') as file:
+            writer = csv.writer(file, delimiter=',', lineterminator='\n')
+            for agent in self.agent_pop:
+                writer.writerow(agent)
+            file.close()
+
     def get_scores(self, game_pop, simulator):
         g_vertex = game_pop._vertex
         scores = g_vertex.get_data(
@@ -381,7 +399,7 @@ class agent_pop(object):
             simulator.graph_mapper, simulator.buffer_manager, simulator.machine_time_step)
         return scores.tolist()
 
-    def bandit_test(self, connections, arms, runtime=2000, exposure_time=200, noise_rate=100, noise_weight=0.01):
+    def bandit_test(self, connections, arms, runtime=2000, exposure_time=200, noise_rate=100, noise_weight=0.01, reward=0):
         max_attempts = 5
         try_except = 0
         while try_except < max_attempts:
@@ -406,7 +424,7 @@ class agent_pop(object):
                 else:
                     bandit_count += 1
                     bandit.append(
-                        p.Population(len(arms), Bandit(arms, exposure_time, label='bandit_pop_{}-{}'.format(bandit_count, i))))
+                        p.Population(len(arms), Bandit(arms, exposure_time, reward_based=reward, label='bandit_pop_{}-{}'.format(bandit_count, i))))
                     if e_size > 0:
                         excite_count += 1
                         excite.append(
@@ -414,7 +432,7 @@ class agent_pop(object):
                         excite_noise = p.Population(e_size, p.SpikeSourcePoisson(rate=noise_rate))
                         p.Projection(excite_noise, excite[excite_count], p.OneToOneConnector(),
                                      p.StaticSynapse(weight=noise_weight), receptor_type='excitatory')
-                        excite.record('spikes')
+                        excite[excite_count].record('spikes')
                         excite_marker.append(i)
                     if i_size > 0:
                         inhib_count += 1
@@ -422,7 +440,7 @@ class agent_pop(object):
                         inhib_noise = p.Population(i_size, p.SpikeSourcePoisson(rate=noise_rate))
                         p.Projection(inhib_noise, inhib[inhib_count], p.OneToOneConnector(),
                                      p.StaticSynapse(weight=noise_weight), receptor_type='excitatory')
-                        inhib.record('spikes')
+                        inhib[inhib_count].record('spikes')
                         inhib_marker.append(i)
                     if len(in2e) != 0:
                         p.Projection(bandit[bandit_count], excite[excite_count], p.FromListConnector(in2e),
@@ -460,22 +478,48 @@ class agent_pop(object):
                 break
             except:
                 traceback.print_exc()
+                try:
+                    p.end()
+                    print "end was necessary"
+                except:
+                    traceback.print_exc()
+                    print "end wasn't necessary"
                 try_except += 1
                 print "failed to run on attempt ", try_except, "\n"  # . total fails: ", all_fails, "\n"
 
         scores = []
         agent_fitness = []
         fails = 0
+        excite_spike_count = [0 for i in range(len(connections))]
+        excite_fail = 0
+        inhib_spike_count = [0 for i in range(len(connections))]
+        inhib_fail = 0
         for i in range(len(connections)):
             if i in failures:
                 fails += 1
-                scores.append(-100000)
+                scores.append(max_fail_score)
                 agent_fitness.append(scores[i])
                 print "worst score for the failure"
             else:
+                if i in excite_marker:
+                    spikes = excite[i-excite_fail].get_data('spikes').segments[0].spiketrains
+                    for neuron in spikes:
+                        for spike in neuron:
+                            excite_spike_count[i] -= 1
+                else:
+                    excite_fail += 1
+                if i in inhib_marker:
+                    spikes = inhib[i-inhib_fail].get_data('spikes').segments[0].spiketrains
+                    for neuron in spikes:
+                        for spike in neuron:
+                            inhib_spike_count[i] -= 1
+                else:
+                    inhib_fail += 1
                 scores.append(self.get_scores(game_pop=bandit[i - fails], simulator=simulator))
                 # pop[i].stats = {'fitness': scores[i][len(scores[i]) - 1][0]}  # , 'steps': 0}
-                agent_fitness.append(scores[i][len(scores[i]) - 1][0])
+                agent_fitness.append(scores[i][len(scores[i]) - 1][0])#, excite_spike_count, inhib_spike_count)
+            print i, "| e:", excite_spike_count[i], "-i:", inhib_spike_count[i], "|\t", scores[i]
+        p.end()
 
         return agent_fitness
 

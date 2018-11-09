@@ -83,8 +83,8 @@ class motif_population(object):
         #     self.motif_configs[types]['depth'] = 0
         self.motifs_generated = 0
         self.total_weight = 0
-        self.agent_pop = []
-        self.agent_nets = {}
+        # self.agent_pop = []
+        # self.agent_nets = {}
 
         true_or_false = [True, False]
 
@@ -571,15 +571,15 @@ class motif_population(object):
 
         return in2e, in2i, len(indexed_ex), e2e, e2i, len(indexed_in), i2e, i2i, e2out, i2out
 
-    def convert_population(self, inputs, outputs):
-        agent_connections = []
-        for agent in self.agent_pop:
-            # agent_connections.append(self.read_motif(agent))
-            agent_conn = self.read_motif(agent[0])
-            spinn_conn = \
-                self.construct_connections(agent_conn, agent[1], inputs, outputs)
-            agent_connections.append(spinn_conn)
-        return agent_connections
+    # def convert_population(self, inputs, outputs):
+    #     agent_connections = []
+    #     for agent in self.agent_pop:
+    #         # agent_connections.append(self.read_motif(agent))
+    #         agent_conn = self.read_motif(agent[0])
+    #         spinn_conn = \
+    #             self.construct_connections(agent_conn, agent[1], inputs, outputs)
+    #         agent_connections.append(spinn_conn)
+    #     return agent_connections
 
     def convert_individual(self, agent, inputs, outputs):
             # agent_connections.append(self.read_motif(agent))
@@ -705,6 +705,7 @@ class motif_population(object):
                     else:
                         line.append(motif[atribute])
                     writer.writerow(line)
+            file.close()
 
     def adjust_weights(self, agents, clean=True, fitness_shaping=True, reward_shape=True):
         self.reset_weights()

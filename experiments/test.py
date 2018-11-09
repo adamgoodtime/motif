@@ -1,25 +1,35 @@
 from methods.networks import motif_population
-from methods.agents import agent_pop
+from methods.agents import agent_population
 import numpy as np
 import traceback
 
 print "starting"
 
 #check max motif count
-motif_pop = motif_population(max_motif_size=3,
-                             no_weight_bins=3,
-                             no_delay_bins=3,
+motifs = motif_population(max_motif_size=3,
+                             no_weight_bins=5,
+                             no_delay_bins=5,
+                             weight_range=(0.005, 0.05),
+                             # delay_range=(),
                              # read_entire_population='motif population 0: conf.csv',
                              population_size=200)
 
-# motif_pop.generate_agents(max_depth=3, pop_size=100)
+# motifs.generate_agents(max_depth=3, pop_size=100)
+
+# todo move this all to a new script called bandit
+# todo :print best agent, add spikes to the fitness function - weight the spikes prob, add noise?
 
 arms = [0.1, 0.9]
 
-# convert motifs to networks
-# agent_pop_conn = motif_pop.convert_population(inputs=1, outputs=len(arms)) # [in2e, in2i, e2e, e2i, i2e, i2i, out2e, out2i]
+reward_shape = True
+reward = 1
 
-agents = agent_pop(motif_pop, pop_size=100)
+config = "reward_shape:{}, reward:{}".format(reward_shape, reward)
+
+# convert motifs to networks
+# agent_pop_conn = motifs.convert_population(inputs=1, outputs=len(arms)) # [in2e, in2i, e2e, e2i, i2e, i2i, out2e, out2i]
+
+agents = agent_population(motifs, pop_size=100)
 
 for i in range(1000):
     if i == 0:
@@ -29,36 +39,51 @@ for i in range(1000):
 
     # evaluate
         # pass the agent pop connections into a fucntion which tests the networks and returns fitnesses
-    # fitnesses = agents.bandit_test(connections, arms, runtime=21000)
-    fitnesses = np.random.randint(0, 100, len(agents.agent_pop))
+    arms = [0.1, 0.9]
+    fitnesses = agents.bandit_test(connections, arms, runtime=21000, reward=reward)
+    arms = [0.9, 0.1]
+    fitnesses2 = agents.bandit_test(connections, arms, runtime=21000, reward=reward)
+    best_score = -1000000
+    best_agent = 'they suck'
+    combined_fitnesses = [fitnesses, fitnesses2]
+    # for j in range(len(fitnesses)):
+    #     combined_fitnesses.append(fitnesses[j] + fitnesses2[j])
+    #     print j, "|", combined_fitnesses[j]
+    #     if combined_fitnesses[j] > best_score:
+    #         best_score = combined_fitnesses[j]
+    #         best_agent = j
+    # print "best fitness was ", best_score, " by agent:", best_agent, "with a score of ", fitnesses[best_agent], "and", fitnesses2[best_agent]
 
-    print "1", motif_pop.total_weight
+    # fitnesses = np.random.randint(0, 100, len(agents.agent_pop))
 
-    agents.pass_fitnesses(fitnesses)
+    print "1", motifs.total_weight
 
-    print "2", motif_pop.total_weight
+    agents.pass_fitnesses(combined_fitnesses)
 
-    motif_pop.adjust_weights(agents.agent_pop, reward_shape=False)
+    print "2", motifs.total_weight
 
-    print "3", motif_pop.total_weight
+    motifs.adjust_weights(agents.agent_pop, reward_shape=reward_shape)
+
+    print "3", motifs.total_weight
 
     # for parent in agents.agent_pop:
     #     list_child = []
-    #     list_child = motif_pop.list_motifs(parent[0], list_child)
+    #     list_child = motifs.list_motifs(parent[0], list_child)
     #     for item in list_child:
     #         try:
-    #             motif = motif_pop.motif_configs[item]
+    #             motif = motifs.motif_configs[item]
     #         except:
     #             traceback.print_exc()
     #             print "weights killed it 1"
 
-    motif_pop.save_motifs(i, 'conf')
+    motifs.save_motifs(i, config)
+    agents.save_agents(i, config)
 
-    print "4", motif_pop.total_weight
+    print "4", motifs.total_weight
 
     agents.evolve(species=False)
 
-    print "finished", i, motif_pop.total_weight
+    print "finished", i, motifs.total_weight
 
 
 # adjust population weights and clean up unused motifs
