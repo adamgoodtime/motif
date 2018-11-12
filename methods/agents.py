@@ -400,6 +400,13 @@ class agent_population(object):
             simulator.graph_mapper, simulator.buffer_manager, simulator.machine_time_step)
         return scores.tolist()
 
+    def thread_bandit_test_test(self, connections, arms, split=4, runtime=2000, exposure_time=200, noise_rate=100,
+                           noise_weight=0.01, reward=0):
+
+        result = np.random.random()
+
+        return result
+
     def thread_bandit_test(self, connections, arms, split = 4, runtime=2000, exposure_time=200, noise_rate=100, noise_weight=0.01, reward=0):
         max_attempts = 5
         try_except = 0
