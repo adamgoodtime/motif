@@ -2,6 +2,7 @@ from methods.networks import motif_population
 from methods.agents import agent_population
 import numpy as np
 import traceback
+import threading
 
 print "starting"
 
@@ -16,7 +17,6 @@ motifs = motif_population(max_motif_size=3,
 
 # motifs.generate_agents(max_depth=3, pop_size=100)
 
-
 # todo :print best agent, add spikes to the fitness function - weight the spikes prob, add noise?
 
 arms = [0.1, 0.9]
@@ -24,7 +24,7 @@ arms = [0.1, 0.9]
 reward_shape = True
 reward = 1
 
-config = "reward_shape:{}, reward:{}".format(reward_shape, reward)
+config = "bandit reward_shape:{}, reward:{}".format(reward_shape, reward)
 
 # convert motifs to networks
 # agent_pop_conn = motifs.convert_population(inputs=1, outputs=len(arms)) # [in2e, in2i, e2e, e2i, i2e, i2i, out2e, out2i]
@@ -39,13 +39,20 @@ for i in range(1000):
 
     # evaluate
         # pass the agent pop connections into a fucntion which tests the networks and returns fitnesses
-    # arms = [0.1, 0.9]
-    # fitnesses = agents.bandit_test(connections, arms, runtime=21000, reward=reward)
-    # arms = [0.9, 0.1]
-    # fitnesses2 = agents.bandit_test(connections, arms, runtime=21000, reward=reward)
-    # best_score = -1000000
-    # best_agent = 'they suck'
-    # combined_fitnesses = [fitnesses, fitnesses2]
+    arms = [0.1, 0.9]
+    step_size = len(connections) / 4
+    connection_threads = [connections[x:x + step_size] for x in xrange(0, len(connections), step_size)]
+    for segment in connection_threads:
+        t = threading.Thread(target=agents.thread_bandit_test, args=[segment, arms, 4, 2000, 200, 100, 0.01, 0])
+        t.start()
+        # todo figure out returning values back from threads
+
+    fitnesses = agents.bandit_test(connections, arms, runtime=21000, reward=reward)
+    arms = [0.9, 0.1]
+    fitnesses2 = agents.bandit_test(connections, arms, runtime=21000, reward=reward)
+    best_score = -1000000
+    best_agent = 'they suck'
+    combined_fitnesses = [fitnesses, fitnesses2]
     # for j in range(len(fitnesses)):
     #     combined_fitnesses.append(fitnesses[j] + fitnesses2[j])
     #     print j, "|", combined_fitnesses[j]
@@ -54,11 +61,11 @@ for i in range(1000):
     #         best_agent = j
     # print "best fitness was ", best_score, " by agent:", best_agent, "with a score of ", fitnesses[best_agent], "and", fitnesses2[best_agent]
 
-    fitnesses = np.random.randint(0, 100, len(agents.agent_pop))
+    # fitnesses = np.random.randint(0, 100, len(agents.agent_pop))
 
     print "1", motifs.total_weight
 
-    agents.pass_fitnesses(fitnesses)
+    agents.pass_fitnesses(combined_fitnesses)
 
     print "2", motifs.total_weight
 

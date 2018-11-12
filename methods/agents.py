@@ -21,6 +21,7 @@ import math
 from methods.networks import motif_population
 import traceback
 import csv
+import threading
 
 max_fail_score = -1000000
 
@@ -398,6 +399,131 @@ class agent_population(object):
             'score', simulator.no_machine_time_steps, simulator.placements,
             simulator.graph_mapper, simulator.buffer_manager, simulator.machine_time_step)
         return scores.tolist()
+
+    def thread_bandit_test(self, connections, arms, split = 4, runtime=2000, exposure_time=200, noise_rate=100, noise_weight=0.01, reward=0):
+        max_attempts = 5
+        try_except = 0
+        while try_except < max_attempts:
+            bandit = []
+            bandit_count = -1
+            excite = []
+            excite_count = -1
+            excite_marker = []
+            inhib = []
+            inhib_count = -1
+            inhib_marker = []
+            failures = []
+            # p.setup(timestep=1.0, min_delay=self.delay_range[0], max_delay=self.delay_range[1])
+            p.setup(timestep=1.0, min_delay=1, max_delay=127)
+            p.set_number_of_neurons_per_core(p.IF_cond_exp, 100)
+            # starting_pistol = p.Population(len(arms), p.SpikeSourceArray(spike_times=[0]))
+            for i in range(len(connections)):
+                [in2e, in2i, e_size, e2e, e2i, i_size, i2e, i2i, e2out, i2out] = connections[i]
+                if (len(in2e) == 0 and len(in2i) == 0) or (len(e2out) == 0 and len(i2out) == 0):
+                    failures.append(i)
+                    print "agent {} was not properly connected to the game".format(i)
+                else:
+                    bandit_count += 1
+                    bandit.append(
+                        p.Population(len(arms), Bandit(arms, exposure_time, reward_based=reward, label='bandit_pop_{}-{}'.format(bandit_count, i))))
+                    if e_size > 0:
+                        excite_count += 1
+                        excite.append(
+                            p.Population(e_size, p.IF_cond_exp(), label='excite_pop_{}-{}'.format(excite_count, i)))
+                        excite_noise = p.Population(e_size, p.SpikeSourcePoisson(rate=noise_rate))
+                        p.Projection(excite_noise, excite[excite_count], p.OneToOneConnector(),
+                                     p.StaticSynapse(weight=noise_weight), receptor_type='excitatory')
+                        excite[excite_count].record('spikes')
+                        excite_marker.append(i)
+                    if i_size > 0:
+                        inhib_count += 1
+                        inhib.append(p.Population(i_size, p.IF_cond_exp(), label='inhib_pop_{}-{}'.format(inhib_count, i)))
+                        inhib_noise = p.Population(i_size, p.SpikeSourcePoisson(rate=noise_rate))
+                        p.Projection(inhib_noise, inhib[inhib_count], p.OneToOneConnector(),
+                                     p.StaticSynapse(weight=noise_weight), receptor_type='excitatory')
+                        inhib[inhib_count].record('spikes')
+                        inhib_marker.append(i)
+                    if len(in2e) != 0:
+                        p.Projection(bandit[bandit_count], excite[excite_count], p.FromListConnector(in2e),
+                                     receptor_type='excitatory')
+                        # p.Projection(starting_pistol, excite[excite_count], p.FromListConnector(in2e),
+                        #              receptor_type='excitatory')
+                    if len(in2i) != 0:
+                        p.Projection(bandit[bandit_count], inhib[inhib_count], p.FromListConnector(in2i),
+                                     receptor_type='excitatory')
+                        # p.Projection(starting_pistol, inhib[inhib_count], p.FromListConnector(in2i),
+                        #              receptor_type='excitatory')
+                    if len(e2e) != 0:
+                        p.Projection(excite[excite_count], excite[excite_count], p.FromListConnector(e2e),
+                                     receptor_type='excitatory')
+                    if len(e2i) != 0:
+                        p.Projection(excite[excite_count], inhib[inhib_count], p.FromListConnector(e2i),
+                                     receptor_type='excitatory')
+                    if len(i2e) != 0:
+                        p.Projection(inhib[inhib_count], excite[excite_count], p.FromListConnector(i2e),
+                                     receptor_type='inhibitory')
+                    if len(i2i) != 0:
+                        p.Projection(inhib[inhib_count], inhib[inhib_count], p.FromListConnector(i2i),
+                                     receptor_type='inhibitory')
+                    if len(e2out) != 0:
+                        p.Projection(excite[excite_count], bandit[bandit_count], p.FromListConnector(e2out),
+                                     receptor_type='excitatory')
+                    if len(i2out) != 0:
+                        p.Projection(inhib[inhib_count], bandit[bandit_count], p.FromListConnector(i2out),
+                                     receptor_type='inhibitory')
+
+            simulator = get_simulator()
+            try:
+                p.run(runtime)
+                try_except = max_attempts
+                break
+            except:
+                traceback.print_exc()
+                try:
+                    p.end()
+                    print "end was necessary"
+                except:
+                    traceback.print_exc()
+                    print "end wasn't necessary"
+                try_except += 1
+                print "failed to run on attempt ", try_except, "\n"  # . total fails: ", all_fails, "\n"
+
+        scores = []
+        agent_fitness = []
+        fails = 0
+        excite_spike_count = [0 for i in range(len(connections))]
+        excite_fail = 0
+        inhib_spike_count = [0 for i in range(len(connections))]
+        inhib_fail = 0
+        for i in range(len(connections)):
+            if i in failures:
+                fails += 1
+                scores.append(max_fail_score)
+                agent_fitness.append(scores[i])
+                print "worst score for the failure"
+            else:
+                if i in excite_marker:
+                    spikes = excite[i-excite_fail].get_data('spikes').segments[0].spiketrains
+                    for neuron in spikes:
+                        for spike in neuron:
+                            excite_spike_count[i] -= 1
+                else:
+                    excite_fail += 1
+                if i in inhib_marker:
+                    spikes = inhib[i-inhib_fail].get_data('spikes').segments[0].spiketrains
+                    for neuron in spikes:
+                        for spike in neuron:
+                            inhib_spike_count[i] -= 1
+                else:
+                    inhib_fail += 1
+                scores.append(self.get_scores(game_pop=bandit[i - fails], simulator=simulator))
+                # pop[i].stats = {'fitness': scores[i][len(scores[i]) - 1][0]}  # , 'steps': 0}
+                agent_fitness.append(scores[i][len(scores[i]) - 1][0])#, excite_spike_count, inhib_spike_count)
+            print i, "| e:", excite_spike_count[i], "-i:", inhib_spike_count[i], "|\t", scores[i]
+        p.end()
+
+        return agent_fitness
+
 
     def bandit_test(self, connections, arms, runtime=2000, exposure_time=200, noise_rate=100, noise_weight=0.01, reward=0):
         max_attempts = 5
