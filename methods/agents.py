@@ -46,7 +46,7 @@ class agent_population(object):
                  new_motif=0.03,
                  similarity_threshold=0.4,
                  stagnation_age=25,
-                 inputs=1,
+                 inputs=2,
                  outputs=2,
                  pop_size=100):
 
@@ -74,6 +74,14 @@ class agent_population(object):
         self.species = []
         self.agent_pop = []
         self.agent_nets = {}
+
+        self.max_fitness = []
+        self.average_fitness = []
+        self.min_fitness = []
+        self.max_score = []
+        self.average_score = []
+        self.min_score = []
+        self.total_average = []
 
     def generate_spinn_nets(self, input=None, output=None, create=True, max_depth=2):
         if input is None:
@@ -395,6 +403,64 @@ class agent_population(object):
                 writer.writerow(agent)
             file.close()
 
+    def save_agent_connections(self, agent, iteration, config):
+        connections = self.convert_agent(agent, self.inputs, self.outputs)
+        with open('best agent {}: {}.csv'.format(iteration, config), 'w') as file:
+            writer = csv.writer(file, delimiter=',', lineterminator='\n')
+            for thing in connections:
+                writer.writerow([thing, ''])
+            file.close()
+
+    def status_update(self, combined_fitnesses, iteration, config):
+        total_fitnesses = [0 for i in range(len(combined_fitnesses))]
+        worst_score = 1000000
+        worst_agent = 'need to higher worst score'
+        best_score = -1000000
+        best_agent = 'need to lower best score'
+        worst_fitness = 1000000
+        worst_agent_f = 'need to higher worst score'
+        best_fitness = -1000000
+        best_agent_f = 'need to lower best score'
+        for j in range(len(self.agent_pop)):
+            print j, "|\t", combined_fitnesses[0][j], '\t',combined_fitnesses[0][j]
+            if self.agent_pop[j][2] > best_score:
+                best_score = self.agent_pop[j][2]
+                best_agent = j
+            if self.agent_pop[j][2] < worst_score:
+                worst_score = self.agent_pop[j][2]
+                worst_agent = j
+            combined_fitness = 0
+            for i in range(len(combined_fitnesses)):
+                if combined_fitnesses[i][j] != 'fail':
+                    combined_fitness += combined_fitnesses[i][j]
+                    total_fitnesses[i] += combined_fitnesses[i][j]
+            if combined_fitness > best_fitness:
+                best_fitness = combined_fitness
+                best_agent_f = j
+            if combined_fitness < worst_fitness:
+                worst_fitness = combined_fitness
+                worst_agent_f = j
+        print "best fitness was ", best_score, " by agent:", best_agent, \
+            "with a score of ", combined_fitnesses[0][best_agent], "and", combined_fitnesses[0][best_agent]
+        self.max_score.append(best_score)
+        self.min_score.append(worst_score)
+        total_average = 0
+        for i in range(len(combined_fitnesses)):
+            total_fitnesses[i] /= len(self.agent_pop)
+            total_average += total_fitnesses[i]
+        self.average_fitness.append(total_fitnesses)
+        self.max_fitness.append(best_fitness)
+        self.total_average.append(total_average)
+        self.min_fitness.append(worst_fitness)
+        print "maximum score:", self.max_score
+        print "average score:", self.average_score
+        print "minimum score:", self.min_score
+        print "maximum fitness:", self.max_fitness
+        print "average fitness:", self.total_average
+        print "minimum fitness:", self.min_fitness
+        self.save_agent_connections(self.agent_pop[best_agent], iteration, 'score '+config)
+        self.save_agent_connections(self.agent_pop[best_agent_f], iteration, 'fitness '+config)
+
     def get_scores(self, game_pop, simulator):
         g_vertex = game_pop._vertex
         scores = g_vertex.get_data(
@@ -422,15 +488,15 @@ class agent_population(object):
 
         return result
 
-    def thread_bandit_test(self, connections, arms, split=4, runtime=2000, exposure_time=200, noise_rate=100, noise_weight=0.01, reward=0):#, seed=0):
+    def thread_bandit_test(self, connections, arms, split=4, runtime=2000, exposure_time=200, noise_rate=100, noise_weight=0.01, reward=0, seed=0):
 
         def helper(args):
-            return self.bandit_test(*args)
-            # return self.thread_bandit_test_test(*args)
+            # return self.bandit_test(*args)
+            return self.thread_bandit_test_test(*args)
 
         step_size = len(connections) / split
         connection_threads = [[connections[x:x + step_size], arms, split, runtime, exposure_time, noise_rate,
-                               noise_weight, reward] for x in xrange(0, len(connections), step_size)]
+                               noise_weight, reward, np.random.randint(100)] for x in xrange(0, len(connections), step_size)]
         pool = pathos.multiprocessing.Pool(processes=len(connection_threads))
 
         pool_result = pool.map(func=helper, iterable=connection_threads)
@@ -438,7 +504,7 @@ class agent_population(object):
         for i in range(len(pool_result)):
             if pool_result[i] == 'fail' and len(connection_threads[i][0]) > 1:
                 print "splitting ", len(connection_threads[i][0]), " into 4 pieces"
-                pool_result[i] = self.thread_bandit_test(connection_threads[i][0], arms, split=4, runtime=2000, exposure_time=200, noise_rate=100, noise_weight=0.01, reward=0)#, seed=i)
+                pool_result[i] = self.thread_bandit_test(connection_threads[i][0], arms, split, runtime, exposure_time, noise_rate, noise_weight, reward, seed=i)
 
         agent_fitness = []
         for thread in pool_result:

@@ -33,16 +33,16 @@ def bandit():
     # convert motifs to networks
     # agent_pop_conn = motifs.convert_population(inputs=1, outputs=len(arms)) # [in2e, in2i, e2e, e2i, i2e, i2i, out2e, out2i]
 
-    agents = agent_population(motifs, pop_size=100)
+    agents = agent_population(motifs, pop_size=100, inputs=2, outputs=len(arms))
 
     def helper(args):
         return agents.thread_bandit_test(*args)
 
     for i in range(1000):
         if i == 0:
-            connections = agents.generate_spinn_nets(input=1, output=len(arms), max_depth=3)
+            connections = agents.generate_spinn_nets(input=2, output=len(arms), max_depth=3)
         else:
-            connections = agents.generate_spinn_nets(input=1, output=len(arms), max_depth=3, create=False)
+            connections = agents.generate_spinn_nets(input=2, output=len(arms), max_depth=3, create=False)
 
         # evaluate
             # pass the agent pop connections into a fucntion which tests the networks and returns fitnesses
@@ -75,14 +75,7 @@ def bandit():
 
         agents.pass_fitnesses(combined_fitnesses)
 
-        best_score = -1000000
-        best_agent = 'they suck'
-        for j in range(len(fitnesses)):
-            print j, "|\t", combined_fitnesses[0][j], '\t',combined_fitnesses[0][j]
-            if agents.agent_pop[j][2] > best_score:
-                best_score = combined_fitnesses[j]
-                best_agent = j
-        print "best fitness was ", best_score, " by agent:", best_agent, "with a score of ", fitnesses[best_agent], "and", fitnesses2[best_agent]
+        agents.status_update(combined_fitnesses, i, config)
 
         print "2", motifs.total_weight
 
