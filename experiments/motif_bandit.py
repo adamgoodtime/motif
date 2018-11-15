@@ -4,10 +4,10 @@ import numpy as np
 import traceback
 import threading
 from multiprocessing.pool import ThreadPool
-# import multiprocessing
+import multiprocessing
 import pathos.multiprocessing
 
-def main():
+def bandit():
     print "starting"
 
     # check max motif count
@@ -47,29 +47,17 @@ def main():
         # evaluate
             # pass the agent pop connections into a fucntion which tests the networks and returns fitnesses
         arms = [0.1, 0.9]
-        step_size = len(connections) / 4
-        connection_threads = [[connections[x:x + step_size], arms, 4, 2000, 200, 100, 0.01, 0] for x in xrange(0, len(connections), step_size)]
-        # pool = ThreadPool(processes=len(connection_threads))
-        pool = pathos.multiprocessing.Pool(processes=len(connection_threads))
-        results = []
-        values = []
-        # for segment in connection_threads:
-            # result = pool.apply_async(func=agents.thread_bandit_test, args=(segment, arms, 4, 2000, 200, 100, 0.01, 0))
+        # step_size = len(connections) / 4
+        # connection_threads = [[connections[x:x + step_size], arms, 4, 2000, 200, 100, 0.01, 0] for x in xrange(0, len(connections), step_size)]
+        # pool = pathos.multiprocessing.Pool(processes=len(connection_threads))
+        # multiprocessing.pool.Pool
+        #
+        # result = pool.map(func=helper, iterable=connection_threads)
 
-        # result = pool.map(func=agents.thread_bandit_test, iterable=connection_threads)
-
-        result = pool.map(func=helper, iterable=connection_threads)
-            # results.append(result)
-            # t = threading.Thread(target=agents.thread_bandit_test, args=[segment, arms, 4, 2000, 200, 100, 0.01, 0])
-            # t.start()
-            # todo figure out returning values back from threads
-        # for res in results:
-        #     values.append(res.get())
-        # the_result = result.get()
-
-        fitnesses = agents.bandit_test(connections, arms, runtime=21000, reward=reward)
+        fitnesses = agents.thread_bandit_test(connections, arms, runtime=21000, reward=reward)
         arms = [0.9, 0.1]
-        fitnesses2 = agents.bandit_test(connections, arms, runtime=21000, reward=reward)
+        fitnesses2 = agents.thread_bandit_test(connections, arms, runtime=21000, reward=reward)
+        # fitnesses2 = agents.bandit_test(connections, arms, runtime=21000, reward=reward)
         best_score = -1000000
         best_agent = 'they suck'
         combined_fitnesses = [fitnesses, fitnesses2]
@@ -86,6 +74,15 @@ def main():
         print "1", motifs.total_weight
 
         agents.pass_fitnesses(combined_fitnesses)
+
+        best_score = -1000000
+        best_agent = 'they suck'
+        for j in range(len(fitnesses)):
+            print j, "|\t", combined_fitnesses[0][j], '\t',combined_fitnesses[0][j]
+            if agents.agent_pop[j][2] > best_score:
+                best_score = combined_fitnesses[j]
+                best_agent = j
+        print "best fitness was ", best_score, " by agent:", best_agent, "with a score of ", fitnesses[best_agent], "and", fitnesses2[best_agent]
 
         print "2", motifs.total_weight
 
@@ -120,10 +117,12 @@ def main():
     # connection change
     # swap motif
 
+bandit()
+
 print "done"
 
-if __name__ == '__main__':
-    main()
+# if __name__ == '__main__':
+#     main()
 
 #ToDo
 '''
