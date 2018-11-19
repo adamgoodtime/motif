@@ -44,6 +44,7 @@ class agent_population(object):
                  motif_gone=0.03,
                  motif_switch=0.03,
                  new_motif=0.03,
+                 maximum_depth=5,
                  similarity_threshold=0.4,
                  stagnation_age=25,
                  inputs=2,
@@ -66,6 +67,7 @@ class agent_population(object):
         self.motif_gone = motif_gone
         self.motif_switch = motif_switch
         self.new_motif = new_motif
+        self.maximum_depth = maximum_depth
         self.similarity_threshold = similarity_threshold
         self.stagnation_age = stagnation_age
         self.inputs = inputs
@@ -73,7 +75,7 @@ class agent_population(object):
 
         self.species = []
         self.agent_pop = []
-        self.agent_nets = {}
+        self.agent_mutate_keys = {}
 
         self.max_fitness = []
         self.average_fitness = []
@@ -141,11 +143,22 @@ class agent_population(object):
 
     def pass_fitnesses(self, fitnesses, fitness_shaping=True):
         if fitness_shaping:
-            fitnesses = self.fitness_shape(fitnesses)
+            processed_fitnesses = self.fitness_shape(fitnesses)
         else:
-            print "check if its a list and what not then just bang it on"
+            # todo figure out what to do about fitness less than 0
+            if isinstance(fitnesses[0], list):
+                processed_fitnesses = []
+                for i in range(len(fitnesses[0])):
+                    summed_f = 0
+                    for j in range(len(fitnesses)):
+                        if fitnesses[j][i] == 'fail':
+                            summed_f = max_fail_score
+                            break
+                        summed_f += fitnesses[j][i]
+                    processed_fitnesses.append(summed_f)
+
         for i in range(len(self.agent_pop)):
-            self.agent_pop[i].append(fitnesses[i])
+            self.agent_pop[i].append(processed_fitnesses[i])
 
 
     def reset(self):
@@ -242,7 +255,8 @@ class agent_population(object):
             mutate_key['c_gone'] = 0
             mutate_key['param_w'] = 0
             mutate_key['param_d'] = 0
-            mutate_key['parent_f'] = parent[2]
+            mutate_key['mum'] = parent[2]
+            mutate_key['dad'] = parent[2]
             mutate_key['sex'] = 1
         # acquire the motif of parent and copy it to avoid messing with both memory locations
         motif_config = self.motifs.return_motif(parent[0])
@@ -337,10 +351,25 @@ class agent_population(object):
             node_count += 1
         if copy_copy != config_copy:
             motif_id = self.motifs.insert_motif(copy_copy)
+        # todo do something with mutate key
         return motif_id
 
-    def mate(self, mum, dad):
+    def mate(self, mum, dad, mutate_key):
         # maybe the crossover should be more than just random, incorporating depth or some other dad decision metric
+        if mutate_key == {}:
+            mutate_key['motif'] = 0
+            mutate_key['new'] = 0
+            mutate_key['node'] = 0
+            mutate_key['io'] = 0
+            mutate_key['m_add'] = 0
+            mutate_key['m_gone'] = 0
+            mutate_key['c_add'] = 0
+            mutate_key['c_gone'] = 0
+            mutate_key['param_w'] = 0
+            mutate_key['param_d'] = 0
+            mutate_key['mum'] = mum[2]
+            mutate_key['dad'] = dad[2]
+            mutate_key['sex'] = 1
         child_id = mum[0]
         mum_motif = deepcopy(self.motifs.motif_configs[mum[0]])
         dad_list = []
@@ -349,11 +378,9 @@ class agent_population(object):
             if np.random.random() < self.crossover:
                 mum_motif['node'][i] = np.random.choice(dad_list)
             elif mum_motif['node'][i] not in self.motifs.neuron_types:
-                mum_motif['node'][i] = self.mate([mum_motif['node'][i]], dad)
+                mum_motif['node'][i] = self.mate([mum_motif['node'][i]], dad, mutate_key)
         if self.motifs.motif_configs[mum[0]] != mum_motif:
             child_id = self.motifs.insert_motif(mum_motif)
-        # for i in range(len(mum_motif['node'])):
-        #     self.mate()
         return child_id
 
     # here is where the children are created for both a species and for the entire population if required
@@ -364,7 +391,8 @@ class agent_population(object):
         parents.sort(key=lambda x: x[2], reverse=True)
         for i in range(elite):
             children.append([parents[i][0], parents[i][1]])
-        for i in range(elite, birthing):
+        i = elite
+        while i < birthing:
             if np.random.random() < self.asexual:
                 if fitness_shaping:
                     parent = parents[self.select_shaped(len(parents))]
@@ -372,14 +400,25 @@ class agent_population(object):
                     print "use a function to determine the parent based on fitness"
                 mutate_key = {}
                 child = self.mutate(parent, mutate_key)
+                if self.motifs.depth_read(child) > self.maximum_depth:
+                    child = False
+                    print "as3x d"
             else:
                 if fitness_shaping:
                     mum = parents[self.select_shaped(len(parents))]
                     dad = parents[self.select_shaped(len(parents))]
                 else:
                     print "use a function to determine the parent based on fitness"
-                child = self.mate(mum, dad)
-            children.append([child, np.random.randint(200)])
+                mutate_key = {}
+                child = self.mate(mum, dad, mutate_key)
+                if self.motifs.depth_read(child) > self.maximum_depth:
+                    child = False
+                    print "mate d"
+            if child:
+                children.append([child, np.random.randint(200)])
+                i += 1
+            else:
+                print "went over the maximum depth"
         return children
 
     def select_shaped(self, list_size, best_first=True):
@@ -405,10 +444,12 @@ class agent_population(object):
 
     def save_agent_connections(self, agent, iteration, config):
         connections = self.convert_agent(agent, self.inputs, self.outputs)
-        with open('best agent {}: {}.csv'.format(iteration, config), 'w') as file:
+        with open('best agent {}: score({}), {}.csv'.format(iteration, agent[3], config), 'w') as file:
             writer = csv.writer(file, delimiter=',', lineterminator='\n')
             for thing in connections:
                 writer.writerow([thing, ''])
+            writer.writerow(["fitness", agent[2]])
+            writer.writerow(["score", agent[3]])
             file.close()
 
     def status_update(self, combined_fitnesses, iteration, config):
@@ -421,8 +462,9 @@ class agent_population(object):
         worst_agent_f = 'need to higher worst score'
         best_fitness = -1000000
         best_agent_f = 'need to lower best score'
+        #todo make it print all the separate fitnesses
         for j in range(len(self.agent_pop)):
-            print j, "|\t", combined_fitnesses[0][j], '\t',combined_fitnesses[0][j]
+            print j, "|\t", combined_fitnesses[0][j], '\t',combined_fitnesses[1][j]
             if self.agent_pop[j][2] > best_score:
                 best_score = self.agent_pop[j][2]
                 best_agent = j
@@ -440,8 +482,10 @@ class agent_population(object):
             if combined_fitness < worst_fitness:
                 worst_fitness = combined_fitness
                 worst_agent_f = j
+            self.agent_pop[j].append(combined_fitness)
+        print "At iteration: ", iteration
         print "best fitness was ", best_score, " by agent:", best_agent, \
-            "with a score of ", combined_fitnesses[0][best_agent], "and", combined_fitnesses[0][best_agent]
+            "with a score of ", combined_fitnesses[0][best_agent], "and", combined_fitnesses[1][best_agent]
         self.max_score.append(best_score)
         self.min_score.append(worst_score)
         total_average = 0
@@ -488,15 +532,27 @@ class agent_population(object):
 
         return result
 
-    def thread_bandit_test(self, connections, arms, split=4, runtime=2000, exposure_time=200, noise_rate=100, noise_weight=0.01, reward=0, seed=0):
+    def thread_bandit(self, connections, arms, split=4, runtime=2000, exposure_time=200, noise_rate=100, noise_weight=0.01, reward=0, size_f=False, seed=0, top=True):
 
         def helper(args):
-            # return self.bandit_test(*args)
-            return self.thread_bandit_test_test(*args)
+            return self.bandit_test(*args)
+            # return self.thread_bandit_test_test(*args)
 
         step_size = len(connections) / split
-        connection_threads = [[connections[x:x + step_size], arms, split, runtime, exposure_time, noise_rate,
-                               noise_weight, reward, np.random.randint(100)] for x in xrange(0, len(connections), step_size)]
+        if isinstance(arms[0], list):
+            connection_threads = []
+            all_configs = [[[connections[x:x + step_size], arm, split, runtime, exposure_time, noise_rate, noise_weight,
+                             reward] for x in xrange(0, len(connections), step_size)] for arm in arms]
+            # all_configs = [[[connections[x:x + step_size], arm, split, runtime, exposure_time, noise_rate, noise_weight,
+            #                  reward, np.random.randint(100)] for x in xrange(0, len(connections), step_size)] for arm in arms]
+            for arm in all_configs:
+                for config in arm:
+                    connection_threads.append(config)
+        else:
+            connection_threads = [[connections[x:x + step_size], arms, split, runtime, exposure_time, noise_rate,
+                                   noise_weight, reward] for x in xrange(0, len(connections), step_size)]
+            # connection_threads = [[connections[x:x + step_size], arms, split, runtime, exposure_time, noise_rate,
+            #                        noise_weight, reward, np.random.randint(100)] for x in xrange(0, len(connections), step_size)]
         pool = pathos.multiprocessing.Pool(processes=len(connection_threads))
 
         pool_result = pool.map(func=helper, iterable=connection_threads)
@@ -504,7 +560,8 @@ class agent_population(object):
         for i in range(len(pool_result)):
             if pool_result[i] == 'fail' and len(connection_threads[i][0]) > 1:
                 print "splitting ", len(connection_threads[i][0]), " into 4 pieces"
-                pool_result[i] = self.thread_bandit_test(connection_threads[i][0], arms, split, runtime, exposure_time, noise_rate, noise_weight, reward, seed=i)
+                problem_arms = connection_threads[i][1]
+                pool_result[i] = self.thread_bandit(connection_threads[i][0], problem_arms, split, runtime, exposure_time, noise_rate, noise_weight, reward, seed=i, top=False)
 
         agent_fitness = []
         for thread in pool_result:
@@ -514,6 +571,19 @@ class agent_population(object):
             else:
                 agent_fitness.append(thread)
 
+        if isinstance(arms[0], list) and top:
+            copy_fitness = deepcopy(agent_fitness)
+            agent_fitness = []
+            for i in range(len(arms)):
+                arm_results = []
+                for j in range(self.pop_size):
+                    arm_results.append(copy_fitness[(i*self.pop_size) + j])
+                agent_fitness.append(arm_results)
+            if size_f:
+                arm_results = []
+                for i in range(self.pop_size):
+                    arm_results.append(connections[i][2] + connections[i][5])
+                agent_fitness.append(arm_results)
         return agent_fitness
 
 

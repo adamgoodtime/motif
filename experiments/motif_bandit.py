@@ -19,79 +19,44 @@ def bandit():
                               # read_entire_population='motif population 0: conf.csv',
                               population_size=200)
 
-    # motifs.generate_agents(max_depth=3, pop_size=100)
-
     # todo :print best agent, add spikes to the fitness function - weight the spikes prob, add noise?
 
-    arms = [0.1, 0.9]
+    arms = [[0.1, 0.9], [0.9, 0.1]]
+    # arms = [[0.2, 0.8], [0.8, 0.2]]
+    # arms = [[0.4, 0.6], [0.6, 0.4]]
+    # arms = [[0.4, 0.6], [0.6, 0.4], [0.1, 0.9], [0.9, 0.1]]
+    number_of_arms = 2
 
     reward_shape = True
     reward = 1
+    noise_rate = 100
+    noise_weight = 0.01
+    maximum_depth = 10
+    size_fitness = False
 
-    config = "bandit reward_shape:{}, reward:{}".format(reward_shape, reward)
+    config = "bandit reward_shape:{}, reward:{}, noise r-w:{}-{}, arms:{}-{}, max_d{}".format(reward_shape, reward, noise_rate, noise_weight, arms[0][1], len(arms), maximum_depth)
 
-    # convert motifs to networks
-    # agent_pop_conn = motifs.convert_population(inputs=1, outputs=len(arms)) # [in2e, in2i, e2e, e2i, i2e, i2i, out2e, out2i]
-
-    agents = agent_population(motifs, pop_size=100, inputs=2, outputs=len(arms))
-
-    def helper(args):
-        return agents.thread_bandit_test(*args)
+    agents = agent_population(motifs, pop_size=100, inputs=2, outputs=number_of_arms, maximum_depth=maximum_depth)
 
     for i in range(1000):
         if i == 0:
-            connections = agents.generate_spinn_nets(input=2, output=len(arms), max_depth=3)
+            connections = agents.generate_spinn_nets(input=2, output=number_of_arms, max_depth=3)
         else:
-            connections = agents.generate_spinn_nets(input=2, output=len(arms), max_depth=3, create=False)
+            connections = agents.generate_spinn_nets(input=2, output=number_of_arms, max_depth=3, create=False)
 
-        # evaluate
-            # pass the agent pop connections into a fucntion which tests the networks and returns fitnesses
-        arms = [0.1, 0.9]
-        # step_size = len(connections) / 4
-        # connection_threads = [[connections[x:x + step_size], arms, 4, 2000, 200, 100, 0.01, 0] for x in xrange(0, len(connections), step_size)]
-        # pool = pathos.multiprocessing.Pool(processes=len(connection_threads))
-        # multiprocessing.pool.Pool
-        #
-        # result = pool.map(func=helper, iterable=connection_threads)
-
-        fitnesses = agents.thread_bandit_test(connections, arms, runtime=21000, reward=reward)
-        arms = [0.9, 0.1]
-        fitnesses2 = agents.thread_bandit_test(connections, arms, runtime=21000, reward=reward)
-        # fitnesses2 = agents.bandit_test(connections, arms, runtime=21000, reward=reward)
-        best_score = -1000000
-        best_agent = 'they suck'
-        combined_fitnesses = [fitnesses, fitnesses2]
-        # for j in range(len(fitnesses)):
-        #     combined_fitnesses.append(fitnesses[j] + fitnesses2[j])
-        #     print j, "|", combined_fitnesses[j]
-        #     if combined_fitnesses[j] > best_score:
-        #         best_score = combined_fitnesses[j]
-        #         best_agent = j
-        # print "best fitness was ", best_score, " by agent:", best_agent, "with a score of ", fitnesses[best_agent], "and", fitnesses2[best_agent]
-
-        # fitnesses = np.random.randint(0, 100, len(agents.agent_pop))
+        fitnesses = agents.thread_bandit(connections, arms, runtime=21000, reward=reward, noise_rate=noise_rate, noise_weight=noise_weight, size_f=size_fitness)
 
         print "1", motifs.total_weight
 
-        agents.pass_fitnesses(combined_fitnesses)
+        agents.pass_fitnesses(fitnesses)
 
-        agents.status_update(combined_fitnesses, i, config)
+        agents.status_update(fitnesses, i, config)
 
         print "2", motifs.total_weight
 
         motifs.adjust_weights(agents.agent_pop, reward_shape=reward_shape)
 
         print "3", motifs.total_weight
-
-        # for parent in agents.agent_pop:
-        #     list_child = []
-        #     list_child = motifs.list_motifs(parent[0], list_child)
-        #     for item in list_child:
-        #         try:
-        #             motif = motifs.motif_configs[item]
-        #         except:
-        #             traceback.print_exc()
-        #             print "weights killed it 1"
 
         motifs.save_motifs(i, config)
         agents.save_agents(i, config)
