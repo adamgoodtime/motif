@@ -452,64 +452,68 @@ class agent_population(object):
             writer.writerow(["score", agent[3]])
             file.close()
 
-    def status_update(self, combined_fitnesses, iteration, config):
-        total_fitnesses = [0 for i in range(len(combined_fitnesses))]
+    def status_update(self, combined_fitnesses, iteration, config, len_arms):
+        total_scores = [0 for i in range(len(combined_fitnesses))]
         worst_score = 1000000
         worst_agent = 'need to higher worst score'
         best_score = -1000000
         best_agent = 'need to lower best score'
         worst_fitness = 1000000
-        worst_agent_f = 'need to higher worst score'
+        worst_agent_s = 'need to higher worst score'
         best_fitness = -1000000
-        best_agent_f = 'need to lower best score'
-        #todo make it print all the separate fitnesses
+        best_agent_s = 'need to lower best score'
         for j in range(len(self.agent_pop)):
             scores = '|'
             for i in range(len(combined_fitnesses)):
-                scores += '{:5}'.format(combined_fitnesses[i][j])
+                scores += '{:8}'.format(combined_fitnesses[i][j])
             print '{:3}'.format(j), scores
-            if self.agent_pop[j][2] > best_score:
-                best_score = self.agent_pop[j][2]
+            if self.agent_pop[j][2] > best_fitness:
+                best_fitness = self.agent_pop[j][2]
                 best_agent = j
-            if self.agent_pop[j][2] < worst_score:
-                worst_score = self.agent_pop[j][2]
+            if self.agent_pop[j][2] < worst_fitness:
+                worst_fitness = self.agent_pop[j][2]
                 worst_agent = j
-            combined_fitness = 0
-            for i in range(len(combined_fitnesses)):
+            combined_score = 0
+            for i in range(len_arms):
                 if combined_fitnesses[i][j] != 'fail':
-                    combined_fitness += combined_fitnesses[i][j]
-                    total_fitnesses[i] += combined_fitnesses[i][j]
-            if combined_fitness > best_fitness:
-                best_fitness = combined_fitness
-                best_agent_f = j
-            if combined_fitness < worst_fitness:
-                worst_fitness = combined_fitness
-                worst_agent_f = j
-            self.agent_pop[j].append(combined_fitness)
+                    combined_score += combined_fitnesses[i][j]
+                    total_scores[i] += combined_fitnesses[i][j]
+            if combined_score > best_score:
+                best_score = combined_score
+                best_agent_s = j
+            if combined_score < worst_score:
+                worst_score = combined_score
+                worst_agent_s = j
+            self.agent_pop[j].append(combined_score)
         best_scores = '{:3}'.format(combined_fitnesses[0][best_agent])
         for i in range(1, len(combined_fitnesses)):
             best_scores += ', {:3}'.format(combined_fitnesses[i][best_agent])
         print "At iteration: ", iteration
-        print "best fitness was ", best_score, " by agent:", best_agent, \
+        print "best fitness was ", best_fitness, " by agent:", best_agent, \
             "with a score of: ", best_scores
         self.max_score.append(best_score)
         self.min_score.append(worst_score)
         total_average = 0
-        for i in range(len(combined_fitnesses)):
-            total_fitnesses[i] /= len(self.agent_pop)
-            total_average += total_fitnesses[i]
-        self.average_fitness.append(total_fitnesses)
+        for i in range(len_arms):
+            total_scores[i] /= len(self.agent_pop)
+            total_average += total_scores[i]
+        # self.average_score.append(total_scores)
         self.max_fitness.append(best_fitness)
         self.total_average.append(total_average)
         self.min_fitness.append(worst_fitness)
-        print "maximum score:", self.max_score
-        print "average score:", self.average_score
-        print "minimum score:", self.min_score
         print "maximum fitness:", self.max_fitness
-        print "average fitness:", self.total_average
+        # print "average fitness:", self.total_average
         print "minimum fitness:", self.min_fitness
+        best_scores = '{:3}'.format(combined_fitnesses[0][best_agent_s])
+        for i in range(1, len(combined_fitnesses)):
+            best_scores += ', {:3}'.format(combined_fitnesses[i][best_agent_s])
+        print "best score was ", best_score, " by agent:", best_agent_s, \
+            "with a score of: ", best_scores
+        print "maximum score:", self.max_score
+        print "average score:", self.total_average
+        print "minimum score:", self.min_score
         self.save_agent_connections(self.agent_pop[best_agent], iteration, 'score '+config)
-        self.save_agent_connections(self.agent_pop[best_agent_f], iteration, 'fitness '+config)
+        self.save_agent_connections(self.agent_pop[best_agent_s], iteration, 'fitness '+config)
 
     def get_scores(self, game_pop, simulator):
         g_vertex = game_pop._vertex
@@ -519,13 +523,13 @@ class agent_population(object):
         return scores.tolist()
 
     def thread_bandit_test_test(self, connections, arms, split=4, runtime=2000, exposure_time=200, noise_rate=100,
-                           noise_weight=0.01, reward=0, seed=0):
+                           noise_weight=0.01, reward=0, spike_f=False, seed=0):
 
         np.random.seed(seed)
         if np.random.random() < 0.5:
             result = []
             for i in range(len(connections)):
-                result.append(np.random.random())
+                result.append([np.random.random(), np.random.randint(100)])
         else:
             result = 'fail'
 
@@ -538,36 +542,39 @@ class agent_population(object):
 
         return result
 
-    def thread_bandit(self, connections, arms, split=4, runtime=2000, exposure_time=200, noise_rate=100, noise_weight=0.01, reward=0, size_f=False, seed=0, top=True):
+    def thread_bandit(self, connections, arms, split=4, runtime=2000, exposure_time=200, noise_rate=100, noise_weight=0.01, reward=0, size_f=False, spike_f=False, seed=0, top=True):
 
         def helper(args):
             return self.bandit_test(*args)
             # return self.thread_bandit_test_test(*args)
 
         step_size = len(connections) / split
+        if step_size == 0:
+            step_size = 1
         if isinstance(arms[0], list):
             connection_threads = []
             all_configs = [[[connections[x:x + step_size], arm, split, runtime, exposure_time, noise_rate, noise_weight,
-                             reward] for x in xrange(0, len(connections), step_size)] for arm in arms]
+                             reward, spike_f] for x in xrange(0, len(connections), step_size)] for arm in arms]
             # all_configs = [[[connections[x:x + step_size], arm, split, runtime, exposure_time, noise_rate, noise_weight,
-            #                  reward, np.random.randint(100)] for x in xrange(0, len(connections), step_size)] for arm in arms]
+            #                  reward, spike_f, np.random.randint(100)] for x in xrange(0, len(connections), step_size)] for arm in arms]
             for arm in all_configs:
                 for config in arm:
                     connection_threads.append(config)
         else:
             connection_threads = [[connections[x:x + step_size], arms, split, runtime, exposure_time, noise_rate,
-                                   noise_weight, reward] for x in xrange(0, len(connections), step_size)]
+                                   noise_weight, reward, spike_f] for x in xrange(0, len(connections), step_size)]
             # connection_threads = [[connections[x:x + step_size], arms, split, runtime, exposure_time, noise_rate,
-            #                        noise_weight, reward, np.random.randint(100)] for x in xrange(0, len(connections), step_size)]
+            #                        noise_weight, reward, spike_f, np.random.randint(100)] for x in xrange(0, len(connections), step_size)]
         pool = pathos.multiprocessing.Pool(processes=len(connection_threads))
 
         pool_result = pool.map(func=helper, iterable=connection_threads)
 
         for i in range(len(pool_result)):
+            new_split = 16
             if pool_result[i] == 'fail' and len(connection_threads[i][0]) > 1:
-                print "splitting ", len(connection_threads[i][0]), " into 4 pieces"
+                print "splitting ", len(connection_threads[i][0]), " into ", new_split, " pieces"
                 problem_arms = connection_threads[i][1]
-                pool_result[i] = self.thread_bandit(connection_threads[i][0], problem_arms, split, runtime, exposure_time, noise_rate, noise_weight, reward, seed=i, top=False)
+                pool_result[i] = self.thread_bandit(connection_threads[i][0], problem_arms, new_split, runtime, exposure_time, noise_rate, noise_weight, reward, spike_f, seed=i, top=False)
 
         agent_fitness = []
         for thread in pool_result:
@@ -593,7 +600,7 @@ class agent_population(object):
         return agent_fitness
 
 
-    def bandit_test(self, connections, arms, split=4, runtime=2000, exposure_time=200, noise_rate=100, noise_weight=0.01, reward=0):
+    def bandit_test(self, connections, arms, split=4, runtime=2000, exposure_time=200, noise_rate=100, noise_weight=0.01, reward=0, spike_f=False):
         max_attempts = 2
         try_except = 0
         while try_except < max_attempts:
@@ -702,20 +709,29 @@ class agent_population(object):
                     spikes = excite[i-excite_fail].get_data('spikes').segments[0].spiketrains
                     for neuron in spikes:
                         for spike in neuron:
-                            excite_spike_count[i] -= 1
+                            excite_spike_count[i] += 1
                 else:
                     excite_fail += 1
                 if i in inhib_marker:
                     spikes = inhib[i-inhib_fail].get_data('spikes').segments[0].spiketrains
                     for neuron in spikes:
                         for spike in neuron:
-                            inhib_spike_count[i] -= 1
+                            inhib_spike_count[i] += 1
                 else:
                     inhib_fail += 1
                 scores.append(self.get_scores(game_pop=bandit[i - fails], simulator=simulator))
                 # pop[i].stats = {'fitness': scores[i][len(scores[i]) - 1][0]}  # , 'steps': 0}
-                agent_fitness.append(scores[i][len(scores[i]) - 1][0])#, excite_spike_count, inhib_spike_count)
-            print i, "| e:", excite_spike_count[i], "-i:", inhib_spike_count[i], "|\t", scores[i]
+                if spike_f:
+                    agent_fitness.append([scores[i][len(scores[i]) - 1][0], excite_spike_count[i] + inhib_spike_count[i]])
+                else:
+                    agent_fitness.append(scores[i][len(scores[i]) - 1][0])
+            # print i, "| e:", excite_spike_count[i], "-i:", inhib_spike_count[i], "|\t", scores[i]
+            e_string = "e: {}".format(excite_spike_count[i])
+            i_string = "i: {}".format(inhib_spike_count[i])
+            score_string = ""
+            for j in range(len(scores[i])):
+                score_string += "{:4},".format(scores[i][j][0])
+            print "{:3} | {:8} {:8} - ".format(i, e_string, i_string), score_string
         p.end()
 
         return agent_fitness

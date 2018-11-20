@@ -19,38 +19,68 @@ def bandit():
                               # read_entire_population='motif population 0: conf.csv',
                               population_size=200)
 
-    # todo :print best agent, add spikes to the fitness function - weight the spikes prob, add noise?
+    # todo :add number of different motifs to the fitness function to promote regularity
 
+    agent_pop_size = 100
     # arms = [[0.1, 0.9], [0.9, 0.1]]
     # arms = [[0.2, 0.8], [0.8, 0.2]]
     # arms = [[0.4, 0.6], [0.6, 0.4]]
     arms = [[0.4, 0.6], [0.6, 0.4], [0.1, 0.9], [0.9, 0.1]]
     number_of_arms = 2
+    split = 1
 
     reward_shape = True
-    reward = 1
+    reward = 0
     noise_rate = 100
     noise_weight = 0.01
     maximum_depth = 10
-    size_fitness = False
+    size_fitness = True
+    spikes_fitness = True
+    random_arms = 0
 
-    config = "bandit reward_shape:{}, reward:{}, noise r-w:{}-{}, arms:{}-{}, max_d{}".format(reward_shape, reward, noise_rate, noise_weight, arms[0][1], len(arms), maximum_depth)
+    config = "bandit reward_shape:{}, reward:{}, noise r-w:{}-{}, arms:{}-{}-{}, max_d{}, size:{}, spikes:{}".format(
+        reward_shape, reward, noise_rate, noise_weight, arms[0][1], len(arms), random_arms, maximum_depth, size_fitness, spikes_fitness)
 
-    agents = agent_population(motifs, pop_size=100, inputs=2, outputs=number_of_arms, maximum_depth=maximum_depth)
+    agents = agent_population(motifs, pop_size=agent_pop_size, inputs=2, outputs=number_of_arms, maximum_depth=maximum_depth)
 
     for i in range(1000):
+
+        if random_arms:
+            arms = []
+            for k in range(random_arms):
+                total = 1
+                arm = []
+                for j in range(number_of_arms - 1):
+                    arm.append(np.random.uniform(0, total))
+                    total -= arm[j]
+                arm.append(total)
+                arms.append(arm)
+
         if i == 0:
             connections = agents.generate_spinn_nets(input=2, output=number_of_arms, max_depth=3)
         else:
             connections = agents.generate_spinn_nets(input=2, output=number_of_arms, max_depth=3, create=False)
 
-        fitnesses = agents.thread_bandit(connections, arms, runtime=21000, reward=reward, noise_rate=noise_rate, noise_weight=noise_weight, size_f=size_fitness)
+        fitnesses = agents.thread_bandit(connections, arms, split=split, runtime=21000, reward=reward, noise_rate=noise_rate, noise_weight=noise_weight, size_f=size_fitness, spike_f=spikes_fitness)
 
         print "1", motifs.total_weight
 
+        if spikes_fitness:
+            agent_spikes = []
+            for k in range(agent_pop_size):
+                spike_total = 0
+                for j in range(len(arms)):
+                    if isinstance(fitnesses[j][k], list):
+                        spike_total -= fitnesses[j][k][1]
+                        fitnesses[j][k] = fitnesses[j][k][0]
+                    else:
+                        spike_total -= 1000000
+                agent_spikes.append(spike_total)
+            fitnesses.append(agent_spikes)
+
         agents.pass_fitnesses(fitnesses)
 
-        agents.status_update(fitnesses, i, config)
+        agents.status_update(fitnesses, i, config, len(arms))
 
         print "2", motifs.total_weight
 
@@ -75,6 +105,7 @@ def bandit():
     # connection change
     # swap motif
 
+# execfile('motif_bandit.py')
 bandit()
 
 print "done"
@@ -84,7 +115,6 @@ print "done"
 
 #ToDo
 '''
-complete checks for infinite loops, in mutate mainly
 create a motif for the input/output population that is connected to the reservoir network
 shifting of upper reference needs to be careful of layers larger than 10
 figure out mapping to inputs
