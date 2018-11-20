@@ -54,7 +54,8 @@ for i in range(1000):
     #         best_agent = j
     # print "best fitness was ", best_score, " by agent:", best_agent, "with a score of ", fitnesses[best_agent], "and", fitnesses2[best_agent]
 
-    fitnesses = np.random.randint(0, 100, len(agents.agent_pop))
+    # fitnesses = np.random.randint(0, 100, len(agents.agent_pop))
+    fitnesses = agents.bandit_test(connections, [0.9, 0.1])
 
     print "1", motifs.total_weight
 
@@ -76,8 +77,8 @@ for i in range(1000):
     #             traceback.print_exc()
     #             print "weights killed it 1"
 
-    motifs.save_motifs(i, config)
-    agents.save_agents(i, config)
+    # motifs.save_motifs(i, config)
+    # agents.save_agents(i, config)
 
     print "4", motifs.total_weight
 

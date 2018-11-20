@@ -21,10 +21,10 @@ def bandit():
 
     # todo :print best agent, add spikes to the fitness function - weight the spikes prob, add noise?
 
-    arms = [[0.1, 0.9], [0.9, 0.1]]
+    # arms = [[0.1, 0.9], [0.9, 0.1]]
     # arms = [[0.2, 0.8], [0.8, 0.2]]
     # arms = [[0.4, 0.6], [0.6, 0.4]]
-    # arms = [[0.4, 0.6], [0.6, 0.4], [0.1, 0.9], [0.9, 0.1]]
+    arms = [[0.4, 0.6], [0.6, 0.4], [0.1, 0.9], [0.9, 0.1]]
     number_of_arms = 2
 
     reward_shape = True

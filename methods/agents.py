@@ -464,7 +464,10 @@ class agent_population(object):
         best_agent_f = 'need to lower best score'
         #todo make it print all the separate fitnesses
         for j in range(len(self.agent_pop)):
-            print j, "|\t", combined_fitnesses[0][j], '\t',combined_fitnesses[1][j]
+            scores = '|'
+            for i in range(len(combined_fitnesses)):
+                scores += '{:5}'.format(combined_fitnesses[i][j])
+            print '{:3}'.format(j), scores
             if self.agent_pop[j][2] > best_score:
                 best_score = self.agent_pop[j][2]
                 best_agent = j
@@ -483,9 +486,12 @@ class agent_population(object):
                 worst_fitness = combined_fitness
                 worst_agent_f = j
             self.agent_pop[j].append(combined_fitness)
+        best_scores = '{:3}'.format(combined_fitnesses[0][best_agent])
+        for i in range(1, len(combined_fitnesses)):
+            best_scores += ', {:3}'.format(combined_fitnesses[i][best_agent])
         print "At iteration: ", iteration
         print "best fitness was ", best_score, " by agent:", best_agent, \
-            "with a score of ", combined_fitnesses[0][best_agent], "and", combined_fitnesses[1][best_agent]
+            "with a score of: ", best_scores
         self.max_score.append(best_score)
         self.min_score.append(worst_score)
         total_average = 0
