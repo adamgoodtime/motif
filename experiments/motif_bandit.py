@@ -82,7 +82,7 @@ def bandit():
 
         agents.status_update(fitnesses, i, config, len(arms))
 
-        print "config: ", config
+        print "\nconfig: ", config, "\n"
 
         print "2", motifs.total_weight
 
