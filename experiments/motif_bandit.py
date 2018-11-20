@@ -82,6 +82,8 @@ def bandit():
 
         agents.status_update(fitnesses, i, config, len(arms))
 
+        print "config: ", config
+
         print "2", motifs.total_weight
 
         motifs.adjust_weights(agents.agent_pop, reward_shape=reward_shape)
