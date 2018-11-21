@@ -61,7 +61,23 @@ def bandit():
         else:
             connections = agents.generate_spinn_nets(input=2, output=number_of_arms, max_depth=3, create=False)
 
-        fitnesses = agents.thread_bandit(connections, arms, split=split, runtime=21000, reward=reward, noise_rate=noise_rate, noise_weight=noise_weight, size_f=size_fitness, spike_f=spikes_fitness)
+        # fitnesses = agents.thread_bandit(connections, arms, split=split, runtime=21000, exposure_time=200, reward=reward, noise_rate=noise_rate, noise_weight=noise_weight, size_f=size_fitness, spike_f=spikes_fitness)
+
+        globals()['pop_size'] = agent_pop_size
+        globals()['config'] = config
+        globals()['connections'] = connections
+        globals()['arms'] = arms
+        globals()['split'] = split
+        globals()['runtime'] = 21000
+        globals()['reward'] = reward
+        globals()['noise_rate'] = noise_rate
+        globals()['noise_weight'] = noise_weight
+        globals()['size_f'] = size_fitness
+        globals()['spike_f'] = spikes_fitness
+        globals()['exposure_time'] = 200
+        execfile("../methods/exec_bandit.py", globals())
+
+        fitnesses = agents.read_fitnesses(config)
 
         print "1", motifs.total_weight
 
@@ -107,7 +123,6 @@ def bandit():
     # connection change
     # swap motif
 
-# execfile('motif_bandit.py')
 bandit()
 
 print "done"

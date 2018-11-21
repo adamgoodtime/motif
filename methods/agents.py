@@ -24,6 +24,7 @@ import csv
 import threading
 import pathos.multiprocessing
 from spinn_front_end_common.utilities import globals_variables
+from ast import literal_eval
 
 max_fail_score = -1000000
 
@@ -452,6 +453,18 @@ class agent_population(object):
             writer.writerow(["score", agent[3]])
             file.close()
 
+    def save_status(self, config):
+        with open('status for {}.csv'.format(config), 'w') as file:
+            writer = csv.writer(file, delimiter=',', lineterminator='\n')
+            writer.writerow(['maximum score', ''])
+            writer.writerow(self.max_score)
+            writer.writerow(['average score', ''])
+            writer.writerow(self.average_score)
+            writer.writerow(['minimum score', ''])
+            writer.writerow(self.min_score)
+            file.close()
+
+
     def status_update(self, combined_fitnesses, iteration, config, len_arms):
         total_scores = [0 for i in range(len(combined_fitnesses))]
         worst_score = 1000000
@@ -499,7 +512,7 @@ class agent_population(object):
             total_average += total_scores[i]
         # self.average_score.append(total_scores)
         self.max_fitness.append(best_fitness)
-        self.total_average.append(total_average)
+        self.average_score.append(total_average)
         self.min_fitness.append(worst_fitness)
         print "maximum fitness:", self.max_fitness
         # print "average fitness:", self.total_average
@@ -510,10 +523,11 @@ class agent_population(object):
         print "best score was ", best_score, " by agent:", best_agent_s, \
             "with a score of: ", best_scores
         print "maximum score:", self.max_score
-        print "average score:", self.total_average
+        print "average score:", self.average_score
         print "minimum score:", self.min_score
         self.save_agent_connections(self.agent_pop[best_agent], iteration, 'score '+config)
         self.save_agent_connections(self.agent_pop[best_agent_s], iteration, 'fitness '+config)
+        self.save_status(config)
 
     def get_scores(self, game_pop, simulator):
         g_vertex = game_pop._vertex
@@ -735,6 +749,18 @@ class agent_population(object):
         p.end()
 
         return agent_fitness
+
+    def read_fitnesses(self, config):
+        fitnesses = []
+        file_name = 'fitnesses {}.csv'.format(config)
+        with open(file_name) as from_file:
+            csvFile = csv.reader(from_file)
+            for row in csvFile:
+                metric = []
+                for thing in row:
+                    metric.append(literal_eval(thing))
+                fitnesses.append(metric)
+        return fitnesses
 
 class agent_species(object):
     def __init__(self, initial_member):
