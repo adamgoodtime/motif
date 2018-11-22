@@ -7,14 +7,16 @@ from multiprocessing.pool import ThreadPool
 import multiprocessing
 import pathos.multiprocessing
 
-def bandit():
+def bandit(generations):
     print "starting"
+
+    weight_max = 0.1
 
     # check max motif count
     motifs = motif_population(max_motif_size=3,
                               no_weight_bins=5,
                               no_delay_bins=5,
-                              weight_range=(0.005, 0.1),
+                              weight_range=(0.005, weight_max),
                               # delay_range=(),
                               # read_entire_population='motif population 0: conf.csv',
                               population_size=200)
@@ -24,7 +26,10 @@ def bandit():
     agent_pop_size = 100
     # arms = [0.9, 0.1]
     # arms = [[0.1, 0.9], [0.9, 0.1]]
-    arms = [[0.1, 0.9], [0.9, 0.1], [0.1, 0.9], [0.9, 0.1]]
+    arms = [[1, 0], [0, 1]]
+    # arms = [[0.1, 0.9], [0.9, 0.1], [0.1, 0.9], [0.9, 0.1]]
+    # arms = [[0.1, 0.9], [0.9, 0.1], [0.1, 0.9], [0.9, 0.1], [0.1, 0.9], [0.9, 0.1]]
+    # arms = [[0.1, 0.9], [0.9, 0.1], [0.1, 0.9], [0.9, 0.1], [0.1, 0.9], [0.9, 0.1], [0.1, 0.9], [0.9, 0.1]]
     # arms = [[0.2, 0.8], [0.8, 0.2]]
     # arms = [[0.4, 0.6], [0.6, 0.4]]
     # arms = [[0.4, 0.6], [0.6, 0.4], [0.1, 0.9], [0.9, 0.1]]
@@ -40,12 +45,12 @@ def bandit():
     spikes_fitness = False
     random_arms = 0
 
-    config = "bandit reward_shape:{}, reward:{}, noise r-w:{}-{}, arms:{}-{}-{}, max_d{}, size:{}, spikes:{}".format(
-        reward_shape, reward, noise_rate, noise_weight, arms[0], len(arms), random_arms, maximum_depth, size_fitness, spikes_fitness)
+    config = "bandit reward_shape:{}, reward:{}, noise r-w:{}-{}, arms:{}-{}-{}, max_d{}, size:{}, spikes:{}, w_max{}".format(
+        reward_shape, reward, noise_rate, noise_weight, arms[0], len(arms), random_arms, maximum_depth, size_fitness, spikes_fitness, weight_max)
 
     agents = agent_population(motifs, pop_size=agent_pop_size, inputs=2, outputs=number_of_arms, maximum_depth=maximum_depth)
 
-    for i in range(1000):
+    for i in range(generations):
 
         if random_arms:
             arms = []
@@ -125,7 +130,7 @@ def bandit():
     # connection change
     # swap motif
 
-bandit()
+bandit(1000)
 
 print "done"
 
