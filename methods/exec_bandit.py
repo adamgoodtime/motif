@@ -190,8 +190,10 @@ def bandit_test(connections, arms, split=4, runtime=2000, exposure_time=200, noi
     for i in range(len(connections)):
         if i in failures:
             fails += 1
-            scores.append(max_fail_score)
+            scores.append([[max_fail_score], [max_fail_score], [max_fail_score], [max_fail_score]])
             agent_fitness.append(scores[i])
+            excite_spike_count[i] -= max_fail_score
+            inhib_spike_count[i] -= max_fail_score
             print "worst score for the failure"
         else:
             if i in excite_marker:
@@ -210,10 +212,10 @@ def bandit_test(connections, arms, split=4, runtime=2000, exposure_time=200, noi
                 inhib_fail += 1
             scores.append(get_scores(game_pop=bandit[i - fails], simulator=simulator))
             # pop[i].stats = {'fitness': scores[i][len(scores[i]) - 1][0]}  # , 'steps': 0}
-            if spike_f:
-                agent_fitness.append([scores[i][len(scores[i]) - 1][0], excite_spike_count[i] + inhib_spike_count[i]])
-            else:
-                agent_fitness.append(scores[i][len(scores[i]) - 1][0])
+        if spike_f:
+            agent_fitness.append([scores[i][len(scores[i]) - 1][0], excite_spike_count[i] + inhib_spike_count[i]])
+        else:
+            agent_fitness.append(scores[i][len(scores[i]) - 1][0])
         # print i, "| e:", excite_spike_count[i], "-i:", inhib_spike_count[i], "|\t", scores[i]
         e_string = "e: {}".format(excite_spike_count[i])
         i_string = "i: {}".format(inhib_spike_count[i])

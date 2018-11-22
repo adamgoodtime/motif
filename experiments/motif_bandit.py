@@ -14,7 +14,7 @@ def bandit():
     motifs = motif_population(max_motif_size=3,
                               no_weight_bins=5,
                               no_delay_bins=5,
-                              weight_range=(0.005, 0.05),
+                              weight_range=(0.005, 0.1),
                               # delay_range=(),
                               # read_entire_population='motif population 0: conf.csv',
                               population_size=200)
@@ -36,8 +36,8 @@ def bandit():
     noise_rate = 100
     noise_weight = 0.01
     maximum_depth = 10
-    size_fitness = True
-    spikes_fitness = True
+    size_fitness = False
+    spikes_fitness = False
     random_arms = 0
 
     config = "bandit reward_shape:{}, reward:{}, noise r-w:{}-{}, arms:{}-{}-{}, max_d{}, size:{}, spikes:{}".format(
