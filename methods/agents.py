@@ -584,7 +584,7 @@ class agent_population(object):
         pool_result = pool.map(func=helper, iterable=connection_threads)
 
         for i in range(len(pool_result)):
-            new_split = 16
+            new_split = 4
             if pool_result[i] == 'fail' and len(connection_threads[i][0]) > 1:
                 print "splitting ", len(connection_threads[i][0]), " into ", new_split, " pieces"
                 problem_arms = connection_threads[i][1]
@@ -715,8 +715,10 @@ class agent_population(object):
         for i in range(len(connections)):
             if i in failures:
                 fails += 1
-                scores.append(max_fail_score)
+                scores.append([[max_fail_score], [max_fail_score], [max_fail_score], [max_fail_score]])
                 agent_fitness.append(scores[i])
+                excite_spike_count[i] -= max_fail_score
+                inhib_spike_count[i] -= max_fail_score
                 print "worst score for the failure"
             else:
                 if i in excite_marker:
@@ -735,10 +737,10 @@ class agent_population(object):
                     inhib_fail += 1
                 scores.append(self.get_scores(game_pop=bandit[i - fails], simulator=simulator))
                 # pop[i].stats = {'fitness': scores[i][len(scores[i]) - 1][0]}  # , 'steps': 0}
-                if spike_f:
-                    agent_fitness.append([scores[i][len(scores[i]) - 1][0], excite_spike_count[i] + inhib_spike_count[i]])
-                else:
-                    agent_fitness.append(scores[i][len(scores[i]) - 1][0])
+            if spike_f:
+                agent_fitness.append([scores[i][len(scores[i]) - 1][0], excite_spike_count[i] + inhib_spike_count[i]])
+            else:
+                agent_fitness.append(scores[i][len(scores[i]) - 1][0])
             # print i, "| e:", excite_spike_count[i], "-i:", inhib_spike_count[i], "|\t", scores[i]
             e_string = "e: {}".format(excite_spike_count[i])
             i_string = "i: {}".format(inhib_spike_count[i])

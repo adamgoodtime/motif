@@ -54,7 +54,9 @@ for i in range(1000):
     #         best_agent = j
     # print "best fitness was ", best_score, " by agent:", best_agent, "with a score of ", fitnesses[best_agent], "and", fitnesses2[best_agent]
 
-    execfile("../methods/exec_bandit.py", globals())
+    # execfile("../methods/exec_bandit.py", globals())
+
+    # fitnesses = agents.thread_bandit(connections, arms, split=16, runtime=21000, exposure_time=200, reward=reward, noise_rate=noise_rate, noise_weight=noise_weight, size_f=size_fitness, spike_f=spikes_fitness)
 
     # fitnesses = np.random.randint(0, 100, len(agents.agent_pop))
     fitnesses = agents.bandit_test(connections, [0.9, 0.1])

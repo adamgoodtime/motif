@@ -22,10 +22,12 @@ def bandit():
     # todo :add number of different motifs to the fitness function to promote regularity
 
     agent_pop_size = 100
+    # arms = [0.9, 0.1]
     # arms = [[0.1, 0.9], [0.9, 0.1]]
+    arms = [[0.1, 0.9], [0.9, 0.1], [0.1, 0.9], [0.9, 0.1]]
     # arms = [[0.2, 0.8], [0.8, 0.2]]
     # arms = [[0.4, 0.6], [0.6, 0.4]]
-    arms = [[0.4, 0.6], [0.6, 0.4], [0.1, 0.9], [0.9, 0.1]]
+    # arms = [[0.4, 0.6], [0.6, 0.4], [0.1, 0.9], [0.9, 0.1]]
     number_of_arms = 2
     split = 1
 
@@ -39,7 +41,7 @@ def bandit():
     random_arms = 0
 
     config = "bandit reward_shape:{}, reward:{}, noise r-w:{}-{}, arms:{}-{}-{}, max_d{}, size:{}, spikes:{}".format(
-        reward_shape, reward, noise_rate, noise_weight, arms[0][1], len(arms), random_arms, maximum_depth, size_fitness, spikes_fitness)
+        reward_shape, reward, noise_rate, noise_weight, arms[0], len(arms), random_arms, maximum_depth, size_fitness, spikes_fitness)
 
     agents = agent_population(motifs, pop_size=agent_pop_size, inputs=2, outputs=number_of_arms, maximum_depth=maximum_depth)
 
@@ -61,7 +63,7 @@ def bandit():
         else:
             connections = agents.generate_spinn_nets(input=2, output=number_of_arms, max_depth=3, create=False)
 
-        # fitnesses = agents.thread_bandit(connections, arms, split=split, runtime=21000, exposure_time=200, reward=reward, noise_rate=noise_rate, noise_weight=noise_weight, size_f=size_fitness, spike_f=spikes_fitness)
+        # fitnesses = agents.thread_bandit(connections, arms, split=16, runtime=21000, exposure_time=200, reward=reward, noise_rate=noise_rate, noise_weight=noise_weight, size_f=size_fitness, spike_f=spikes_fitness)
 
         globals()['pop_size'] = agent_pop_size
         globals()['config'] = config
