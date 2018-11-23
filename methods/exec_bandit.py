@@ -187,6 +187,7 @@ def bandit_test(connections, arms, split=4, runtime=2000, exposure_time=200, noi
     excite_fail = 0
     inhib_spike_count = [0 for i in range(len(connections))]
     inhib_fail = 0
+    print "reading the spikes of ", config
     for i in range(len(connections)):
         if i in failures:
             fails += 1

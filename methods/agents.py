@@ -448,7 +448,7 @@ class agent_population(object):
         with open('best agent {}: score({}), {}.csv'.format(iteration, agent[3], config), 'w') as file:
             writer = csv.writer(file, delimiter=',', lineterminator='\n')
             for thing in connections:
-                writer.writerow([thing, ''])
+                writer.writerow([thing])
             writer.writerow(["fitness", agent[2]])
             writer.writerow(["score", agent[3]])
             file.close()
@@ -456,11 +456,11 @@ class agent_population(object):
     def save_status(self, config):
         with open('status for {}.csv'.format(config), 'w') as file:
             writer = csv.writer(file, delimiter=',', lineterminator='\n')
-            writer.writerow(['maximum score', ''])
+            writer.writerow(['maximum score'])
             writer.writerow(self.max_score)
-            writer.writerow(['average score', ''])
+            writer.writerow(['average score'])
             writer.writerow(self.average_score)
-            writer.writerow(['minimum score', ''])
+            writer.writerow(['minimum score'])
             writer.writerow(self.min_score)
             file.close()
 
@@ -765,6 +765,7 @@ class agent_population(object):
         return fitnesses
 
 class agent_species(object):
+    # todo species could work on a fitness metric in isolation with a shared motif pool
     def __init__(self, initial_member):
         self.members = [initial_member]
         self.representative = initial_member
