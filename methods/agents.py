@@ -462,6 +462,7 @@ class agent_population(object):
             writer.writerow(self.average_score)
             writer.writerow(['minimum score'])
             writer.writerow(self.min_score)
+            writer.writerow([time.localtime()])
             file.close()
 
 
