@@ -17,7 +17,7 @@ def bandit(generations):
                               no_weight_bins=5,
                               no_delay_bins=5,
                               weight_range=(0.005, weight_max),
-                              # delay_range=(),
+                              # delay_range=(2, 2.00001),
                               # read_entire_population='motif population 0: conf.csv',
                               population_size=200)
 

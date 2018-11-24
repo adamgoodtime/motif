@@ -189,6 +189,7 @@ def bandit_test(connections, arms, split=4, runtime=2000, exposure_time=200, noi
     inhib_fail = 0
     print "reading the spikes of ", config
     for i in range(len(connections)):
+        print "started processing fitness of: ", i
         if i in failures:
             fails += 1
             scores.append([[max_fail_score], [max_fail_score], [max_fail_score], [max_fail_score]])
@@ -204,6 +205,7 @@ def bandit_test(connections, arms, split=4, runtime=2000, exposure_time=200, noi
                         excite_spike_count[i] += 1
             else:
                 excite_fail += 1
+                print "had an excite failure"
             if i in inhib_marker:
                 spikes = inhib[i - inhib_fail].get_data('spikes').segments[0].spiketrains
                 for neuron in spikes:
@@ -211,13 +213,18 @@ def bandit_test(connections, arms, split=4, runtime=2000, exposure_time=200, noi
                         inhib_spike_count[i] += 1
             else:
                 inhib_fail += 1
+                print "had an inhib failure"
             scores.append(get_scores(game_pop=bandit[i - fails], simulator=simulator))
             # pop[i].stats = {'fitness': scores[i][len(scores[i]) - 1][0]}  # , 'steps': 0}
+        print "finished spikes"
         if spike_f:
             agent_fitness.append([scores[i][len(scores[i]) - 1][0], excite_spike_count[i] + inhib_spike_count[i]])
         else:
             agent_fitness.append(scores[i][len(scores[i]) - 1][0])
         # print i, "| e:", excite_spike_count[i], "-i:", inhib_spike_count[i], "|\t", scores[i]
+    print "The scores for this run of {} agents are:".format(len(connections))
+    for i in range(len(connections)):
+        print "c:{}, s:{}, si:{}, si0:{}".format(len(connections), len(scores), len(scores[i]), len(scores[i][0]))
         e_string = "e: {}".format(excite_spike_count[i])
         i_string = "i: {}".format(inhib_spike_count[i])
         score_string = ""

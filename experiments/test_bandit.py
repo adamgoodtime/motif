@@ -45,7 +45,21 @@ def read_agent():
             agent_connections.append(literal_eval(row[0]))
     return agent_connections
 
-def test_agent(arm):
+def thread_bandit():
+    def helper(args):
+        return test_agent(*args)
+
+    if isinstance(arms[0], list):
+        pool = pathos.multiprocessing.Pool(processes=len(arms))
+
+        pool.map(func=helper, iterable=arms)
+    else:
+        test_agent(arms[0], arms[1])
+
+def test_agent(arm1, arm2):
+
+    arm = [arm1, arm2]
+
     connections = read_agent()
 
     p.setup(timestep=1.0, min_delay=1, max_delay=127)
@@ -98,14 +112,18 @@ def test_agent(arm):
 
     scores = get_scores(game_pop=bandit, simulator=simulator)
     print scores
+    print arm
     p.end()
 
-file = 'best agent 348: score(206), score bandit reward_shape:True, reward:0, noise r-w:100-0.01, arms:[1, 0]-2-0, max_d10, size:False, spikes:False, w_max0.1.csv'
+# file = 'best agent 348: score(206), score bandit reward_shape:True, reward:0, noise r-w:100-0.01, arms:[1, 0]-2-0, max_d10, size:False, spikes:False, w_max0.1.csv'
+file = 'best agent 152: score(204), score bandit reward_shape:True, reward:0, noise r-w:0-0.01, arms:[1, 0]-2-0, max_d10, size:False, spikes:False, w_max0.1.csv'
 
 # arms = [0.9, 0.1]
-arms = [0, 0.9]
+# arms = [0.1, 0.9]
+# arms = [0, 1]
+# arms = [1, 0]
 # arms = [[0.1, 0.9], [0.9, 0.1]]
-# arms = [[1, 0], [0, 1]]
+arms = [[1, 0], [0, 1]]
 # arms = [[0.1, 0.9], [0.9, 0.1], [0.1, 0.9], [0.9, 0.1]]
 # arms = [[0.1, 0.9], [0.9, 0.1], [0.1, 0.9], [0.9, 0.1], [0.1, 0.9], [0.9, 0.1]]
 # arms = [[0.1, 0.9], [0.9, 0.1], [0.1, 0.9], [0.9, 0.1], [0.1, 0.9], [0.9, 0.1], [0.1, 0.9], [0.9, 0.1]]
@@ -117,11 +135,11 @@ split = 1
 
 reward_shape = True
 reward = 0
-noise_rate = 100
+noise_rate = 0
 noise_weight = 0.01
 random_arms = 0
 
 runtime = 40000
 exposure_time = 200
 
-test_agent(arms)
+thread_bandit()

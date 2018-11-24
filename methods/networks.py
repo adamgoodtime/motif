@@ -692,7 +692,7 @@ class motif_population(object):
         self.depth_fix()
 
     def save_motifs(self, iteration, config):
-        with open('motif population {}: {}.csv'.format(iteration, config), 'w') as file:
+        with open('Motif population {}: {}.csv'.format(iteration, config), 'w') as file:
             writer = csv.writer(file, delimiter=',', lineterminator='\n')
             for motif_id in self.motif_configs:
                 motif = self.motif_configs[motif_id]

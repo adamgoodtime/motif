@@ -437,7 +437,7 @@ class agent_population(object):
         return i
 
     def save_agents(self, iteration, config):
-        with open('agent population {}: {}.csv'.format(iteration, config), 'w') as file:
+        with open('Agent population {}: {}.csv'.format(iteration, config), 'w') as file:
             writer = csv.writer(file, delimiter=',', lineterminator='\n')
             for agent in self.agent_pop:
                 writer.writerow(agent)
