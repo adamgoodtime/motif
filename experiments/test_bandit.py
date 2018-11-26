@@ -25,6 +25,8 @@ import threading
 import pathos.multiprocessing
 from spinn_front_end_common.utilities import globals_variables
 from ast import literal_eval
+from pyNN.utility.plotting import Figure, Panel
+import matplotlib.pyplot as plt
 
 def get_scores(game_pop, simulator):
     g_vertex = game_pop._vertex
@@ -33,13 +35,13 @@ def get_scores(game_pop, simulator):
         simulator.graph_mapper, simulator.buffer_manager, simulator.machine_time_step)
     return scores.tolist()
 
-def read_agent():
+def read_agent(printing=False):
     agent_connections = []
     with open(file) as from_file:
         csvFile = csv.reader(from_file)
         for row in csvFile:
-            print row
-            print "0", row[0]
+            if printing:
+                print row
             if row[0] == 'fitness':
                 break
             agent_connections.append(literal_eval(row[0]))
@@ -113,23 +115,36 @@ def test_agent(arm1, arm2):
     scores = get_scores(game_pop=bandit, simulator=simulator)
     print scores
     print arm
+
+    e_spikes = excite.get_data('spikes').segments[0].spiketrains
+    i_spikes = inhib.get_data('spikes').segments[0].spiketrains
+    # v = receive_pop[i].get_data('v').segments[0].filter(name='v')[0]
+    plt.figure("[{}, {}] - {}".format(arm1, arm2, scores))
+    Figure(
+        Panel(e_spikes, xlabel="Time (ms)", ylabel="nID", xticks=True),
+        Panel(i_spikes, xlabel="Time (ms)", ylabel="nID", xticks=True)
+    )
+    plt.show()
+
     p.end()
 
 # file = 'best agent 348: score(206), score bandit reward_shape:True, reward:0, noise r-w:100-0.01, arms:[1, 0]-2-0, max_d10, size:False, spikes:False, w_max0.1.csv'
-file = 'best agent 152: score(204), score bandit reward_shape:True, reward:0, noise r-w:0-0.01, arms:[1, 0]-2-0, max_d10, size:False, spikes:False, w_max0.1.csv'
+# file = 'best agent 152: score(204), score bandit reward_shape:True, reward:0, noise r-w:0-0.01, arms:[1, 0]-2-0, max_d10, size:False, spikes:False, w_max0.1.csv'
+file = 'best agent 257: score(784), score bandit reward_shape:True, reward:0, noise r-w:0-0.01, arms:[0.1, 0.9]-8-0, max_d7, size:False, spikes:False, w_max0.1.csv'
 
 # arms = [0.9, 0.1]
 # arms = [0.1, 0.9]
 # arms = [0, 1]
 # arms = [1, 0]
 # arms = [[0.1, 0.9], [0.9, 0.1]]
-arms = [[1, 0], [0, 1]]
+# arms = [[1, 0], [0, 1]]
 # arms = [[0.1, 0.9], [0.9, 0.1], [0.1, 0.9], [0.9, 0.1]]
 # arms = [[0.1, 0.9], [0.9, 0.1], [0.1, 0.9], [0.9, 0.1], [0.1, 0.9], [0.9, 0.1]]
 # arms = [[0.1, 0.9], [0.9, 0.1], [0.1, 0.9], [0.9, 0.1], [0.1, 0.9], [0.9, 0.1], [0.1, 0.9], [0.9, 0.1]]
+arms = [[0.15, 0.85], [0.85, 0.15], [1, 0], [0, 1], [0.05, 0.95], [0.95, 0.05]]
 # arms = [[0.2, 0.8], [0.8, 0.2]]
 # arms = [[0.4, 0.6], [0.6, 0.4]]
-# arms = [[0.4, 0.6], [0.6, 0.4], [0.1, 0.9], [0.9, 0.1]]
+# arms = [[0.4, 0.6], [0.6, 0.4], [0.2, 0.8], [0.8, 0.2], [0.1, 0.9], [0.9, 0.1]]
 number_of_arms = 2
 split = 1
 
@@ -141,5 +156,7 @@ random_arms = 0
 
 runtime = 40000
 exposure_time = 200
+
+read_agent(True)
 
 thread_bandit()

@@ -124,11 +124,15 @@ class agent_population(object):
                 new_indexes.sort()
                 indexed_fitness.append(new_indexes)
             for metric in indexed_fitness:
+                current_shape = 0
                 for i in range(len(metric)):
                     if metric[i][0] == max_fail_score or metric[i][0] == 'fail':
                         shaped_fitnesses[metric[i][1]] += 0
                     else:
-                        shaped_fitnesses[metric[i][1]] += i  # maybe add some weighting here but I dunno
+                        if i > 0:
+                            if metric[i][0] != metric[i-1][0]:
+                                current_shape = i
+                        shaped_fitnesses[metric[i][1]] += current_shape  # maybe add some weighting here but I dunno
         else:
             shaped_fitnesses = [0 for i in range(len(fitnesses))]
             new_indexes = []

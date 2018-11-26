@@ -191,15 +191,16 @@ def bandit_test(connections, arms, split=4, runtime=2000, exposure_time=200, noi
     for i in range(len(connections)):
         print "started processing fitness of: ", i
         if i in failures:
+            print "worst score for the failure"
             fails += 1
             scores.append([[max_fail_score], [max_fail_score], [max_fail_score], [max_fail_score]])
             agent_fitness.append(scores[i])
             excite_spike_count[i] -= max_fail_score
             inhib_spike_count[i] -= max_fail_score
-            print "worst score for the failure"
         else:
             if i in excite_marker:
-                spikes = excite[i - excite_fail].get_data('spikes').segments[0].spiketrains
+                print "counting excite spikes"
+                spikes = excite[i - excite_fail - fails].get_data('spikes').segments[0].spiketrains
                 for neuron in spikes:
                     for spike in neuron:
                         excite_spike_count[i] += 1
@@ -207,7 +208,8 @@ def bandit_test(connections, arms, split=4, runtime=2000, exposure_time=200, noi
                 excite_fail += 1
                 print "had an excite failure"
             if i in inhib_marker:
-                spikes = inhib[i - inhib_fail].get_data('spikes').segments[0].spiketrains
+                print "counting inhib spikes"
+                spikes = inhib[i - inhib_fail - fails].get_data('spikes').segments[0].spiketrains
                 for neuron in spikes:
                     for spike in neuron:
                         inhib_spike_count[i] += 1
