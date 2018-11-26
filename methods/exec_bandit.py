@@ -45,13 +45,13 @@ def thread_bandit(connections, arms, split=4, runtime=2000, exposure_time=200, n
     if isinstance(arms[0], list):
         connection_threads = []
         all_configs = [[[connections[x:x + step_size], arm, split, runtime, exposure_time, noise_rate, noise_weight,
-                         reward, spike_f] for x in xrange(0, len(connections), step_size)] for arm in arms]
+                         reward, spike_f, np.random.randint(10000)] for x in xrange(0, len(connections), step_size)] for arm in arms]
         for arm in all_configs:
             for config in arm:
                 connection_threads.append(config)
     else:
         connection_threads = [[connections[x:x + step_size], arms, split, runtime, exposure_time, noise_rate,
-                               noise_weight, reward, spike_f] for x in xrange(0, len(connections), step_size)]
+                               noise_weight, reward, spike_f, np.random.randint(10000)] for x in xrange(0, len(connections), step_size)]
     pool = pathos.multiprocessing.Pool(processes=len(connection_threads))
 
     pool_result = pool.map(func=helper, iterable=connection_threads)
@@ -62,7 +62,7 @@ def thread_bandit(connections, arms, split=4, runtime=2000, exposure_time=200, n
             print "splitting ", len(connection_threads[i][0]), " into ", new_split, " pieces"
             problem_arms = connection_threads[i][1]
             pool_result[i] = thread_bandit(connection_threads[i][0], problem_arms, new_split, runtime,
-                                                exposure_time, noise_rate, noise_weight, reward, spike_f,top=False)
+                                                exposure_time, noise_rate, noise_weight, reward, spike_f, top=False)
 
     agent_fitness = []
     for thread in pool_result:
@@ -89,7 +89,10 @@ def thread_bandit(connections, arms, split=4, runtime=2000, exposure_time=200, n
 
 
 def bandit_test(connections, arms, split=4, runtime=2000, exposure_time=200, noise_rate=100, noise_weight=0.01,
-                reward=0, spike_f=False):
+                reward=0, spike_f=False, seed=0):
+    np.random.seed(seed)
+    sleep = 10 * np.random.random()
+    time.sleep(sleep)
     max_attempts = 2
     try_except = 0
     while try_except < max_attempts:
