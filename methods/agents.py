@@ -242,7 +242,7 @@ class agent_population(object):
         if species:
             self.iterate_species()
         else:
-            self.agent_pop = self.generate_children(self.agent_pop, len(self.agent_pop))
+            self.agent_pop, self.agent_mutate_keys = self.generate_children(self.agent_pop, len(self.agent_pop))
 
     '''Takes in a parent motif and mutates it in various ways, all sub-motifs are added with the final motif structure/
     id being returned. A key is kept of each mutation used to generate a child for later analysis of appropriate 
@@ -262,7 +262,7 @@ class agent_population(object):
             mutate_key['param_d'] = 0
             mutate_key['mum'] = parent[2]
             mutate_key['dad'] = parent[2]
-            mutate_key['sex'] = 1
+            mutate_key['sex'] = 0
         # acquire the motif of parent and copy it to avoid messing with both memory locations
         motif_config = self.motifs.return_motif(parent[0])
         config_copy = deepcopy(motif_config)
@@ -361,6 +361,7 @@ class agent_population(object):
 
     def mate(self, mum, dad, mutate_key):
         # maybe the crossover should be more than just random, incorporating depth or some other dad decision metric
+        # maybe take the seed randomly from mum or dad?
         if mutate_key == {}:
             mutate_key['motif'] = 0
             mutate_key['new'] = 0
@@ -392,6 +393,7 @@ class agent_population(object):
     def generate_children(self, pop, birthing, fitness_shaping=True):
         parents = deepcopy(pop)
         children = []
+        mumate_dict = {}
         elite = int(math.ceil(len(pop) * self.elitism))
         parents.sort(key=lambda x: x[2], reverse=True)
         for i in range(elite):
@@ -421,10 +423,11 @@ class agent_population(object):
                     print "mate d"
             if child:
                 children.append([child, np.random.randint(200)])
+                mumate_dict[child] = mutate_key
                 i += 1
             else:
                 print "went over the maximum depth"
-        return children
+        return children, mumate_dict
 
     def select_shaped(self, list_size, best_first=True):
         list_total = 0
@@ -469,6 +472,8 @@ class agent_population(object):
             writer.writerow([time.localtime()])
             file.close()
 
+    def save_mutate_keys(self, config):
+        print "saving keys"
 
     def status_update(self, combined_fitnesses, iteration, config, len_arms):
         total_scores = [0 for i in range(len(combined_fitnesses))]

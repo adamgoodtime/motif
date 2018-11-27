@@ -202,7 +202,7 @@ def bandit_test(connections, arms, split=4, runtime=2000, exposure_time=200, noi
             print "worst score for the failure"
             fails += 1
             scores.append([[max_fail_score], [max_fail_score], [max_fail_score], [max_fail_score]])
-            agent_fitness.append(scores[i])
+            # agent_fitness.append(scores[i])
             excite_spike_count[i] -= max_fail_score
             inhib_spike_count[i] -= max_fail_score
         else:

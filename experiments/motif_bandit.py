@@ -32,7 +32,7 @@ def bandit(generations):
         arms.append([arm1, arm2])
         arms.append([arm2, arm1])
     # arms = [[0.4, 0.6], [0.6, 0.4], [0.1, 0.9], [0.9, 0.1]]
-    number_of_arms = 2
+    number_of_arms = 1
     split = 1
 
     reward_shape = True
