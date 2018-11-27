@@ -62,6 +62,8 @@ def test_agent(arm1, arm2):
 
     arm = [arm1, arm2]
 
+    print "arm = ", arm
+
     connections = read_agent()
 
     p.setup(timestep=1.0, min_delay=1, max_delay=127)
@@ -130,10 +132,11 @@ def test_agent(arm1, arm2):
 
 # file = 'best agent 348: score(206), score bandit reward_shape:True, reward:0, noise r-w:100-0.01, arms:[1, 0]-2-0, max_d10, size:False, spikes:False, w_max0.1.csv'
 # file = 'best agent 152: score(204), score bandit reward_shape:True, reward:0, noise r-w:0-0.01, arms:[1, 0]-2-0, max_d10, size:False, spikes:False, w_max0.1.csv'
-file = 'best agent 257: score(784), score bandit reward_shape:True, reward:0, noise r-w:0-0.01, arms:[0.1, 0.9]-8-0, max_d7, size:False, spikes:False, w_max0.1.csv'
+# file = 'best agent 257: score(784), score bandit reward_shape:True, reward:0, noise r-w:0-0.01, arms:[0.1, 0.9]-8-0, max_d7, size:False, spikes:False, w_max0.1.csv'
+file = 'best agent 2: score(352), score bandit reward_shape:True, reward:0, noise r-w:100-0.01, arms:[0.4, 0.6]-4-0, max_d10, size:False, spikes:False, w_max0.1.csv'
 
 # arms = [0.9, 0.1]
-# arms = [0.1, 0.9]
+arms = [0.1, 0.9]
 # arms = [0, 1]
 # arms = [1, 0]
 # arms = [[0.1, 0.9], [0.9, 0.1]]
@@ -141,7 +144,7 @@ file = 'best agent 257: score(784), score bandit reward_shape:True, reward:0, no
 # arms = [[0.1, 0.9], [0.9, 0.1], [0.1, 0.9], [0.9, 0.1]]
 # arms = [[0.1, 0.9], [0.9, 0.1], [0.1, 0.9], [0.9, 0.1], [0.1, 0.9], [0.9, 0.1]]
 # arms = [[0.1, 0.9], [0.9, 0.1], [0.1, 0.9], [0.9, 0.1], [0.1, 0.9], [0.9, 0.1], [0.1, 0.9], [0.9, 0.1]]
-arms = [[0.15, 0.85], [0.85, 0.15], [1, 0], [0, 1], [0.05, 0.95], [0.95, 0.05]]
+# arms = [[0.15, 0.85], [0.85, 0.15], [1, 0], [0, 1], [0.05, 0.95], [0.95, 0.05]]
 # arms = [[0.2, 0.8], [0.8, 0.2]]
 # arms = [[0.4, 0.6], [0.6, 0.4]]
 # arms = [[0.4, 0.6], [0.6, 0.4], [0.2, 0.8], [0.8, 0.2], [0.1, 0.9], [0.9, 0.1]]

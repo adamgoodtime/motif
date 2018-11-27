@@ -24,21 +24,13 @@ def bandit(generations):
     # todo :add number of different motifs to the fitness function to promote regularity
 
     agent_pop_size = 100
-    arm1 = 0.4
-    arm2 = 0.6
+    arm1 = 0.2
+    arm2 = 0.8
     arm_len = 2
     arms = []
     for i in range(arm_len):
         arms.append([arm1, arm2])
         arms.append([arm2, arm1])
-    # arms = [0.9, 0.1]
-    # arms = [[0.1, 0.9], [0.9, 0.1]]
-    # arms = [[1, 0], [0, 1]]
-    # arms = [[0.1, 0.9], [0.9, 0.1], [0.1, 0.9], [0.9, 0.1]]
-    # arms = [[0.1, 0.9], [0.9, 0.1], [0.1, 0.9], [0.9, 0.1], [0.1, 0.9], [0.9, 0.1]]
-    # arms = [[0.1, 0.9], [0.9, 0.1], [0.1, 0.9], [0.9, 0.1], [0.1, 0.9], [0.9, 0.1], [0.1, 0.9], [0.9, 0.1]]
-    # arms = [[0.2, 0.8], [0.8, 0.2]]
-    # arms = [[0.4, 0.6], [0.6, 0.4]]
     # arms = [[0.4, 0.6], [0.6, 0.4], [0.1, 0.9], [0.9, 0.1]]
     number_of_arms = 2
     split = 1
