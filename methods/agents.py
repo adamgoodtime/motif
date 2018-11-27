@@ -260,8 +260,8 @@ class agent_population(object):
             mutate_key['c_gone'] = 0
             mutate_key['param_w'] = 0
             mutate_key['param_d'] = 0
-            mutate_key['mum'] = parent[2]
-            mutate_key['dad'] = parent[2]
+            mutate_key['mum'] = [parent[2], parent[3]]
+            mutate_key['dad'] = [parent[2], parent[3]]
             mutate_key['sex'] = 0
         # acquire the motif of parent and copy it to avoid messing with both memory locations
         motif_config = self.motifs.return_motif(parent[0])
@@ -373,8 +373,8 @@ class agent_population(object):
             mutate_key['c_gone'] = 0
             mutate_key['param_w'] = 0
             mutate_key['param_d'] = 0
-            mutate_key['mum'] = mum[2]
-            mutate_key['dad'] = dad[2]
+            mutate_key['mum'] = [mum[2], mum[3]]
+            mutate_key['dad'] = [dad[2], dad[3]]
             mutate_key['sex'] = 1
         child_id = mum[0]
         mum_motif = deepcopy(self.motifs.motif_configs[mum[0]])
@@ -444,25 +444,25 @@ class agent_population(object):
         return i
 
     def save_agents(self, iteration, config):
-        with open('Agent population {}: {}.csv'.format(iteration, config), 'w') as file:
-            writer = csv.writer(file, delimiter=',', lineterminator='\n')
+        with open('Agent population {}: {}.csv'.format(iteration, config), 'w') as agent_file:
+            writer = csv.writer(agent_file, delimiter=',', lineterminator='\n')
             for agent in self.agent_pop:
                 writer.writerow(agent)
-            file.close()
+            agent_file.close()
 
     def save_agent_connections(self, agent, iteration, config):
         connections = self.convert_agent(agent, self.inputs, self.outputs)
-        with open('best agent {}: score({}), {}.csv'.format(iteration, agent[3], config), 'w') as file:
-            writer = csv.writer(file, delimiter=',', lineterminator='\n')
+        with open('best agent {}: score({}), {}.csv'.format(iteration, agent[3], config), 'w') as conn_file:
+            writer = csv.writer(conn_file, delimiter=',', lineterminator='\n')
             for thing in connections:
                 writer.writerow([thing])
             writer.writerow(["fitness", agent[2]])
             writer.writerow(["score", agent[3]])
-            file.close()
+            conn_file.close()
 
     def save_status(self, config):
-        with open('status for {}.csv'.format(config), 'w') as file:
-            writer = csv.writer(file, delimiter=',', lineterminator='\n')
+        with open('status for {}.csv'.format(config), 'w') as status_file:
+            writer = csv.writer(status_file, delimiter=',', lineterminator='\n')
             writer.writerow(['maximum score'])
             writer.writerow(self.max_score)
             writer.writerow(['average score'])
@@ -470,10 +470,20 @@ class agent_population(object):
             writer.writerow(['minimum score'])
             writer.writerow(self.min_score)
             writer.writerow([time.localtime()])
-            file.close()
+            status_file.close()
 
-    def save_mutate_keys(self, config):
-        print "saving keys"
+    def save_mutate_keys(self, iteration, config):
+        with open('mutate keys for {}: {}.csv'.format(iteration, config), 'w') as key_file:
+            writer = csv.writer(key_file, delimiter=',', lineterminator='\n')
+            for agent in self.agent_pop:
+                try:
+                    mutate_key = self.agent_mutate_keys[agent[0]]
+                    writer.writerow([agent[0], agent[2], agent[3]])
+                    for attribute in mutate_key:
+                        writer.writerow([attribute, mutate_key[attribute]])
+                except:
+                    print "no key for agent ", agent[0]
+            key_file.close()
 
     def status_update(self, combined_fitnesses, iteration, config, len_arms):
         total_scores = [0 for i in range(len(combined_fitnesses))]
@@ -538,6 +548,7 @@ class agent_population(object):
         self.save_agent_connections(self.agent_pop[best_agent], iteration, 'score '+config)
         self.save_agent_connections(self.agent_pop[best_agent_s], iteration, 'fitness '+config)
         self.save_status(config)
+        self.save_mutate_keys(iteration, config)
 
     def get_scores(self, game_pop, simulator):
         g_vertex = game_pop._vertex

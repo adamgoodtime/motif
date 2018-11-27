@@ -26,7 +26,7 @@ def bandit(generations):
     agent_pop_size = 100
     arm1 = 0.2
     arm2 = 0.8
-    arm_len = 2
+    arm_len = 4
     arms = []
     for i in range(arm_len):
         arms.append([arm1, arm2])
