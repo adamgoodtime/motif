@@ -31,15 +31,15 @@ def bandit(generations):
     for i in range(arm_len):
         arms.append([arm1, arm2])
         arms.append([arm2, arm1])
-    # arms = [[0.4, 0.6], [0.6, 0.4], [0.1, 0.9], [0.9, 0.1]]
+    # arms = [[0.4, 0.6], [0.6, 0.4], [0.3, 0.7], [0.7, 0.3], [0.2, 0.8], [0.8, 0.2], [0.1, 0.9], [0.9, 0.1]]
     number_of_arms = 1
     split = 1
 
     reward_shape = True
     reward = 0
     noise_rate = 0
-    noise_weight = 0.01
-    maximum_depth = 10
+    noise_weight = 0.016789
+    maximum_depth = 4
     size_fitness = False
     spikes_fitness = False
     random_arms = 0
