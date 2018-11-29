@@ -149,8 +149,43 @@ def motif_tracking(file_location, config):
             #     writer.writerow(motif)
         weight_file.close()
 
+def read_motif(motif_id, iteration, file_location, config):
+    motifs = motif_population(max_motif_size=3,
+                              no_weight_bins=5,
+                              no_delay_bins=5,
+                              weight_range=(0.005, weight_max),
+                              # delay_range=(2, 2.00001),
+                              read_entire_population='{}/Motif population {}: {}.csv'.format(file_location, iteration, config),
+                              population_size=200)
+
+    motif = motifs.motif_configs[motif_id]
+    motif_struct = motifs.read_motif(motif_id)
+    # print motif_struct
 
 file_location = 'runtime data/The start of screen and good results'
-config = 'bandit reward_shape:True, reward:0, noise r-w:0-0.01, arms:[0.1, 0.9]-8-0, max_d7, size:False, spikes:False, w_max0.1.csv'
 
-motif_tracking(file_location, config)
+weight_max = 0.1
+arm1 = 0.1
+arm2 = 0.9
+arm_len = 4
+arms = []
+for i in range(arm_len):
+    arms.append([arm1, arm2])
+    arms.append([arm2, arm1])
+# arms = [[0.4, 0.6], [0.6, 0.4], [0.3, 0.7], [0.7, 0.3], [0.2, 0.8], [0.8, 0.2], [0.1, 0.9], [0.9, 0.1]]
+number_of_arms = 1
+split = 1
+reward_shape = True
+reward = 0
+noise_rate = 0
+noise_weight = 0.01
+maximum_depth = 7
+size_fitness = False
+spikes_fitness = False
+random_arms = 0
+
+config = "bandit reward_shape:{}, reward:{}, noise r-w:{}-{}, arms:{}-{}-{}, max_d{}, size:{}, spikes:{}, w_max{}".format(
+    reward_shape, reward, noise_rate, noise_weight, arms[0], len(arms), random_arms, maximum_depth, size_fitness, spikes_fitness, weight_max)
+
+# motif_tracking(file_location, config)
+read_motif('416623', 250, file_location, config)

@@ -130,7 +130,8 @@ def bandit_test(connections, arms, split=4, runtime=2000, exposure_time=200, noi
                     excite_noise = p.Population(e_size, p.SpikeSourcePoisson(rate=noise_rate))
                     p.Projection(excite_noise, excite[excite_count], p.OneToOneConnector(),
                                  p.StaticSynapse(weight=noise_weight), receptor_type='excitatory')
-                    excite[excite_count].record('spikes')
+                    if spike_f:
+                        excite[excite_count].record('spikes')
                     excite_marker.append(i)
                 if i_size > 0:
                     inhib_count += 1
@@ -138,7 +139,8 @@ def bandit_test(connections, arms, split=4, runtime=2000, exposure_time=200, noi
                     inhib_noise = p.Population(i_size, p.SpikeSourcePoisson(rate=noise_rate))
                     p.Projection(inhib_noise, inhib[inhib_count], p.OneToOneConnector(),
                                  p.StaticSynapse(weight=noise_weight), receptor_type='excitatory')
-                    inhib[inhib_count].record('spikes')
+                    if spike_f:
+                        inhib[inhib_count].record('spikes')
                     inhib_marker.append(i)
                 if len(in2e) != 0:
                     p.Projection(bandit[bandit_count], excite[excite_count], p.FromListConnector(in2e),
@@ -206,24 +208,25 @@ def bandit_test(connections, arms, split=4, runtime=2000, exposure_time=200, noi
             excite_spike_count[i] -= max_fail_score
             inhib_spike_count[i] -= max_fail_score
         else:
-            if i in excite_marker:
-                print "counting excite spikes"
-                spikes = excite[i - excite_fail - fails].get_data('spikes').segments[0].spiketrains
-                for neuron in spikes:
-                    for spike in neuron:
-                        excite_spike_count[i] += 1
-            else:
-                excite_fail += 1
-                print "had an excite failure"
-            if i in inhib_marker:
-                print "counting inhib spikes"
-                spikes = inhib[i - inhib_fail - fails].get_data('spikes').segments[0].spiketrains
-                for neuron in spikes:
-                    for spike in neuron:
-                        inhib_spike_count[i] += 1
-            else:
-                inhib_fail += 1
-                print "had an inhib failure"
+            if spike_f:
+                if i in excite_marker:
+                    print "counting excite spikes"
+                    spikes = excite[i - excite_fail - fails].get_data('spikes').segments[0].spiketrains
+                    for neuron in spikes:
+                        for spike in neuron:
+                            excite_spike_count[i] += 1
+                else:
+                    excite_fail += 1
+                    print "had an excite failure"
+                if i in inhib_marker:
+                    print "counting inhib spikes"
+                    spikes = inhib[i - inhib_fail - fails].get_data('spikes').segments[0].spiketrains
+                    for neuron in spikes:
+                        for spike in neuron:
+                            inhib_spike_count[i] += 1
+                else:
+                    inhib_fail += 1
+                    print "had an inhib failure"
             scores.append(get_scores(game_pop=bandit[i - fails], simulator=simulator))
             # pop[i].stats = {'fitness': scores[i][len(scores[i]) - 1][0]}  # , 'steps': 0}
         print "finished spikes"
