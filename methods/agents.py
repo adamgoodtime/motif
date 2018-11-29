@@ -35,6 +35,7 @@ class agent_population(object):
                  # motif_weight=0.5,
                  crossover=0.5,
                  elitism=0.1,
+                 viable_parents=0.1,
                  asexual=0.5,
                  conn_param_mutate=0.1,
                  conn_add=0.03,
@@ -58,6 +59,7 @@ class agent_population(object):
         self.motif_weight = 1 - conn_weight
         self.crossover = crossover
         self.elitism = elitism
+        self.viable_parents = viable_parents
         self.asexual = asexual
         self.conn_param_mutate = conn_param_mutate
         self.conn_add = conn_add
@@ -402,7 +404,7 @@ class agent_population(object):
         while i < birthing:
             if np.random.random() < self.asexual:
                 if fitness_shaping:
-                    parent = parents[self.select_shaped(len(parents))]
+                    parent = parents[self.select_parents(parents)]
                 else:
                     print "use a function to determine the parent based on fitness"
                 mutate_key = {}
@@ -412,8 +414,8 @@ class agent_population(object):
                     print "as3x d"
             else:
                 if fitness_shaping:
-                    mum = parents[self.select_shaped(len(parents))]
-                    dad = parents[self.select_shaped(len(parents))]
+                    mum = parents[self.select_parents(parents)]
+                    dad = parents[self.select_parents(parents)]
                 else:
                     print "use a function to determine the parent based on fitness"
                 mutate_key = {}
@@ -428,6 +430,29 @@ class agent_population(object):
             else:
                 print "went over the maximum depth"
         return children, mumate_dict
+
+    def select_parents(self, parents, best_first=True):
+        if self.viable_parents == 0:
+            return self.select_shaped(len(parents), best_first=best_first)
+        else:
+            allowed_to_mate = int(math.ceil(len(parents) * self.viable_parents))
+            total_fitness = 0
+            for i in range(allowed_to_mate):
+                if best_first:
+                    total_fitness += parents[i][2]
+                else:
+                    total_fitness += parents[len(parents) - 1 - i][2]
+            selection = np.random.uniform(total_fitness)
+            for i in range(allowed_to_mate):
+                if best_first:
+                    selection -= parents[i][2]
+                else:
+                    selection -= parents[len(parents) - 1 - i][2]
+                if selection < 0:
+                    if best_first:
+                        return i
+                    else:
+                        return len(parents) - 1 - i
 
     def select_shaped(self, list_size, best_first=True):
         list_total = 0

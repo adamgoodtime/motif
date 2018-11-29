@@ -24,30 +24,34 @@ def bandit(generations):
     # todo :add number of different motifs to the fitness function to promote regularity
 
     agent_pop_size = 100
-    arm1 = 0.2
-    arm2 = 0.8
+    arm1 = 0.7
+    arm2 = 0.3
     arm_len = 4
     arms = []
     for i in range(arm_len):
         arms.append([arm1, arm2])
         arms.append([arm2, arm1])
-    arms = [[0.4, 0.6], [0.6, 0.4], [0.3, 0.7], [0.7, 0.3], [0.2, 0.8], [0.8, 0.2], [0.1, 0.9], [0.9, 0.1]]
+    #arms = [[0.4, 0.6], [0.6, 0.4], [0.3, 0.7], [0.7, 0.3], [0.2, 0.8], [0.8, 0.2], [0.1, 0.9], [0.9, 0.1]]
     number_of_arms = 1
     split = 1
 
     reward_shape = False
     reward = 0
     noise_rate = 0
-    noise_weight = 0.016789
-    maximum_depth = 4
+    noise_weight = 0.01
+    maximum_depth = 5
     size_fitness = False
     spikes_fitness = False
     random_arms = 0
+    viable_parents = 0.1
 
-    config = "bandit reward_shape:{}, reward:{}, noise r-w:{}-{}, arms:{}-{}-{}, max_d{}, size:{}, spikes:{}, w_max{}".format(
-        reward_shape, reward, noise_rate, noise_weight, arms[0], len(arms), random_arms, maximum_depth, size_fitness, spikes_fitness, weight_max)
+    config = "bandit reward_shape:{}, reward:{}, noise r-w:{}-{}, arms:{}-{}-{}, max_d{}, size:{}, spikes:{}, w_max{}, rents{}".format(
+        reward_shape, reward, noise_rate, noise_weight, arms[0], len(arms), random_arms, maximum_depth, size_fitness, spikes_fitness, weight_max, viable_parents)
+    # config = "bandit reward_shape:{}, reward:{}, noise r-w:{}-{}, arms:{}-{}-{}, max_d{}, size:{}, spikes:{}, w_max{}".format(
+    #     reward_shape, reward, noise_rate, noise_weight, arms[0], len(arms), random_arms, maximum_depth, size_fitness, spikes_fitness, weight_max)
 
-    agents = agent_population(motifs, pop_size=agent_pop_size, inputs=2, outputs=number_of_arms, maximum_depth=maximum_depth)
+    agents = agent_population(motifs, pop_size=agent_pop_size, inputs=2, outputs=number_of_arms,
+                              maximum_depth=maximum_depth, viable_parents=viable_parents)
 
     for i in range(generations):
 

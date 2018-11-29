@@ -110,8 +110,13 @@ def bandit_test(connections, arms, split=4, runtime=2000, exposure_time=200, noi
             p.set_number_of_neurons_per_core(p.IF_cond_exp, 100)
         except:
             print "set up failed, trying again"
-            p.setup(timestep=1.0, min_delay=1, max_delay=127)
-            p.set_number_of_neurons_per_core(p.IF_cond_exp, 100)
+            try:
+                p.setup(timestep=1.0, min_delay=1, max_delay=127)
+                p.set_number_of_neurons_per_core(p.IF_cond_exp, 100)
+            except:
+                print "set up failed, trying again for the last time"
+                p.setup(timestep=1.0, min_delay=1, max_delay=127)
+                p.set_number_of_neurons_per_core(p.IF_cond_exp, 100)
         # starting_pistol = p.Population(len(arms), p.SpikeSourceArray(spike_times=[0]))
         for i in range(len(connections)):
             [in2e, in2i, e_size, e2e, e2i, i_size, i2e, i2i, e2out, i2out] = connections[i]
