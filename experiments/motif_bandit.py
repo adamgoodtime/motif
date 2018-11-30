@@ -36,7 +36,7 @@ def bandit(generations):
     split = 1
 
     reward_shape = False
-    reward = 0
+    reward = 1
     noise_rate = 0
     noise_weight = 0.01
     maximum_depth = 5
