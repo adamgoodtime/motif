@@ -24,8 +24,8 @@ def bandit(generations):
     # todo :add number of different motifs to the fitness function to promote regularity
 
     agent_pop_size = 100
-    arm1 = 0.7
-    arm2 = 0.3
+    arm1 = 0.9
+    arm2 = 0.1
     arm_len = 4
     arms = []
     for i in range(arm_len):

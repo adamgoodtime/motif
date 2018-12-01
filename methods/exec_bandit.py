@@ -98,6 +98,7 @@ def bandit_test(connections, arms, split=4, runtime=2000, exposure_time=200, noi
     while try_except < max_attempts:
         bandit = []
         bandit_count = -1
+        output = []
         excite = []
         excite_count = -1
         excite_marker = []
@@ -128,6 +129,9 @@ def bandit_test(connections, arms, split=4, runtime=2000, exposure_time=200, noi
                 bandit.append(
                     p.Population(len(arms), Bandit(arms, exposure_time, reward_based=reward,
                                                    label='bandit_pop_{}-{}'.format(bandit_count, i))))
+                output.append(
+                    p.Population(len(arms), p.IF_cond_exp(), label='output_{}-{}'.format(bandit_count, i)))
+                p.Projection(output[bandit_count], bandit[bandit_count], p.AllToAllConnector(), p.StaticSynapse())
                 if e_size > 0:
                     excite_count += 1
                     excite.append(
@@ -170,10 +174,10 @@ def bandit_test(connections, arms, split=4, runtime=2000, exposure_time=200, noi
                     p.Projection(inhib[inhib_count], inhib[inhib_count], p.FromListConnector(i2i),
                                  receptor_type='inhibitory')
                 if len(e2out) != 0:
-                    p.Projection(excite[excite_count], bandit[bandit_count], p.FromListConnector(e2out),
+                    p.Projection(excite[excite_count], output[bandit_count], p.FromListConnector(e2out),
                                  receptor_type='excitatory')
                 if len(i2out) != 0:
-                    p.Projection(inhib[inhib_count], bandit[bandit_count], p.FromListConnector(i2out),
+                    p.Projection(inhib[inhib_count], output[bandit_count], p.FromListConnector(i2out),
                                  receptor_type='inhibitory')
 
         simulator = get_simulator()

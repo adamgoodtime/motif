@@ -344,8 +344,8 @@ file_location = 'runtime data/The start of screen and good results'
 file_location = 'runtime data/spalloc fails with really good 0.6'
 
 weight_max = 0.1
-arm1 = 0.6
-arm2 = 0.4
+arm1 = 0.7
+arm2 = 0.3
 arm_len = 4
 arms = []
 for i in range(arm_len):
@@ -362,7 +362,7 @@ maximum_depth = 5
 size_fitness = False
 spikes_fitness = False
 random_arms = 0
-viable_parents = 0.01
+viable_parents = 1
 
 # mutate keys for 0: bandit reward_shape:False, reward:0, noise r-w:0-0.01, arms:[0.6, 0.4]-8-0, max_d5, size:False, spikes:False, w_max0.1, rents0.01.csv
 # mutate keys for 33: bandit reward_shape:False, reward:0, noise r-w:0-0.016789, arms:[0.4, 0.6]-8-0, max_d4, size:False, spikes:False, w_max0.1.csv
@@ -377,5 +377,5 @@ config = "bandit reward_shape:{}, reward:{}, noise r-w:{}-{}, arms:{}-{}-{}, max
 #     reward_shape, reward, noise_rate, noise_weight, arms[0], len(arms), random_arms, maximum_depth, size_fitness, spikes_fitness, weight_max)
 
 # motif_tracking(file_location, config)
-read_motif('152946', 96, file_location, config)
-# mutate_anal(file_location, config)
+# read_motif('152946', 96, file_location, config)
+mutate_anal(file_location, config)
