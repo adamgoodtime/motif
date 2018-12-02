@@ -18,6 +18,7 @@ from spinn_front_end_common.utilities.globals_variables import get_simulator
 import traceback
 import csv
 from ast import literal_eval
+import fnmatch
 
 # import random
 
@@ -489,13 +490,13 @@ class motif_population(object):
                     post_index = indexed_in.index(conn[1])
                     input_count['{}'.format(conn[1])] = 1
             if pre_ex and post_ex:
-                e2e.append((pre_index, post_index, conn[2], conn[3]))
+                e2e.append([pre_index, post_index, conn[2], conn[3]])
             elif pre_ex and not post_ex:
-                e2i.append((pre_index, post_index, conn[2], conn[3]))
+                e2i.append([pre_index, post_index, conn[2], conn[3]])
             elif not pre_ex and post_ex:
-                i2e.append((pre_index, post_index, conn[2], conn[3]))
+                i2e.append([pre_index, post_index, conn[2], conn[3]])
             elif not pre_ex and not post_ex:
-                i2i.append((pre_index, post_index, conn[2], conn[3]))
+                i2i.append([pre_index, post_index, conn[2], conn[3]])
         pre_ex_count = [[0, 'e', j] for j in range(len(indexed_ex))]
         post_ex_count = [[0, 'e', j] for j in range(len(indexed_ex))]
         pre_in_count = [[0, 'i', j] for j in range(len(indexed_in))]
@@ -525,6 +526,8 @@ class motif_population(object):
         e2out = []
         i2out = []
         if self.global_io[0] == 'highest':
+            input_neurons = []
+            output_neurons = []
             if self.global_io[1] == 'seeded':
                 np.random.seed(seed)
                 input_order = range(inputs)
@@ -533,43 +536,92 @@ class motif_population(object):
                 np.random.shuffle(output_order)
                 io_index = 0
                 for node in pre_count:
-                    if node[1] == 'e':
-                        in2e.append((input_order[io_index], node[2], 0.1, 1))
-                    else:
-                        in2i.append((input_order[io_index], node[2], 0.1, 1))
+                    input_neurons.append([node[1], input_order[io_index], node[2]])
                     io_index += 1
                     if io_index == inputs:
                         break
                 io_index = 0
                 for node in post_count:
-                    if node[1] == 'e':
-                        e2out.append((node[2], output_order[io_index], 0.1, 1))
-                    else:
-                        i2out.append((node[2], output_order[io_index], 0.1, 1))
+                    output_neurons.append([node[1], output_order[io_index], node[2]])
                     io_index += 1
                     if io_index == outputs:
                         break
             elif self.global_io[1] == 'unseeded':
                 io_index = 0
                 for node in pre_count:
-                    if node[1] == 'e':
-                        in2e.append((io_index, node[2], 0.1, 1))
-                    else:
-                        in2i.append((io_index, node[2], 0.1, 1))
+                    input_neurons.append([node[1], io_index, node[2]])
                     io_index += 1
                     if io_index == inputs:
                         break
                 io_index = 0
                 for node in post_count:
-                    if node[1] == 'e':
-                        e2out.append((node[2], io_index, 0.1, 1))
-                    else:
-                        i2out.append((node[2], io_index, 0.1, 1))
+                    output_neurons.append([node[1], io_index, node[2]])
                     io_index += 1
                     if io_index == outputs:
                         break
+            # for neuron in input_neurons:
+            #     if neuron[0] == 'e':
+            #         for conn in e2e:
+            #             if conn[0] == neuron[2]:
+            #                 conn[0] = ['i', neuron[1], neuron[0]]
+            #             if conn[1] == neuron[2]:
+            #                 conn[1] = ['i', neuron[1], neuron[0]]
+            #         for conn in e2i:
+            #             if conn[0] == neuron[2]:
+            #                 conn[0] = ['i', neuron[1], neuron[0]]
+            #         for conn in i2e:
+            #             if conn[1] == neuron[2]:
+            #                 conn[1] = ['i', neuron[1], neuron[0]]
+            #     else:
+            #         for conn in i2i:
+            #             if conn[0] == neuron[2]:
+            #                 conn[0] = ['i', neuron[1], neuron[0]]
+            #             if conn[1] == neuron[2]:
+            #                 conn[1] = ['i', neuron[1], neuron[0]]
+            #         for conn in i2e:
+            #             if conn[0] == neuron[2]:
+            #                 conn[0] = ['i', neuron[1], neuron[0]]
+            #         for conn in e2i:
+            #             if conn[1] == neuron[2]:
+            #                 conn[1] = ['i', neuron[1], neuron[0]]
+            for neuron in output_neurons:
+                if neuron[0] == 'e':
+                    for conn in e2e:
+                        if conn[0] == neuron[2]:
+                            conn[0] = ['o', neuron[1], neuron[0]]
+                        if conn[1] == neuron[2]:
+                            conn[1] = ['o', neuron[1], neuron[0]]
+                    for conn in e2i:
+                        if conn[0] == neuron[2]:
+                            conn[0] = ['o', neuron[1], neuron[0]]
+                    for conn in i2e:
+                        if conn[1] == neuron[2]:
+                            conn[1] = ['o', neuron[1], neuron[0]]
+                else:
+                    for conn in i2i:
+                        if conn[0] == neuron[2]:
+                            conn[0] = ['o', neuron[1], neuron[0]]
+                        if conn[1] == neuron[2]:
+                            conn[1] = ['o', neuron[1], neuron[0]]
+                    for conn in i2e:
+                        if conn[0] == neuron[2]:
+                            conn[0] = ['o', neuron[1], neuron[0]]
+                    for conn in e2i:
+                        if conn[1] == neuron[2]:
+                            conn[1] = ['o', neuron[1], neuron[0]]
+            new_list = []
+            for conn_list in [e2e, e2i, i2e, i2i]:
+                for conn in conn_list:
+                    if isinstance(conn[0], list) or isinstance(conn[1], list):
+                        print conn_list
+                        print conn
+                        new_list.append(conn)
+                        # can't delete as it's iterating
+                        del conn_list[conn_list.index(conn)]
 
-        return in2e, in2i, len(indexed_ex), e2e, e2i, len(indexed_in), i2e, i2i, e2out, i2out
+
+
+        return in2e, in2i, e2in, i2in, len(indexed_ex), e2e, e2i, len(indexed_in), i2e, i2i, e2out, i2out, out2e, out2i, in2out
 
     # def convert_population(self, inputs, outputs):
     #     agent_connections = []
