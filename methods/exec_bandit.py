@@ -143,6 +143,7 @@ def bandit_test(connections, arms, split=4, runtime=2000, exposure_time=200, noi
                                                    label='bandit_pop_{}-{}'.format(bandit_count, i))))
                 output.append(
                     p.Population(len(arms), p.IF_cond_exp(), label='output_{}-{}'.format(bandit_count, i)))
+                p.Projection(output[bandit_count], bandit[bandit_count], p.AllToAllConnector(), p.StaticSynapse())
                 if e_size > 0:
                     excite_count += 1
                     excite.append(
