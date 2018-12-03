@@ -163,100 +163,100 @@ def bandit_test(connections, arms, split=4, runtime=2000, exposure_time=200, noi
                     if spike_f:
                         inhib[inhib_count].record('spikes')
                     inhib_marker.append(i)
-                    if len(in2e) != 0:
-                        [in_ex, in_in] = split_ex_in(in2e)
-                        if len(in_ex) != 0:
-                            p.Projection(bandit[bandit_count], excite[excite_count], p.FromListConnector(in_ex),
-                                         receptor_type='excitatory')
-                        if len(in_in) != 0:
-                            p.Projection(bandit[bandit_count], excite[excite_count], p.FromListConnector(in_in),
-                                         receptor_type='inhibitory')
-                    if len(in2i) != 0:
-                        [in_ex, in_in] = split_ex_in(in2i)
-                        if len(in_ex) != 0:
-                            p.Projection(bandit[bandit_count], inhib[inhib_count], p.FromListConnector(in_ex),
-                                         receptor_type='excitatory')
-                        if len(in_in) != 0:
-                            p.Projection(bandit[bandit_count], inhib[inhib_count], p.FromListConnector(in_in),
-                                         receptor_type='inhibitory')
-                    if len(in2in) != 0:
-                        [in_ex, in_in] = split_ex_in(in2in)
-                        if len(in_ex) != 0:
-                            p.Projection(bandit[bandit_count], bandit[bandit_count], p.FromListConnector(in_ex),
-                                         receptor_type='excitatory')
-                        if len(in_in) != 0:
-                            p.Projection(bandit[bandit_count], bandit[bandit_count], p.FromListConnector(in_in),
-                                         receptor_type='inhibitory')
-                    if len(in2out) != 0:
-                        [in_ex, in_in] = split_ex_in(in2out)
-                        if len(in_ex) != 0:
-                            p.Projection(bandit[bandit_count], output[bandit_count], p.FromListConnector(in_ex),
-                                         receptor_type='excitatory')
-                        if len(in_in) != 0:
-                            p.Projection(bandit[bandit_count], output[bandit_count], p.FromListConnector(in_in),
-                                         receptor_type='inhibitory')
-                    if len(e2in) != 0:
-                        p.Projection(excite[excite_count], bandit[bandit_count], p.FromListConnector(e2in),
+                if len(in2e) != 0:
+                    [in_ex, in_in] = split_ex_in(in2e)
+                    if len(in_ex) != 0:
+                        p.Projection(bandit[bandit_count], excite[excite_count], p.FromListConnector(in_ex),
                                      receptor_type='excitatory')
-                    if len(i2in) != 0:
-                        p.Projection(inhib[inhib_count], bandit[bandit_count], p.FromListConnector(i2in),
+                    if len(in_in) != 0:
+                        p.Projection(bandit[bandit_count], excite[excite_count], p.FromListConnector(in_in),
                                      receptor_type='inhibitory')
-                    if len(e2e) != 0:
-                        p.Projection(excite[excite_count], excite[excite_count], p.FromListConnector(e2e),
+                if len(in2i) != 0:
+                    [in_ex, in_in] = split_ex_in(in2i)
+                    if len(in_ex) != 0:
+                        p.Projection(bandit[bandit_count], inhib[inhib_count], p.FromListConnector(in_ex),
                                      receptor_type='excitatory')
-                    if len(e2i) != 0:
-                        p.Projection(excite[excite_count], inhib[inhib_count], p.FromListConnector(e2i),
+                    if len(in_in) != 0:
+                        p.Projection(bandit[bandit_count], inhib[inhib_count], p.FromListConnector(in_in),
+                                     receptor_type='inhibitory')
+                if len(in2in) != 0:
+                    [in_ex, in_in] = split_ex_in(in2in)
+                    if len(in_ex) != 0:
+                        p.Projection(bandit[bandit_count], bandit[bandit_count], p.FromListConnector(in_ex),
                                      receptor_type='excitatory')
-                    if len(i2e) != 0:
-                        p.Projection(inhib[inhib_count], excite[excite_count], p.FromListConnector(i2e),
+                    if len(in_in) != 0:
+                        p.Projection(bandit[bandit_count], bandit[bandit_count], p.FromListConnector(in_in),
                                      receptor_type='inhibitory')
-                    if len(i2i) != 0:
-                        p.Projection(inhib[inhib_count], inhib[inhib_count], p.FromListConnector(i2i),
-                                     receptor_type='inhibitory')
-                    if len(e2out) != 0:
-                        p.Projection(excite[excite_count], output[bandit_count], p.FromListConnector(e2out),
+                if len(in2out) != 0:
+                    [in_ex, in_in] = split_ex_in(in2out)
+                    if len(in_ex) != 0:
+                        p.Projection(bandit[bandit_count], output[bandit_count], p.FromListConnector(in_ex),
                                      receptor_type='excitatory')
-                    if len(i2out) != 0:
-                        p.Projection(inhib[inhib_count], output[bandit_count], p.FromListConnector(i2out),
+                    if len(in_in) != 0:
+                        p.Projection(bandit[bandit_count], output[bandit_count], p.FromListConnector(in_in),
                                      receptor_type='inhibitory')
-                    if len(out2e) != 0:
-                        [out_ex, out_in] = split_ex_in(out2e)
-                        if len(out_ex) != 0:
-                            p.Projection(output[bandit_count], excite[excite_count], p.FromListConnector(out_ex),
-                                         receptor_type='excitatory')
-                        if len(out_in) != 0:
-                            p.Projection(output[bandit_count], excite[excite_count], p.FromListConnector(out_in),
-                                         receptor_type='inhibitory')
-                    if len(out2i) != 0:
-                        [out_ex, out_in] = split_ex_in(out2i)
-                        if len(out_ex) != 0:
-                            p.Projection(output[bandit_count], inhib[inhib_count], p.FromListConnector(out_ex),
-                                         receptor_type='excitatory')
-                        if len(out_in) != 0:
-                            p.Projection(output[bandit_count], inhib[inhib_count], p.FromListConnector(out_in),
-                                         receptor_type='inhibitory')
-                    if len(out2in) != 0:
-                        [out_ex, out_in] = split_ex_in(out2in)
-                        if len(out_ex) != 0:
-                            p.Projection(output[bandit_count], bandit[bandit_count], p.FromListConnector(out_ex),
-                                         receptor_type='excitatory')
-                        if len(out_in) != 0:
-                            p.Projection(output[bandit_count], bandit[bandit_count], p.FromListConnector(out_in),
-                                         receptor_type='inhibitory')
-                    if len(out2out) != 0:
-                        [out_ex, out_in] = split_ex_in(out2out)
-                        if len(out_ex) != 0:
-                            p.Projection(output[bandit_count], output[bandit_count], p.FromListConnector(out_ex),
-                                         receptor_type='excitatory')
-                        if len(out_in) != 0:
-                            p.Projection(output[bandit_count], output[bandit_count], p.FromListConnector(out_in),
-                                         receptor_type='inhibitory')
-                    if len(e2out) != 0:
-                        p.Projection(excite[excite_count], output[bandit_count], p.FromListConnector(e2out),
+                if len(e2in) != 0:
+                    p.Projection(excite[excite_count], bandit[bandit_count], p.FromListConnector(e2in),
+                                 receptor_type='excitatory')
+                if len(i2in) != 0:
+                    p.Projection(inhib[inhib_count], bandit[bandit_count], p.FromListConnector(i2in),
+                                 receptor_type='inhibitory')
+                if len(e2e) != 0:
+                    p.Projection(excite[excite_count], excite[excite_count], p.FromListConnector(e2e),
+                                 receptor_type='excitatory')
+                if len(e2i) != 0:
+                    p.Projection(excite[excite_count], inhib[inhib_count], p.FromListConnector(e2i),
+                                 receptor_type='excitatory')
+                if len(i2e) != 0:
+                    p.Projection(inhib[inhib_count], excite[excite_count], p.FromListConnector(i2e),
+                                 receptor_type='inhibitory')
+                if len(i2i) != 0:
+                    p.Projection(inhib[inhib_count], inhib[inhib_count], p.FromListConnector(i2i),
+                                 receptor_type='inhibitory')
+                if len(e2out) != 0:
+                    p.Projection(excite[excite_count], output[bandit_count], p.FromListConnector(e2out),
+                                 receptor_type='excitatory')
+                if len(i2out) != 0:
+                    p.Projection(inhib[inhib_count], output[bandit_count], p.FromListConnector(i2out),
+                                 receptor_type='inhibitory')
+                if len(out2e) != 0:
+                    [out_ex, out_in] = split_ex_in(out2e)
+                    if len(out_ex) != 0:
+                        p.Projection(output[bandit_count], excite[excite_count], p.FromListConnector(out_ex),
                                      receptor_type='excitatory')
-                    if len(i2out) != 0:
-                        p.Projection(inhib[inhib_count], output[bandit_count], p.FromListConnector(i2out),
+                    if len(out_in) != 0:
+                        p.Projection(output[bandit_count], excite[excite_count], p.FromListConnector(out_in),
                                      receptor_type='inhibitory')
+                if len(out2i) != 0:
+                    [out_ex, out_in] = split_ex_in(out2i)
+                    if len(out_ex) != 0:
+                        p.Projection(output[bandit_count], inhib[inhib_count], p.FromListConnector(out_ex),
+                                     receptor_type='excitatory')
+                    if len(out_in) != 0:
+                        p.Projection(output[bandit_count], inhib[inhib_count], p.FromListConnector(out_in),
+                                     receptor_type='inhibitory')
+                if len(out2in) != 0:
+                    [out_ex, out_in] = split_ex_in(out2in)
+                    if len(out_ex) != 0:
+                        p.Projection(output[bandit_count], bandit[bandit_count], p.FromListConnector(out_ex),
+                                     receptor_type='excitatory')
+                    if len(out_in) != 0:
+                        p.Projection(output[bandit_count], bandit[bandit_count], p.FromListConnector(out_in),
+                                     receptor_type='inhibitory')
+                if len(out2out) != 0:
+                    [out_ex, out_in] = split_ex_in(out2out)
+                    if len(out_ex) != 0:
+                        p.Projection(output[bandit_count], output[bandit_count], p.FromListConnector(out_ex),
+                                     receptor_type='excitatory')
+                    if len(out_in) != 0:
+                        p.Projection(output[bandit_count], output[bandit_count], p.FromListConnector(out_in),
+                                     receptor_type='inhibitory')
+                if len(e2out) != 0:
+                    p.Projection(excite[excite_count], output[bandit_count], p.FromListConnector(e2out),
+                                 receptor_type='excitatory')
+                if len(i2out) != 0:
+                    p.Projection(inhib[inhib_count], output[bandit_count], p.FromListConnector(i2out),
+                                 receptor_type='inhibitory')
 
         simulator = get_simulator()
         try:
