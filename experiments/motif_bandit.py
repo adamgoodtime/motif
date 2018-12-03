@@ -18,6 +18,7 @@ def bandit(generations):
                               no_delay_bins=5,
                               weight_range=(0.005, weight_max),
                               # delay_range=(2, 2.00001),
+                              neuron_types=(['excitatory', 'inhibitory', 'input', 'output']),
                               # read_entire_population='motif population 0: conf.csv',
                               population_size=200)
 
@@ -85,7 +86,9 @@ def bandit(generations):
         globals()['size_f'] = size_fitness
         globals()['spike_f'] = spikes_fitness
         globals()['exposure_time'] = 200
-        execfile("../methods/exec_bandit.py", globals())
+        # config = 'test'
+        if config != 'test':
+            execfile("../methods/exec_bandit.py", globals())
 
         fitnesses = agents.read_fitnesses(config)
 
@@ -106,7 +109,8 @@ def bandit(generations):
 
         agents.pass_fitnesses(fitnesses)
 
-        agents.status_update(fitnesses, i, config, len(arms))
+        if config != 'test':
+            agents.status_update(fitnesses, i, config, len(arms))
 
         print "\nconfig: ", config, "\n"
 
@@ -116,8 +120,9 @@ def bandit(generations):
 
         print "3", motifs.total_weight
 
-        motifs.save_motifs(i, config)
-        agents.save_agents(i, config)
+        if config != 'test':
+            motifs.save_motifs(i, config)
+            agents.save_agents(i, config)
 
         print "4", motifs.total_weight
 
