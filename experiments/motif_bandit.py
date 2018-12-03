@@ -18,7 +18,7 @@ def bandit(generations):
                               no_delay_bins=5,
                               weight_range=(0.005, weight_max),
                               # delay_range=(2, 2.00001),
-                              neuron_types=(['excitatory', 'inhibitory', 'input', 'output']),
+                              neuron_types=(['excitatory', 'inhibitory']),
                               # read_entire_population='motif population 0: conf.csv',
                               population_size=200)
 
@@ -33,7 +33,7 @@ def bandit(generations):
         arms.append([arm1, arm2])
         arms.append([arm2, arm1])
     #arms = [[0.4, 0.6], [0.6, 0.4], [0.3, 0.7], [0.7, 0.3], [0.2, 0.8], [0.8, 0.2], [0.1, 0.9], [0.9, 0.1]]
-    number_of_arms = 1
+    number_of_arms = 2
     split = 1
 
     reward_shape = False
@@ -87,7 +87,9 @@ def bandit(generations):
         globals()['spike_f'] = spikes_fitness
         globals()['exposure_time'] = 200
         # config = 'test'
+        # arms = [0.1, 0.9]
         if config != 'test':
+            # agents.bandit_test(connections, arms)
             execfile("../methods/exec_bandit.py", globals())
 
         fitnesses = agents.read_fitnesses(config)
