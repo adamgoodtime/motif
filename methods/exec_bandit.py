@@ -118,21 +118,21 @@ def bandit_test(connections, arms, split=4, runtime=2000, exposure_time=200, noi
         inhib_count = -1
         inhib_marker = []
         failures = []
+        print "\nsetup seed = ", seed, "\n", "\n"
         try:
-            print "setup seed = ", seed
             p.setup(timestep=1.0, min_delay=1, max_delay=127)
             p.set_number_of_neurons_per_core(p.IF_cond_exp, 100)
         except:
-            print "set up failed, trying again"
+            print "\nset up failed, trying again"
             try:
-                print "setup2 seed = ", seed
+                print "\nsetup2 seed = ", seed, "\n"
                 p.setup(timestep=1.0, min_delay=1, max_delay=127)
                 p.set_number_of_neurons_per_core(p.IF_cond_exp, 100)
             except:
-                print "set up failed, trying again for the last time"
+                print "\nset up failed, trying again for the last time"
                 p.setup(timestep=1.0, min_delay=1, max_delay=127)
                 p.set_number_of_neurons_per_core(p.IF_cond_exp, 100)
-        print "finished setup seed = ", seed
+        print "\nfinished setup seed = ", seed, "\n"
         # starting_pistol = p.Population(len(arms), p.SpikeSourceArray(spike_times=[0]))
         for i in range(len(connections)):
             [in2e, in2i, in2in, in2out, e2in, i2in, e_size, e2e, e2i, i_size,
@@ -262,17 +262,17 @@ def bandit_test(connections, arms, split=4, runtime=2000, exposure_time=200, noi
                     p.Projection(inhib[inhib_count], output[bandit_count], p.FromListConnector(i2out),
                                  receptor_type='inhibitory')
 
-        print "finished connections seed = ", seed
+        print "\nfinished connections seed = ", seed, "\n"
         simulator = get_simulator()
         try:
-            print "run seed = ", seed
+            print "\nrun seed = ", seed, "\n"
             p.run(runtime)
             try_except = max_attempts
             break
         except:
             traceback.print_exc()
             try:
-                print "run 2 seed = ", seed
+                print "\nrun 2 seed = ", seed, "\n"
                 globals_variables.unset_simulator()
                 print "end was necessary"
             except:
@@ -283,7 +283,7 @@ def bandit_test(connections, arms, split=4, runtime=2000, exposure_time=200, noi
             if try_except >= max_attempts:
                 print "calling it a failed population, splitting and rerunning"
                 return 'fail'
-        print "finished run seed = ", seed
+        print "\nfinished run seed = ", seed, "\n"
 
     scores = []
     agent_fitness = []
@@ -324,13 +324,13 @@ def bandit_test(connections, arms, split=4, runtime=2000, exposure_time=200, noi
                     print "had an inhib failure"
             scores.append(get_scores(game_pop=bandit[i - fails], simulator=simulator))
             # pop[i].stats = {'fitness': scores[i][len(scores[i]) - 1][0]}  # , 'steps': 0}
-        print "finished spikes", seed
+        print "\nfinished spikes", seed, "\n"
         if spike_f:
             agent_fitness.append([scores[i][len(scores[i]) - 1][0], excite_spike_count[i] + inhib_spike_count[i]])
         else:
             agent_fitness.append(scores[i][len(scores[i]) - 1][0])
         # print i, "| e:", excite_spike_count[i], "-i:", inhib_spike_count[i], "|\t", scores[i]
-    print seed, "\nThe scores for this run of {} agents are:".format(len(connections))
+    print "seed:", seed, "\tThe scores for this run of {} agents are:".format(len(connections))
     for i in range(len(connections)):
         print "c:{}, s:{}, si:{}, si0:{}".format(len(connections), len(scores), len(scores[i]), len(scores[i][0]))
         e_string = "e: {}".format(excite_spike_count[i])
@@ -339,9 +339,9 @@ def bandit_test(connections, arms, split=4, runtime=2000, exposure_time=200, noi
         for j in range(len(scores[i])):
             score_string += "{:4},".format(scores[i][j][0])
         print "{:3} | {:8} {:8} - ".format(i, e_string, i_string), score_string
-    print "before end seed = ", seed
+    print "\nbefore end seed = ", seed, "\n"
     p.end()
-    print "after end seed = ", seed
+    print "\nafter end seed = ", seed, "\n"
 
     return agent_fitness
 
