@@ -18,6 +18,7 @@ from spinn_front_end_common.utilities.globals_variables import get_simulator
 import traceback
 import csv
 from ast import literal_eval
+import fnmatch
 
 # import random
 
@@ -448,7 +449,7 @@ class motif_population(object):
         i2i = []
         in2e = []
         in2i = []
-        in2in =[]
+        in2in = []
         in2out = []
         e2out = []
         i2out = []
@@ -459,6 +460,10 @@ class motif_population(object):
         out2in = []
         out2out = []
         for conn in agent_connections:
+            out_pre = False
+            in_pre = False
+            out_post = False
+            in_post = False
             if conn[0][0] == 'excitatory':
                 pre_ex = True
                 pre_in = False
@@ -488,9 +493,15 @@ class motif_population(object):
             else:
                 pre_ex = False
                 pre_in = False
-
+                try:
+                    out_pre = literal_eval(conn[0][0].replace('output', '')) + 1
+                    pre_index = out_pre
+                except:
+                    in_pre = literal_eval(conn[0][0].replace('input', '')) + 1
+                    pre_index = in_pre
             if conn[1][0] == 'excitatory':
                 post_ex = True
+                post_in = True
                 try:
                     post_index = indexed_ex.index(conn[1])
                     try:
@@ -501,8 +512,9 @@ class motif_population(object):
                     indexed_ex.append(conn[1])
                     post_index = indexed_ex.index(conn[1])
                     input_count['{}'.format(conn[1])] = 1
-            else:
+            elif conn[1][0] == 'inhibitory':
                 post_ex = False
+                post_in = True
                 try:
                     post_index = indexed_in.index(conn[1])
                     try:
@@ -513,35 +525,52 @@ class motif_population(object):
                     indexed_in.append(conn[1])
                     post_index = indexed_in.index(conn[1])
                     input_count['{}'.format(conn[1])] = 1
+            else:
+                post_ex = False
+                post_in = False
+                try:
+                    out_post = literal_eval(conn[1][0].replace('output', '')) + 1
+                    post_index = out_post
+                except:
+                    in_post = literal_eval(conn[1][0].replace('input', '')) + 1
+                    post_index = in_post
             if pre_ex and post_ex:
                 e2e.append((pre_index, post_index, conn[2], conn[3]))
-            elif pre_ex and not post_ex:
+            elif pre_ex and post_in:
                 e2i.append((pre_index, post_index, conn[2], conn[3]))
-            elif not pre_ex and post_ex:
+            elif pre_in and post_ex:
                 i2e.append((pre_index, post_index, conn[2], conn[3]))
-            elif not pre_ex and not post_ex:
+            elif pre_in and post_in:
                 i2i.append((pre_index, post_index, conn[2], conn[3]))
-        pre_ex_count = [[0, 'e', j] for j in range(len(indexed_ex))]
-        post_ex_count = [[0, 'e', j] for j in range(len(indexed_ex))]
-        pre_in_count = [[0, 'i', j] for j in range(len(indexed_in))]
-        post_in_count = [[0, 'i', j] for j in range(len(indexed_in))]
-        for e in e2e:
-            pre_ex_count[e[0]][0] += 1
-            post_ex_count[e[1]][0] += 1
-        for e in e2i:
-            pre_ex_count[e[0]][0] += 1
-            post_in_count[e[1]][0] += 1
-        for e in i2e:
-            pre_in_count[e[0]][0] += 1
-            post_ex_count[e[1]][0] += 1
-        for e in i2i:
-            pre_in_count[e[0]][0] += 1
-            post_in_count[e[1]][0] += 1
-        pre_ex_count.sort(reverse=True)
-        pre_in_count.sort(key=lambda x: x[0], reverse=True)
+            elif pre_ex and in_post:
+                e2in.append((pre_index, post_index-1, conn[2], conn[3]))
+            elif pre_ex and out_post:
+                e2out.append((pre_index, post_index-1, conn[2], conn[3]))
+            elif pre_in and in_post:
+                i2in.append((pre_index, post_index-1, conn[2], conn[3]))
+            elif pre_in and out_post:
+                i2out.append((pre_index, post_index-1, conn[2], conn[3]))
+            elif in_pre and post_ex:
+                in2e.append((pre_index-1, post_index, conn[2], conn[3]))
+            elif in_pre and post_in:
+                in2i.append((pre_index-1, post_index, conn[2], conn[3]))
+            elif in_pre and in_post:
+                in2in.append((pre_index-1, post_index-1, conn[2], conn[3]))
+            elif in_pre and out_post:
+                in2out.append((pre_index-1, post_index-1, conn[2], conn[3]))
+            elif out_pre and post_ex:
+                out2e.append((pre_index-1, post_index, conn[2], conn[3]))
+            elif out_pre and post_in:
+                out2i.append((pre_index-1, post_index, conn[2], conn[3]))
+            elif out_pre and in_post:
+                out2in.append((pre_index-1, post_index-1, conn[2], conn[3]))
+            elif out_pre and out_post:
+                out2out.append((pre_index-1, post_index-1, conn[2], conn[3]))
+            else:
+                print "somethin fucky"
 
-        return in2e, in2i, in2in, in2out, e2in, i2in, len(indexed_ex) - len(removed_e), e2e, e2i, \
-               len(indexed_in) - len(removed_i), i2e, i2i, e2out, i2out, out2e, out2i, out2in, out2out
+        return in2e, in2i, in2in, in2out, e2in, i2in, len(indexed_ex), e2e, e2i, \
+               len(indexed_in), i2e, i2i, e2out, i2out, out2e, out2i, out2in, out2out
 
     def construct_connections(self, agent_connections, seed, inputs, outputs):
         indexed_ex = []

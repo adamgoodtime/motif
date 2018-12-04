@@ -87,8 +87,9 @@ def bandit(generations):
         globals()['size_f'] = size_fitness
         globals()['spike_f'] = spikes_fitness
         globals()['exposure_time'] = 200
-        config = 'test'
+        # config = 'test'
         if config != 'test':
+            # fitnesses = agents.bandit_test(connections, arms=[0.9, 0.1])
             execfile("../methods/exec_bandit.py", globals())
 
         fitnesses = agents.read_fitnesses(config)
