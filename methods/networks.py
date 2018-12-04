@@ -516,7 +516,11 @@ class motif_population(object):
         pre_ex_count.sort(reverse=True)
         pre_in_count.sort(key=lambda x: x[0], reverse=True)
         post_ex_count.sort(reverse=True)
+        post_ex_index = deepcopy(post_ex_count)
+        post_ex_index.sort(key=lambda x: x[2])
         post_in_count.sort(reverse=True)
+        post_in_index = deepcopy(post_in_count)
+        post_in_index.sort(key=lambda x: x[2])
         pre_count = pre_ex_count + pre_in_count
         pre_count.sort(reverse=True)
         post_count = post_in_count + post_ex_count
@@ -556,11 +560,19 @@ class motif_population(object):
                         break
                 io_index = 0
                 for node in pre_count:
-                    match = False
+                    bad_match = False
                     for neuron in output_neurons:
                         if node[1] == neuron[0] and node[2] == neuron[2]:
-                            match = True
-                    if not match:
+                            bad_match = True
+                            break
+                    if self.global_io[2] == 'no_in' and not bad_match:
+                        if node[1] == 'e':
+                            if post_ex_index[node[2]][0] != 0:
+                                bad_match = True
+                        if node[1] == 'i':
+                            if post_in_index[node[2]][0] != 0:
+                                bad_match = True
+                    if not bad_match:
                         input_neurons.append([node[1], input_order[io_index], node[2]])
                         if node[1] == 'e':
                             removed_e.append(node[2])
@@ -582,12 +594,19 @@ class motif_population(object):
                         break
                 io_index = 0
                 for node in pre_count:
-                    match = False
+                    bad_match = False
                     for neuron in output_neurons:
                         if node[1] == neuron[0] and node[2] == neuron[2]:
-                            match = True
+                            bad_match = True
                             break
-                    if not match:
+                    if self.global_io[2] == 'no_in' and not bad_match:
+                        if node[1] == 'e':
+                            if post_ex_index[node[2]][0] != 0:
+                                bad_match = True
+                        if node[1] == 'i':
+                            if post_in_index[node[2]][0] != 0:
+                                bad_match = True
+                    if not bad_match:
                         input_neurons.append([node[1], io_index, node[2]])
                         if node[1] == 'e':
                             removed_e.append(node[2])
