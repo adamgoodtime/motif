@@ -57,13 +57,13 @@ def thread_bandit(connections, arms, split=4, runtime=2000, exposure_time=200, n
     if isinstance(arms[0], list):
         connection_threads = []
         all_configs = [[[connections[x:x + step_size], arm, split, runtime, exposure_time, noise_rate, noise_weight,
-                         reward, spike_f, np.random.randint(10000000000000)] for x in xrange(0, len(connections), step_size)] for arm in arms]
+                         reward, spike_f, np.random.randint(1000000000)] for x in xrange(0, len(connections), step_size)] for arm in arms]
         for arm in all_configs:
             for config in arm:
                 connection_threads.append(config)
     else:
         connection_threads = [[connections[x:x + step_size], arms, split, runtime, exposure_time, noise_rate,
-                               noise_weight, reward, spike_f, np.random.randint(10000000000000)] for x in xrange(0, len(connections), step_size)]
+                               noise_weight, reward, spike_f, np.random.randint(1000000000)] for x in xrange(0, len(connections), step_size)]
     pool = pathos.multiprocessing.Pool(processes=len(connection_threads))
 
     pool_result = pool.map(func=helper, iterable=connection_threads)
