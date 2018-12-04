@@ -18,7 +18,8 @@ def bandit(generations):
                               no_delay_bins=5,
                               weight_range=(0.005, weight_max),
                               # delay_range=(2, 2.00001),
-                              neuron_types=(['excitatory', 'inhibitory', 'input', 'output']),
+                              neuron_types=(['excitatory', 'inhibitory']),
+                              io_weight=[2, 2, 0.6],
                               # read_entire_population='motif population 0: conf.csv',
                               population_size=200)
 
@@ -86,7 +87,7 @@ def bandit(generations):
         globals()['size_f'] = size_fitness
         globals()['spike_f'] = spikes_fitness
         globals()['exposure_time'] = 200
-        # config = 'test'
+        config = 'test'
         if config != 'test':
             execfile("../methods/exec_bandit.py", globals())
 

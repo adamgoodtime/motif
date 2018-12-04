@@ -45,6 +45,7 @@ class motif_population(object):
                  selection_metric='fitness',  # fixed, population based, fitness based
                  # starting_weight='uniform',
                  neuron_types=['excitatory', 'inhibitory'],
+                 io_weight=0.3,
                  io_config='fixed',  # fixed, dynamic/coded probabilistic, uniform
                  global_io=('highest', 'unseeded'), # highest, seeded, random, average
                  multi_synapse=False):
@@ -73,18 +74,24 @@ class motif_population(object):
         self.max_hierarchy_depth = max_hierarchy_depth
         self.selection_metric = selection_metric
         self.neuron_types = neuron_types
+        self.io_weight = io_weight
+        if self.io_weight:
+            no_io = self.io_weight[0] + self.io_weight[1]
+            no_ex_in = int(np.ceil(no_io / self.io_weight[2]))
+            for i in range(no_ex_in):
+                self.neuron_types.append(self.neuron_types[0])
+                self.neuron_types.append(self.neuron_types[1])
+            for i in range(self.io_weight[0]):
+                self.neuron_types.append('input{}'.format(i))
+            for i in range(self.io_weight[1]):
+                self.neuron_types.append('output{}'.format(i))
         self.io_config = io_config
         self.global_io = global_io
         self.multi_synapse = multi_synapse
 
         self.motif_configs = {}  # Tuple of tuples(node types, node i/o P(), connections, selection weight)
-        # for types in self.neuron_types:
-        #     self.motif_configs[types] = {}
-        #     self.motif_configs[types]['depth'] = 0
         self.motifs_generated = 0
         self.total_weight = 0
-        # self.agent_pop = []
-        # self.agent_nets = {}
 
         true_or_false = [True, False]
 
@@ -430,6 +437,112 @@ class motif_population(object):
             node_count += 1
         return all_connections
 
+    def construct_io(self, agent_connections, seed, inputs, outputs):
+        indexed_ex = []
+        indexed_in = []
+        input_count = {}
+        output_count = {}
+        e2e = []
+        e2i = []
+        i2e = []
+        i2i = []
+        in2e = []
+        in2i = []
+        in2in =[]
+        in2out = []
+        e2out = []
+        i2out = []
+        e2in = []
+        i2in = []
+        out2e = []
+        out2i = []
+        out2in = []
+        out2out = []
+        for conn in agent_connections:
+            if conn[0][0] == 'excitatory':
+                pre_ex = True
+                pre_in = False
+                try:
+                    pre_index = indexed_ex.index(conn[0])
+                    try:
+                        output_count['{}'.format(conn[0])] += 1
+                    except:
+                        output_count['{}'.format(conn[0])] = 1
+                except:
+                    indexed_ex.append(conn[0])
+                    output_count['{}'.format(conn[0])] = 1
+                    pre_index = indexed_ex.index(conn[0])
+            elif conn[0][0] == 'inhibitory':
+                pre_ex = False
+                pre_in = True
+                try:
+                    pre_index = indexed_in.index(conn[0])
+                    try:
+                        output_count['{}'.format(conn[0])] += 1
+                    except:
+                        output_count['{}'.format(conn[0])] = 1
+                except:
+                    indexed_in.append(conn[0])
+                    pre_index = indexed_in.index(conn[0])
+                    output_count['{}'.format(conn[0])] = 1
+            else:
+                pre_ex = False
+                pre_in = False
+
+            if conn[1][0] == 'excitatory':
+                post_ex = True
+                try:
+                    post_index = indexed_ex.index(conn[1])
+                    try:
+                        input_count['{}'.format(conn[1])] += 1
+                    except:
+                        input_count['{}'.format(conn[1])] = 1
+                except:
+                    indexed_ex.append(conn[1])
+                    post_index = indexed_ex.index(conn[1])
+                    input_count['{}'.format(conn[1])] = 1
+            else:
+                post_ex = False
+                try:
+                    post_index = indexed_in.index(conn[1])
+                    try:
+                        input_count['{}'.format(conn[1])] += 1
+                    except:
+                        input_count['{}'.format(conn[1])] = 1
+                except:
+                    indexed_in.append(conn[1])
+                    post_index = indexed_in.index(conn[1])
+                    input_count['{}'.format(conn[1])] = 1
+            if pre_ex and post_ex:
+                e2e.append((pre_index, post_index, conn[2], conn[3]))
+            elif pre_ex and not post_ex:
+                e2i.append((pre_index, post_index, conn[2], conn[3]))
+            elif not pre_ex and post_ex:
+                i2e.append((pre_index, post_index, conn[2], conn[3]))
+            elif not pre_ex and not post_ex:
+                i2i.append((pre_index, post_index, conn[2], conn[3]))
+        pre_ex_count = [[0, 'e', j] for j in range(len(indexed_ex))]
+        post_ex_count = [[0, 'e', j] for j in range(len(indexed_ex))]
+        pre_in_count = [[0, 'i', j] for j in range(len(indexed_in))]
+        post_in_count = [[0, 'i', j] for j in range(len(indexed_in))]
+        for e in e2e:
+            pre_ex_count[e[0]][0] += 1
+            post_ex_count[e[1]][0] += 1
+        for e in e2i:
+            pre_ex_count[e[0]][0] += 1
+            post_in_count[e[1]][0] += 1
+        for e in i2e:
+            pre_in_count[e[0]][0] += 1
+            post_ex_count[e[1]][0] += 1
+        for e in i2i:
+            pre_in_count[e[0]][0] += 1
+            post_in_count[e[1]][0] += 1
+        pre_ex_count.sort(reverse=True)
+        pre_in_count.sort(key=lambda x: x[0], reverse=True)
+
+        return in2e, in2i, in2in, in2out, e2in, i2in, len(indexed_ex) - len(removed_e), e2e, e2i, \
+               len(indexed_in) - len(removed_i), i2e, i2i, e2out, i2out, out2e, out2i, out2in, out2out
+
     def construct_connections(self, agent_connections, seed, inputs, outputs):
         indexed_ex = []
         indexed_in = []
@@ -584,8 +697,12 @@ class motif_population(object):
     def convert_individual(self, agent, inputs, outputs):
             # agent_connections.append(self.read_motif(agent))
         agent_conn = self.read_motif(agent[0])
-        spinn_conn = \
-            self.construct_connections(agent_conn, agent[1], inputs, outputs)
+        if self.io_weight:
+            spinn_conn = \
+                self.construct_io(agent_conn, agent[1], inputs, outputs)
+        else:
+            spinn_conn = \
+                self.construct_connections(agent_conn, agent[1], inputs, outputs)
         return spinn_conn
 
     def list_motifs(self, motif_id, list=[]):
