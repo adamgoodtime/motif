@@ -294,7 +294,7 @@ def bandit_test(connections, arms, split=4, runtime=2000, exposure_time=200, noi
     inhib_fail = 0
     print "reading the spikes of ", config, '\n', seed
     for i in range(len(connections)):
-        print "started processing fitness of: ", i
+        print "started processing fitness of: ", i, '/', len(connections)
         if i in failures:
             print "worst score for the failure"
             fails += 1
