@@ -19,7 +19,7 @@ def bandit(generations):
                               weight_range=(0.005, weight_max),
                               # delay_range=(2, 2.00001),
                               neuron_types=(['excitatory', 'inhibitory']),
-                              # global_io=('highest', 'unseeded', 'no_in'),
+                              global_io=('highest', 'unseeded', 'in'),
                               # read_entire_population='motif population 0: conf.csv',
                               population_size=200)
 
