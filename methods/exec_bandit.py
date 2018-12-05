@@ -25,7 +25,7 @@ import threading
 import pathos.multiprocessing
 from spinn_front_end_common.utilities import globals_variables
 
-max_fail_score = -1000000
+max_fail_score = -int(runtime / exposure_time)
 
 def split_ex_in(connections):
     excite = []
