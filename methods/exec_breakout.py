@@ -10,7 +10,7 @@ import sys, os
 import time
 import socket
 import numpy as np
-from spinn_bandit.python_models.bandit import Bandit
+from spinn_breakout
 import math
 import itertools
 from copy import deepcopy
@@ -34,10 +34,10 @@ def get_scores(game_pop, simulator):
         simulator.graph_mapper, simulator.buffer_manager, simulator.machine_time_step)
     return scores.tolist()
 
-def thread_bandit(connections, arms, split=4, runtime=2000, exposure_time=200, noise_rate=100, noise_weight=0.01,
+def thread_breakout(connections, arms, split=4, runtime=2000, exposure_time=200, noise_rate=100, noise_weight=0.01,
                   reward=0, size_f=False, spike_f=False, top=True):
     def helper(args):
-        return bandit_test(*args)
+        return breakout_test(*args)
 
     step_size = len(connections) / split
     if step_size == 0:
@@ -61,7 +61,7 @@ def thread_bandit(connections, arms, split=4, runtime=2000, exposure_time=200, n
         if pool_result[i] == 'fail' and len(connection_threads[i][0]) > 1:
             print "splitting ", len(connection_threads[i][0]), " into ", new_split, " pieces"
             problem_arms = connection_threads[i][1]
-            pool_result[i] = thread_bandit(connection_threads[i][0], problem_arms, new_split, runtime,
+            pool_result[i] = thread_breakout(connection_threads[i][0], problem_arms, new_split, runtime,
                                                 exposure_time, noise_rate, noise_weight, reward, spike_f, top=False)
 
     agent_fitness = []
@@ -88,7 +88,7 @@ def thread_bandit(connections, arms, split=4, runtime=2000, exposure_time=200, n
     return agent_fitness
 
 
-def bandit_test(connections, arms, split=4, runtime=2000, exposure_time=200, noise_rate=100, noise_weight=0.01,
+def breakout_test(connections, arms, split=4, runtime=2000, exposure_time=200, noise_rate=100, noise_weight=0.01,
                 reward=0, spike_f=False, seed=0):
     np.random.seed(seed)
     sleep = 10 * np.random.random()
@@ -126,8 +126,7 @@ def bandit_test(connections, arms, split=4, runtime=2000, exposure_time=200, noi
             else:
                 bandit_count += 1
                 bandit.append(
-                    p.Population(len(arms), Bandit(arms, exposure_time, reward_based=reward,
-                                                   label='bandit_pop_{}-{}'.format(bandit_count, i))))
+                    p.Population(len(arms), spinn_breakout.Breakout(x_factor=x_factor, y_factor=y_factor, label="breakout {}".format(i))))
                 if e_size > 0:
                     excite_count += 1
                     excite.append(
@@ -266,6 +265,6 @@ def print_fitnesses(fitnesses):
 
 
 
-fitnesses = thread_bandit(connections, arms, split, runtime, exposure_time, noise_rate, noise_weight, reward, size_f, spike_f, True)
+fitnesses = thread_breakout(connections, arms, split, runtime, exposure_time, noise_rate, noise_weight, reward, size_f, spike_f, True)
 
 print_fitnesses(fitnesses)
