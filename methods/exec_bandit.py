@@ -331,14 +331,14 @@ def bandit_test(connections, arms, split=4, runtime=2000, exposure_time=200, noi
             agent_fitness.append(scores[i][len(scores[i]) - 1][0])
         # print i, "| e:", excite_spike_count[i], "-i:", inhib_spike_count[i], "|\t", scores[i]
     print "seed:", seed, "\tThe scores for this run of {} agents are:".format(len(connections))
-    for i in range(len(connections)):
-        print "c:{}, s:{}, si:{}, si0:{}".format(len(connections), len(scores), len(scores[i]), len(scores[i][0]))
-        e_string = "e: {}".format(excite_spike_count[i])
-        i_string = "i: {}".format(inhib_spike_count[i])
-        score_string = ""
-        for j in range(len(scores[i])):
-            score_string += "{:4},".format(scores[i][j][0])
-        print "{:3} | {:8} {:8} - ".format(i, e_string, i_string), score_string
+    # for i in range(len(connections)):
+    #     print "c:{}, s:{}, si:{}, si0:{}".format(len(connections), len(scores), len(scores[i]), len(scores[i][0]))
+    #     e_string = "e: {}".format(excite_spike_count[i])
+    #     i_string = "i: {}".format(inhib_spike_count[i])
+    #     score_string = ""
+    #     for j in range(len(scores[i])):
+    #         score_string += "{:4},".format(scores[i][j][0])
+    #     print "{:3} | {:8} {:8} - ".format(i, e_string, i_string), score_string
     print "\nbefore end seed = ", seed, "\n"
     p.end()
     print "\nafter end seed = ", seed, "\n"
