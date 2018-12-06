@@ -340,6 +340,7 @@ def bandit_test(connections, arms, split=4, runtime=2000, exposure_time=200, noi
     #         score_string += "{:4},".format(scores[i][j][0])
     #     print "{:3} | {:8} {:8} - ".format(i, e_string, i_string), score_string
     print "\nbefore end seed = ", seed, "\n"
+    time.sleep(10)
     p.end()
     print "\nafter end seed = ", seed, "\n"
 
