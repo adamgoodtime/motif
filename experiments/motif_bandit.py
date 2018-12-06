@@ -1,6 +1,7 @@
 from methods.networks import motif_population
 from methods.agents import agent_population
 import numpy as np
+import itertools
 import traceback
 import threading
 from multiprocessing.pool import ThreadPool
@@ -28,13 +29,17 @@ def bandit(generations):
     agent_pop_size = 100
     arm1 = 0.9
     arm2 = 0.1
-    arm_len = 4
+    arm3 = 0.3
+    arm_len = 1
     arms = []
     for i in range(arm_len):
-        arms.append([arm1, arm2])
-        arms.append([arm2, arm1])
+        # arms.append([arm1, arm2])
+        # arms.append([arm2, arm1])
+        for arm in list(itertools.permutations([arm1, arm2, arm3])):
+            arms.append(list(arm))
     #arms = [[0.4, 0.6], [0.6, 0.4], [0.3, 0.7], [0.7, 0.3], [0.2, 0.8], [0.8, 0.2], [0.1, 0.9], [0.9, 0.1]]
-    number_of_arms = 2
+    arms = [[0.1, 0.2, 0.9, 0.3, 0.2, 0.1, 0.2, 0.1], [0.9, 0.1, 0.1, 0.2, 0.3, 0.2, 0.1, 0.2], [0.3, 0.9, 0.2, 0.1, 0.1, 0.2, 0.2, 0.1], [0.2, 0.1, 0.1, 0.9, 0.2, 0.3, 0.1, 0.2], [0.1, 0.1, 0.1, 0.2, 0.9, 0.2, 0.3, 0.2], [0.1, 0.2, 0.1, 0.2, 0.2, 0.9, 0.1, 0.3], [0.2, 0.1, 0.3, 0.1, 0.2, 0.1, 0.9, 0.2], [0.1, 0.3, 0.2, 0.2, 0.1, 0.2, 0.1, 0.9]]
+    number_of_arms = 3
     split = 1
 
     reward_shape = False
@@ -80,7 +85,7 @@ def bandit(generations):
         globals()['connections'] = connections
         globals()['arms'] = arms
         globals()['split'] = split
-        globals()['runtime'] = 21000
+        globals()['runtime'] = 41000
         globals()['reward'] = reward
         globals()['noise_rate'] = noise_rate
         globals()['noise_weight'] = noise_weight
@@ -89,7 +94,7 @@ def bandit(generations):
         globals()['exposure_time'] = 200
         # config = 'test'
         if config != 'test':
-            # arms = [0.1, 0.9]
+            # arms = [0.1, 0.9, 0.2]
             # agents.bandit_test(connections, arms)
             execfile("../methods/exec_bandit.py", globals())
 
