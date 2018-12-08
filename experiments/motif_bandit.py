@@ -1,6 +1,7 @@
 from methods.networks import motif_population
 from methods.agents import agent_population
 import numpy as np
+import itertools
 import traceback
 import threading
 from multiprocessing.pool import ThreadPool
@@ -12,29 +13,28 @@ def bandit(generations):
 
     weight_max = 0.1
 
-    # check max motif count
-    motifs = motif_population(max_motif_size=3,
-                              no_weight_bins=5,
-                              no_delay_bins=5,
-                              weight_range=(0.005, weight_max),
-                              # delay_range=(2, 2.00001),
-                              neuron_types=(['excitatory', 'inhibitory']),
-                              io_weight=[2, 2, 0.6],
-                              # read_entire_population='motif population 0: conf.csv',
-                              population_size=200)
-
-    # todo :add number of different motifs to the fitness function to promote regularity
-
     agent_pop_size = 100
     arm1 = 0.9
     arm2 = 0.1
-    arm_len = 4
+    arm3 = 0.3
+    arm_len = 1
     arms = []
     for i in range(arm_len):
-        arms.append([arm1, arm2])
-        arms.append([arm2, arm1])
-    #arms = [[0.4, 0.6], [0.6, 0.4], [0.3, 0.7], [0.7, 0.3], [0.2, 0.8], [0.8, 0.2], [0.1, 0.9], [0.9, 0.1]]
-    number_of_arms = 1
+        # arms.append([arm1, arm2])
+        # arms.append([arm2, arm1])
+        for arm in list(itertools.permutations([arm1, arm2, arm3])):
+            arms.append(list(arm))
+    # arms = [[0.4, 0.6], [0.6, 0.4], [0.3, 0.7], [0.7, 0.3], [0.2, 0.8], [0.8, 0.2], [0.1, 0.9], [0.9, 0.1]]
+    '''arms = [[0.1, 0.2, 0.9, 0.3, 0.2, 0.1, 0.2, 0.1], [0.9, 0.1, 0.1, 0.2, 0.3, 0.2, 0.1, 0.2],
+            [0.3, 0.9, 0.2, 0.1, 0.1, 0.2, 0.2, 0.1], [0.2, 0.1, 0.1, 0.9, 0.2, 0.3, 0.1, 0.2],
+            [0.1, 0.1, 0.1, 0.2, 0.9, 0.2, 0.3, 0.2], [0.1, 0.2, 0.1, 0.2, 0.2, 0.9, 0.1, 0.3],
+            [0.2, 0.1, 0.3, 0.1, 0.2, 0.1, 0.9, 0.2], [0.1, 0.3, 0.2, 0.2, 0.1, 0.2, 0.1, 0.9]]
+    # '''
+    if isinstance(arms[0], list):
+        number_of_arms = len(arms)
+    else:
+        number_of_arms = len(arms)
+
     split = 1
 
     reward_shape = False
@@ -46,6 +46,19 @@ def bandit(generations):
     spikes_fitness = False
     random_arms = 0
     viable_parents = 0.1
+
+    # check max motif count
+    motifs = motif_population(max_motif_size=3,
+                              no_weight_bins=5,
+                              no_delay_bins=5,
+                              weight_range=(0.005, weight_max),
+                              # delay_range=(2, 2.00001),
+                              neuron_types=(['excitatory', 'inhibitory']),
+                              io_weight=[2, number_of_arms, 0.6],
+                              # read_entire_population='motif population 0: conf.csv',
+                              population_size=200)
+
+    # todo :add number of different motifs to the fitness function to promote regularity
 
     config = "bandit reward_shape:{}, reward:{}, noise r-w:{}-{}, arms:{}-{}-{}, max_d{}, size:{}, spikes:{}, w_max{}, rents{}".format(
         reward_shape, reward, noise_rate, noise_weight, arms[0], len(arms), random_arms, maximum_depth, size_fitness, spikes_fitness, weight_max, viable_parents)
@@ -80,7 +93,7 @@ def bandit(generations):
         globals()['connections'] = connections
         globals()['arms'] = arms
         globals()['split'] = split
-        globals()['runtime'] = 21000
+        globals()['runtime'] = 41000
         globals()['reward'] = reward
         globals()['noise_rate'] = noise_rate
         globals()['noise_weight'] = noise_weight
@@ -89,7 +102,8 @@ def bandit(generations):
         globals()['exposure_time'] = 200
         # config = 'test'
         if config != 'test':
-            # fitnesses = agents.bandit_test(connections, arms=[0.9, 0.1])
+            # arms = [0.1, 0.9, 0.2]
+            # agents.bandit_test(connections, arms)
             execfile("../methods/exec_bandit.py", globals())
 
         fitnesses = agents.read_fitnesses(config)
