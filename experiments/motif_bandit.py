@@ -45,7 +45,7 @@ def bandit(generations):
     size_fitness = False
     spikes_fitness = False
     random_arms = 0
-    viable_parents = 0.1
+    viable_parents = 0.3
 
     # check max motif count
     motifs = motif_population(max_motif_size=3,
