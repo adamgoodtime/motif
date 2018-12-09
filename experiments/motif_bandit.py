@@ -12,6 +12,7 @@ connections = []
 
 def bandit(generations):
     print "starting"
+    global connections
 
     weight_max = 0.1
 
