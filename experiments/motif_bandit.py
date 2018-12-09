@@ -16,7 +16,7 @@ def bandit(generations):
 
     weight_max = 0.1
 
-    agent_pop_size = 100
+    agent_pop_size = 200
     arm1 = 0.9
     arm2 = 0.1
     arm3 = 0.1
