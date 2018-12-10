@@ -68,6 +68,8 @@ def thread_bandit(connections, arms, split=4, runtime=2000, exposure_time=200, n
 
     pool_result = pool.map(func=helper, iterable=connection_threads)
 
+    pool.close()
+
     for i in range(len(pool_result)):
         new_split = 4
         if pool_result[i] == 'fail' and len(connection_threads[i][0]) > 1:

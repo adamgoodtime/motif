@@ -16,7 +16,6 @@ def bandit(generations):
 
     weight_max = 0.1
 
-    agent_pop_size = 200
     arm1 = 0.9
     arm2 = 0.1
     arm3 = 0.1
@@ -40,6 +39,7 @@ def bandit(generations):
 
     split = 1
 
+    agent_pop_size = 200
     reward_shape = False
     reward = 0
     noise_rate = 0
@@ -50,17 +50,19 @@ def bandit(generations):
     random_arms = 0
     viable_parents = 0.3
     elitism = 0.3
+    runtime = 41000
+    exposure_time = 200
 
     # check max motif count
     motifs = motif_population(max_motif_size=3,
                               no_weight_bins=5,
                               no_delay_bins=5,
                               weight_range=(0.005, weight_max),
-                              # delay_range=(2, 2.00001),
+                              # delay_range=(1, 25),
                               neuron_types=(['excitatory', 'inhibitory']),
                               io_weight=[2, number_of_arms, 1],
                               # read_entire_population='motif population 0: conf.csv',
-                              population_size=200)
+                              population_size=agent_pop_size+200)
 
     # todo :add number of different motifs to the fitness function to promote regularity
     # config = "bandit reward_shape:{}, reward:{}, noise r-w:{}-{}, arms:{}-{}-{}, max_d{}, size:{}, spikes:{}, w_max{}".format(
@@ -85,13 +87,14 @@ def bandit(generations):
     # globals()['connections'] = connections
     globals()['arms'] = arms
     globals()['split'] = split
-    globals()['runtime'] = 41000
+    globals()['runtime'] = runtime
     globals()['reward'] = reward
     globals()['noise_rate'] = noise_rate
     globals()['noise_weight'] = noise_weight
     globals()['size_f'] = size_fitness
     globals()['spike_f'] = spikes_fitness
-    globals()['exposure_time'] = 200
+    globals()['exposure_time'] = exposure_time
+    max_fail_score = -int(runtime / exposure_time)
 
     for i in range(generations):
 
@@ -119,7 +122,7 @@ def bandit(generations):
             # agents.bandit_test(connections, arms)
             execfile("../methods/exec_bandit.py", globals())
 
-        fitnesses = agents.read_fitnesses(config)
+        fitnesses = agents.read_fitnesses(config, max_fail_score)
 
         print "1", motifs.total_weight
 
