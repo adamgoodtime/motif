@@ -68,6 +68,8 @@ def thread_bandit(connections, arms, split=4, runtime=2000, exposure_time=200, n
 
     pool_result = pool.map(func=helper, iterable=connection_threads)
 
+    pool.close()
+
     for i in range(len(pool_result)):
         new_split = 4
         if pool_result[i] == 'fail' and len(connection_threads[i][0]) > 1:
@@ -330,17 +332,16 @@ def bandit_test(connections, arms, split=4, runtime=2000, exposure_time=200, noi
         else:
             agent_fitness.append(scores[i][len(scores[i]) - 1][0])
         # print i, "| e:", excite_spike_count[i], "-i:", inhib_spike_count[i], "|\t", scores[i]
-    print "seed:", seed, "\tThe scores for this run of {} agents are:".format(len(connections))
-    # for i in range(len(connections)):
-    #     print "c:{}, s:{}, si:{}, si0:{}".format(len(connections), len(scores), len(scores[i]), len(scores[i][0]))
-    #     e_string = "e: {}".format(excite_spike_count[i])
-    #     i_string = "i: {}".format(inhib_spike_count[i])
-    #     score_string = ""
-    #     for j in range(len(scores[i])):
-    #         score_string += "{:4},".format(scores[i][j][0])
-    #     print "{:3} | {:8} {:8} - ".format(i, e_string, i_string), score_string
-    print "\nbefore end seed = ", seed, "\n"
-    time.sleep(10)
+    print seed, "\nThe scores for this run of {} agents are:".format(len(connections))
+    for i in range(len(connections)):
+        print "c:{}, s:{}, si:{}, si0:{}".format(len(connections), len(scores), len(scores[i]), len(scores[i][0]))
+        e_string = "e: {}".format(excite_spike_count[i])
+        i_string = "i: {}".format(inhib_spike_count[i])
+        score_string = ""
+        for j in range(len(scores[i])):
+            score_string += "{:4},".format(scores[i][j][0])
+        print "{:3} | {:8} {:8} - ".format(i, e_string, i_string), score_string
+    print "before end seed = ", seed
     p.end()
     print "\nafter end seed = ", seed, "\n"
 

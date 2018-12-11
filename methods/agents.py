@@ -908,7 +908,7 @@ class agent_population(object):
 
         return agent_fitness
 
-    def read_fitnesses(self, config):
+    def read_fitnesses(self, config, worst_score):
         #todo check if this handles fails properly
         fitnesses = []
         file_name = 'fitnesses {}.csv'.format(config)
@@ -917,7 +917,10 @@ class agent_population(object):
             for row in csvFile:
                 metric = []
                 for thing in row:
-                    metric.append(literal_eval(thing))
+                    if thing == 'fail':
+                        metric.append(worst_score)
+                    else:
+                        metric.append(literal_eval(thing))
                 fitnesses.append(metric)
         return fitnesses
 
