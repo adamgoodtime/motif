@@ -44,7 +44,7 @@ def bandit(generations):
     reward = 0
     noise_rate = 0
     noise_weight = 0.01
-    maximum_depth = 10
+    maximum_depth = 20
     size_fitness = False
     spikes_fitness = False
     random_arms = 0
