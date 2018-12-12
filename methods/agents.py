@@ -36,7 +36,8 @@ class agent_population(object):
                  crossover=0.5,
                  elitism=0.1,
                  viable_parents=0.1,
-                 asexual=0.5,
+                 # asexual=0.5,
+                 sexuality=[1./3., 1./3., 1./3.],
                  conn_param_mutate=0.1,
                  conn_add=0.03,
                  conn_gone=0.03,
@@ -60,7 +61,8 @@ class agent_population(object):
         self.crossover = crossover
         self.elitism = elitism
         self.viable_parents = viable_parents
-        self.asexual = asexual
+        # self.asexual = asexual
+        self.sexuality = {'asexual': sexuality[0], 'sexual': sexuality[1], 'both': sexuality[2]}
         self.conn_param_mutate = conn_param_mutate
         self.conn_add = conn_add
         self.conn_gone = conn_gone
@@ -363,7 +365,6 @@ class agent_population(object):
             node_count += 1
         if copy_copy != config_copy:
             motif_id = self.motifs.insert_motif(copy_copy)
-        # todo do something with mutate key
         return motif_id
 
     def mate(self, mum, dad, mutate_key):
@@ -407,7 +408,7 @@ class agent_population(object):
             children.append([parents[i][0], parents[i][1]])
         i = elite
         while i < birthing:
-            if np.random.random() < self.asexual:
+            if np.random.random() < self.sexuality['asexual']:
                 if fitness_shaping:
                     parent = parents[self.select_parents(parents)]
                 else:
@@ -417,7 +418,7 @@ class agent_population(object):
                 if self.motifs.depth_read(child) > self.maximum_depth:
                     child = False
                     print "as3x d"
-            else:
+            elif np.random.random() < self.sexuality['sexual']:
                 if fitness_shaping:
                     mum = parents[self.select_parents(parents)]
                     dad = parents[self.select_parents(parents)]
@@ -428,6 +429,22 @@ class agent_population(object):
                 if self.motifs.depth_read(child) > self.maximum_depth:
                     child = False
                     print "mate d"
+            else:
+                if fitness_shaping:
+                    mum = parents[self.select_parents(parents)]
+                    dad = parents[self.select_parents(parents)]
+                else:
+                    print "use a function to determine the parent based on fitness"
+                mutate_key = {}
+                child = self.mate(mum, dad, mutate_key)
+                if self.motifs.depth_read(child) > self.maximum_depth:
+                    child = False
+                    print "both mate d"
+                child = self.mutate(child, mutate_key)
+                if self.motifs.depth_read(child) > self.maximum_depth:
+                    child = False
+                    print "both as3x d"
+                mutate_key['sex'] = 2
             if child:
                 children.append([child, np.random.randint(200)])
                 mumate_dict[child] = mutate_key
