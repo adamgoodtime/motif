@@ -39,12 +39,12 @@ def bandit(generations):
 
     split = 1
 
-    agent_pop_size = 200
+    agent_pop_size = 100
     reward_shape = False
-    reward = 0
+    reward = 1
     noise_rate = 0
     noise_weight = 0.01
-    maximum_depth = 20
+    maximum_depth = 10
     size_fitness = False
     spikes_fitness = False
     random_arms = 0
@@ -52,15 +52,16 @@ def bandit(generations):
     elitism = 0.3
     runtime = 41000
     exposure_time = 200
+    io_weighting = 1
 
     # check max motif count
     motifs = motif_population(max_motif_size=3,
-                              no_weight_bins=5,
-                              no_delay_bins=5,
+                              no_weight_bins=15,
+                              no_delay_bins=15,
                               weight_range=(0.005, weight_max),
                               # delay_range=(1, 25),
                               neuron_types=(['excitatory', 'inhibitory']),
-                              io_weight=[2, number_of_arms, 1],
+                              io_weight=[2, number_of_arms, io_weighting],
                               # read_entire_population='motif population 0: conf.csv',
                               population_size=agent_pop_size+200)
 
@@ -77,10 +78,9 @@ def bandit(generations):
                               viable_parents=viable_parents)
 
     config = "bandit reward_shape:{}, reward:{}, noise r-w:{}-{}, arms:{}-{}-{}, max_d:{}, size:{}, spikes:{}, " \
-             "w_max:{}, rents:{}, elitism:{}, pop_size:{}".format(reward_shape, reward, noise_rate, noise_weight,
-                                                                  arms[0], len(arms), random_arms, maximum_depth,
-                                                                  size_fitness, spikes_fitness,weight_max,
-                                                                  viable_parents, elitism, agent_pop_size)
+             "w_max:{}, rents:{}, elitism:{}, pop_size:{}, io:{}".format(
+                reward_shape, reward, noise_rate, noise_weight, arms[0], len(arms), random_arms, maximum_depth,
+                size_fitness, spikes_fitness, weight_max, viable_parents, elitism, agent_pop_size, io_weighting)
 
     globals()['pop_size'] = agent_pop_size
     globals()['config'] = config

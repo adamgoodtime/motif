@@ -26,6 +26,8 @@ import pathos.multiprocessing
 from spinn_front_end_common.utilities import globals_variables
 
 max_fail_score = -int(runtime / exposure_time)
+setup_retry_time = 20
+new_split = 100
 
 def split_ex_in(connections):
     excite = []
@@ -64,6 +66,7 @@ def thread_bandit(connections, arms, split=4, runtime=2000, exposure_time=200, n
     else:
         connection_threads = [[connections[x:x + step_size], arms, split, runtime, exposure_time, noise_rate,
                                noise_weight, reward, spike_f, np.random.randint(1000000000)] for x in xrange(0, len(connections), step_size)]
+
     pool = pathos.multiprocessing.Pool(processes=len(connection_threads))
 
     pool_result = pool.map(func=helper, iterable=connection_threads)
@@ -71,7 +74,6 @@ def thread_bandit(connections, arms, split=4, runtime=2000, exposure_time=200, n
     pool.close()
 
     for i in range(len(pool_result)):
-        new_split = 4
         if pool_result[i] == 'fail' and len(connection_threads[i][0]) > 1:
             print "splitting ", len(connection_threads[i][0]), " into ", new_split, " pieces"
             problem_arms = connection_threads[i][1]
@@ -120,29 +122,16 @@ def bandit_test(connections, arms, split=4, runtime=2000, exposure_time=200, noi
         inhib_count = -1
         inhib_marker = []
         failures = []
-        print "\nsetup seed = ", seed, "\n", "\n"
-        try:
-            p.setup(timestep=1.0, min_delay=1, max_delay=127)
-            p.set_number_of_neurons_per_core(p.IF_cond_exp, 100)
-        except:
-            traceback.print_exc()
-            print "\nset up failed, trying again"
+        start = time.time()
+        try_count = 0
+        while time.time() - start < setup_retry_time:
             try:
-                print "\nsetup2 seed = ", seed, "\n"
                 p.setup(timestep=1.0, min_delay=1, max_delay=127)
                 p.set_number_of_neurons_per_core(p.IF_cond_exp, 100)
             except:
                 traceback.print_exc()
-                print "\nset up failed, trying again again"
-                try:
-                    print "\nsetup3 seed = ", seed, "\n"
-                    p.setup(timestep=1.0, min_delay=1, max_delay=127)
-                    p.set_number_of_neurons_per_core(p.IF_cond_exp, 100)
-                except:
-                    traceback.print_exc()
-                    print "\nset up failed, trying again for the last time"
-                    p.setup(timestep=1.0, min_delay=1, max_delay=127)
-                    p.set_number_of_neurons_per_core(p.IF_cond_exp, 100)
+            print "\nsetup", try_count, " seed = ", seed, "\n", "\n"
+            try_count += 1
         print "\nfinished setup seed = ", seed, "\n"
         for i in range(len(connections)):
             [in2e, in2i, in2in, in2out, e2in, i2in, e_size, e2e, e2i, i_size,
