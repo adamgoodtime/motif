@@ -264,11 +264,14 @@ class agent_population(object):
             mutate_key['c_gone'] = 0
             mutate_key['param_w'] = 0
             mutate_key['param_d'] = 0
-            mutate_key['mum'] = [parent[2], parent[3]]
-            mutate_key['dad'] = [parent[2], parent[3]]
             mutate_key['sex'] = 0
         # acquire the motif of parent and copy it to avoid messing with both memory locations
-        motif_config = self.motifs.return_motif(parent[0])
+        if isinstance(parent, list):
+            motif_config = self.motifs.return_motif(parent[0])
+            mutate_key['mum'] = [parent[2], parent[3]]
+            mutate_key['dad'] = [parent[2], parent[3]]
+        else:
+            motif_config = self.motifs.return_motif(parent)
         config_copy = deepcopy(motif_config)
         motif_size = len(config_copy['node'])
         # loop through each node and randomly mutate
