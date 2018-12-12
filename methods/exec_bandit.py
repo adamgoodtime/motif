@@ -128,6 +128,8 @@ def bandit_test(connections, arms, split=4, runtime=2000, exposure_time=200, noi
             try:
                 p.setup(timestep=1.0, min_delay=1, max_delay=127)
                 p.set_number_of_neurons_per_core(p.IF_cond_exp, 100)
+                print "\nfinished setup seed = ", seed, "\n"
+                break
             except:
                 traceback.print_exc()
                 sleep = 1 * np.random.random()
