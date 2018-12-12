@@ -26,7 +26,7 @@ import pathos.multiprocessing
 from spinn_front_end_common.utilities import globals_variables
 
 max_fail_score = -int(runtime / exposure_time)
-setup_retry_time = 20
+setup_retry_time = 60
 new_split = 100
 
 def split_ex_in(connections):
@@ -132,8 +132,11 @@ def bandit_test(connections, arms, split=4, runtime=2000, exposure_time=200, noi
                 break
             except:
                 traceback.print_exc()
+                sleep = 1 * np.random.random()
+                time.sleep(sleep)
             print "\nsetup", try_count, " seed = ", seed, "\n", "\n"
             try_count += 1
+        print "\nfinished setup seed = ", seed, "\n"
         for i in range(len(connections)):
             [in2e, in2i, in2in, in2out, e2in, i2in, e_size, e2e, e2i, i_size,
              i2e, i2i, e2out, i2out, out2e, out2i, out2in, out2out] = connections[i]
