@@ -354,7 +354,12 @@ class agent_population(object):
         node_count = 0
         for node in config_copy['node']:
             if node not in self.motifs.neuron_types:
-                copy_copy['node'][node_count] = self.mutate([node], mutate_key)
+                try:
+                    copy_copy['node'][node_count] = self.mutate([node], mutate_key)
+                except:
+                    traceback.print_exc()
+                    print "\nTried to mutate too many times\n"
+                    return node
             node_count += 1
         if copy_copy != config_copy:
             motif_id = self.motifs.insert_motif(copy_copy)
