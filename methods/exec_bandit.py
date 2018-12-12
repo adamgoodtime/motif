@@ -125,17 +125,25 @@ def bandit_test(connections, arms, split=4, runtime=2000, exposure_time=200, noi
             p.setup(timestep=1.0, min_delay=1, max_delay=127)
             p.set_number_of_neurons_per_core(p.IF_cond_exp, 100)
         except:
+            traceback.print_exc()
             print "\nset up failed, trying again"
             try:
                 print "\nsetup2 seed = ", seed, "\n"
                 p.setup(timestep=1.0, min_delay=1, max_delay=127)
                 p.set_number_of_neurons_per_core(p.IF_cond_exp, 100)
             except:
-                print "\nset up failed, trying again for the last time"
-                p.setup(timestep=1.0, min_delay=1, max_delay=127)
-                p.set_number_of_neurons_per_core(p.IF_cond_exp, 100)
+                traceback.print_exc()
+                print "\nset up failed, trying again again"
+                try:
+                    print "\nsetup3 seed = ", seed, "\n"
+                    p.setup(timestep=1.0, min_delay=1, max_delay=127)
+                    p.set_number_of_neurons_per_core(p.IF_cond_exp, 100)
+                except:
+                    traceback.print_exc()
+                    print "\nset up failed, trying again for the last time"
+                    p.setup(timestep=1.0, min_delay=1, max_delay=127)
+                    p.set_number_of_neurons_per_core(p.IF_cond_exp, 100)
         print "\nfinished setup seed = ", seed, "\n"
-        # starting_pistol = p.Population(len(arms), p.SpikeSourceArray(spike_times=[0]))
         for i in range(len(connections)):
             [in2e, in2i, in2in, in2out, e2in, i2in, e_size, e2e, e2i, i_size,
              i2e, i2i, e2out, i2out, out2e, out2i, out2in, out2out] = connections[i]
