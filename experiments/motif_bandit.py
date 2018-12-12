@@ -60,7 +60,7 @@ def bandit(generations):
                               weight_range=(0.005, weight_max),
                               # delay_range=(1, 25),
                               neuron_types=(['excitatory', 'inhibitory']),
-                              global_io=('highest', 'unseeded', 'in'),
+                              global_io=('highest', 'seeded', 'in'),
                               # read_entire_population='motif population 0: conf.csv',
                               population_size=agent_pop_size+200)
 
@@ -76,10 +76,17 @@ def bandit(generations):
                               maximum_depth=maximum_depth,
                               viable_parents=viable_parents)
 
-    config = "bandit reward_shape:{}, reward:{}, noise r-w:{}-{}, arms:{}-{}-{}, max_d:{}, size:{}, spikes:{}, " \
-             "w_max:{}, rents:{}, elitism:{}, pop_size:{}, {}".format(
-                reward_shape, reward, noise_rate, noise_weight, arms[0], len(arms), random_arms, maximum_depth,
-                size_fitness, spikes_fitness, weight_max, viable_parents, elitism, agent_pop_size, motifs.global_io[1])
+    if motifs.read_entire_population:
+        config = "bandit reward_shape:{}, reward:{}, noise r-w:{}-{}, arms:{}-{}-{}, max_d:{}, size:{}, spikes:{}, " \
+                 "w_max:{}, rents:{}, elitism:{}, pop_size:{}, {} read".format(
+                    reward_shape, reward, noise_rate, noise_weight, arms[0], len(arms), random_arms, maximum_depth,
+                    size_fitness, spikes_fitness, weight_max, viable_parents, elitism, agent_pop_size, motifs.global_io[1])
+    else:
+        config = "bandit reward_shape:{}, reward:{}, noise r-w:{}-{}, arms:{}-{}-{}, max_d:{}, size:{}, spikes:{}, " \
+                 "w_max:{}, rents:{}, elitism:{}, pop_size:{}, {}".format(
+                    reward_shape, reward, noise_rate, noise_weight, arms[0], len(arms), random_arms, maximum_depth,
+                    size_fitness, spikes_fitness, weight_max, viable_parents, elitism, agent_pop_size, motifs.global_io[1])
+
 
     globals()['pop_size'] = agent_pop_size
     globals()['config'] = config

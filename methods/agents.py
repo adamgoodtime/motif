@@ -268,8 +268,12 @@ class agent_population(object):
         # acquire the motif of parent and copy it to avoid messing with both memory locations
         if isinstance(parent, list):
             motif_config = self.motifs.return_motif(parent[0])
-            mutate_key['mum'] = [parent[2], parent[3]]
-            mutate_key['dad'] = [parent[2], parent[3]]
+            if len(parent) > 3 and mutate_key == {}:
+                mutate_key['mum'] = [parent[2], parent[3]]
+                mutate_key['dad'] = [parent[2], parent[3]]
+            # elif len(parent) > 2:
+            #     mutate_key['mum'] = [parent[2], parent[3]]
+            #     mutate_key['dad'] = [parent[2], parent[3]]
         else:
             motif_config = self.motifs.return_motif(parent)
         config_copy = deepcopy(motif_config)
