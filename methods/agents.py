@@ -447,10 +447,11 @@ class agent_population(object):
                 if self.motifs.depth_read(child) > self.maximum_depth:
                     child = False
                     print "both mate d"
-                child = self.mutate(child, mutate_key)
-                if self.motifs.depth_read(child) > self.maximum_depth:
-                    child = False
-                    print "both as3x d"
+                if child:
+                    child = self.mutate(child, mutate_key)
+                    if self.motifs.depth_read(child) > self.maximum_depth:
+                        child = False
+                        print "both as3x d"
                 mutate_key['sex'] = 2
             if child:
                 children.append([child, np.random.randint(200)])
