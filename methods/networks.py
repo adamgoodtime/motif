@@ -55,7 +55,7 @@ class motif_population(object):
         self.population_size = population_size
         self.static_population = static_population
         self.population_seed = population_seed
-        # self.read_entire_population = read_entire_population
+        self.read_entire_population = read_entire_population
         self.discrete_params = discrete_params
         self.weights = weights
         self.weight_range = weight_range
