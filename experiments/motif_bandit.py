@@ -77,10 +77,16 @@ def bandit(generations):
                               maximum_depth=maximum_depth,
                               viable_parents=viable_parents)
 
-    config = "bandit reward_shape:{}, reward:{}, noise r-w:{}-{}, arms:{}-{}-{}, max_d:{}, size:{}, spikes:{}, " \
-             "w_max:{}, rents:{}, elitism:{}, pop_size:{}, io:{}".format(
-                reward_shape, reward, noise_rate, noise_weight, arms[0], len(arms), random_arms, maximum_depth,
-                size_fitness, spikes_fitness, weight_max, viable_parents, elitism, agent_pop_size, io_weighting)
+    if motifs.read_entire_population:
+        config = "bandit reward_shape:{}, reward:{}, noise r-w:{}-{}, arms:{}-{}-{}, max_d:{}, size:{}, spikes:{}, " \
+                 "w_max:{}, rents:{}, elitism:{}, pop_size:{}, io:{} read".format(
+                    reward_shape, reward, noise_rate, noise_weight, arms[0], len(arms), random_arms, maximum_depth,
+                    size_fitness, spikes_fitness, weight_max, viable_parents, elitism, agent_pop_size, io_weighting)
+    else:
+        config = "bandit reward_shape:{}, reward:{}, noise r-w:{}-{}, arms:{}-{}-{}, max_d:{}, size:{}, spikes:{}, " \
+                 "w_max:{}, rents:{}, elitism:{}, pop_size:{}, io:{}".format(
+                    reward_shape, reward, noise_rate, noise_weight, arms[0], len(arms), random_arms, maximum_depth,
+                    size_fitness, spikes_fitness, weight_max, viable_parents, elitism, agent_pop_size, io_weighting)
 
     globals()['pop_size'] = agent_pop_size
     globals()['config'] = config
