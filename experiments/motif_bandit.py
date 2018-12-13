@@ -52,6 +52,7 @@ def bandit(generations):
     elitism = 0.3
     runtime = 41000
     exposure_time = 200
+    keep_reading = 0
 
     # check max motif count
     motifs = motif_population(max_motif_size=3,
@@ -62,6 +63,7 @@ def bandit(generations):
                               neuron_types=(['excitatory', 'inhibitory']),
                               global_io=('highest', 'seeded', 'in'),
                               # read_entire_population='motif population 0: conf.csv',
+                              keep_reading=keep_reading,
                               population_size=agent_pop_size+200)
 
     # todo :add number of different motifs to the fitness function to promote regularity
@@ -78,14 +80,16 @@ def bandit(generations):
 
     if motifs.read_entire_population:
         config = "bandit reward_shape:{}, reward:{}, noise r-w:{}-{}, arms:{}-{}-{}, max_d:{}, size:{}, spikes:{}, " \
-                 "w_max:{}, rents:{}, elitism:{}, pop_size:{}, {} read".format(
+                 "w_max:{}, rents:{}, elitism:{}, pop_size:{}, {} read:{}".format(
                     reward_shape, reward, noise_rate, noise_weight, arms[0], len(arms), random_arms, maximum_depth,
-                    size_fitness, spikes_fitness, weight_max, viable_parents, elitism, agent_pop_size, motifs.global_io[1])
+                    size_fitness, spikes_fitness, weight_max, viable_parents, elitism, agent_pop_size,
+                    motifs.global_io[1], keep_reading)
     else:
         config = "bandit reward_shape:{}, reward:{}, noise r-w:{}-{}, arms:{}-{}-{}, max_d:{}, size:{}, spikes:{}, " \
                  "w_max:{}, rents:{}, elitism:{}, pop_size:{}, {}".format(
                     reward_shape, reward, noise_rate, noise_weight, arms[0], len(arms), random_arms, maximum_depth,
-                    size_fitness, spikes_fitness, weight_max, viable_parents, elitism, agent_pop_size, motifs.global_io[1])
+                    size_fitness, spikes_fitness, weight_max, viable_parents, elitism, agent_pop_size,
+                    motifs.global_io[1])
 
 
     globals()['pop_size'] = agent_pop_size
@@ -154,7 +158,7 @@ def bandit(generations):
 
         print "2", motifs.total_weight
 
-        motifs.adjust_weights(agents.agent_pop, reward_shape=reward_shape)
+        motifs.adjust_weights(agents.agent_pop, reward_shape=reward_shape, iteration=i)
 
         print "3", motifs.total_weight
 

@@ -31,6 +31,7 @@ class motif_population(object):
                  static_population=True,
                  population_seed=None,
                  read_entire_population=False,
+                 keep_reading=0,
                  discrete_params=True,
                  weights=True,
                  weight_range=(0, 0.1),
@@ -56,6 +57,7 @@ class motif_population(object):
         self.static_population = static_population
         self.population_seed = population_seed
         self.read_entire_population = read_entire_population
+        self.keep_reading = keep_reading
         self.discrete_params = discrete_params
         self.weights = weights
         self.weight_range = weight_range
@@ -127,33 +129,35 @@ class motif_population(object):
                 i += 1
 
         else:
-            with open(read_entire_population) as from_file:
-                csvFile = csv.reader(from_file)
-                motif = False
-                for row in csvFile:
-                    temp = row
-                    if temp[0] == 'node':
-                        if motif:
-                            self.insert_motif(deepcopy(motif), weight=motif['weight'], read=True)
-                        motif = {}
-                    atribute = temp[0]
-                    del temp[0]
-                    if atribute == 'depth':
-                        temp = int(temp[0])
-                    elif atribute == 'weight':
-                        temp = literal_eval(temp[0])
-                    elif atribute == 'conn' or atribute == 'io':
-                        for i in range(len(temp)):
-                            temp[i] = literal_eval(temp[i])
-                    elif atribute == 'id':
-                        temp = temp[0]
-                        if temp == '338':
-                            print "hola"
-                    motif['{}'.format(atribute)] = temp
-
-                self.insert_motif(deepcopy(motif), weight=motif['weight'], read=True)
+            self.read_population()
 
         print "done generating motif pop"
+
+    '''Reads a motif population from a csv file and inputs each motif into the set'''
+    def read_population(self):
+        with open(self.read_entire_population) as from_file:
+            csvFile = csv.reader(from_file)
+            motif = False
+            for row in csvFile:
+                temp = row
+                if temp[0] == 'node':
+                    if motif:
+                        self.insert_motif(deepcopy(motif), weight=motif['weight'], read=True)
+                    motif = {}
+                atribute = temp[0]
+                del temp[0]
+                if atribute == 'depth':
+                    temp = int(temp[0])
+                elif atribute == 'weight':
+                    temp = literal_eval(temp[0])
+                elif atribute == 'conn' or atribute == 'io':
+                    for i in range(len(temp)):
+                        temp[i] = literal_eval(temp[i])
+                elif atribute == 'id':
+                    temp = temp[0]
+                motif['{}'.format(atribute)] = temp
+
+            self.insert_motif(deepcopy(motif), weight=motif['weight'], read=True)
 
     '''Generates a random motif within the allowable configurations and attempts to enter it into the population. If it
     already exists within the population the function will be called again until a novel motif is added.'''
@@ -272,7 +276,16 @@ class motif_population(object):
             if read:
                 motif_id = motif['id']
             else:
-                motif_id = self.motifs_generated
+                does_it_exist = True
+                while does_it_exist:
+                    try:
+                        does_it_exist = self.motif_configs['{}'.format(self.motifs_generated)]
+                        self.motifs_generated += 1
+                    except:
+                        traceback.print_exc()
+                        motif_id = self.motifs_generated
+                        does_it_exist = False
+
             self.motif_configs['{}'.format(motif_id)] = motif
             self.motif_configs['{}'.format(motif_id)]['weight'] = weight
             self.motif_configs['{}'.format(motif_id)]['id'] = motif_id
@@ -885,7 +898,7 @@ class motif_population(object):
                     writer.writerow(line)
             file.close()
 
-    def adjust_weights(self, agents, clean=True, fitness_shaping=True, reward_shape=True):
+    def adjust_weights(self, agents, clean=True, fitness_shaping=True, reward_shape=True, iteration=0):
         self.reset_weights()
         if fitness_shaping:
             agents.sort(key=lambda x: x[2])#, reverse=True)
@@ -896,6 +909,8 @@ class motif_population(object):
                 if fitness_shaping:
                     self.update_weight(components, i)
                 i += 1
+        if iteration < self.keep_reading:
+            self.read_population()
         if clean:
             self.clean_population(reward_shape)
         self.total_weight = 0
