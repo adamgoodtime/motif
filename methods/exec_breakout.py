@@ -10,7 +10,7 @@ import sys, os
 import time
 import socket
 import numpy as np
-from spinn_bandit.python_models.bandit import Bandit
+from spinn_breakout.python_models.breakout import breakout
 import math
 import itertools
 from copy import deepcopy
@@ -24,10 +24,62 @@ import csv
 import threading
 import pathos.multiprocessing
 from spinn_front_end_common.utilities import globals_variables
+from spinn_breakout import Breakout as b_out
 
 max_fail_score = -int(runtime / exposure_time)
 setup_retry_time = 60
 new_split = 100
+
+def row_col_to_input_breakout(row, col, is_on_input, row_bits, event_bits=1, colour_bits=2, row_start=0):
+    row_bits = np.uint32(row_bits)
+    idx = np.uint32(0)
+
+    if is_on_input:
+        idx = 1
+
+    row += row_start
+    idx = idx | (row << (colour_bits))  # colour bit
+    idx = idx | (col << (row_bits + colour_bits))
+
+    # add two to allow for special event bits
+    idx = idx + 2
+
+    return idx
+
+def subsample_connection(x_res, y_res, subsamp_factor_x, subsamp_factor_y, weight,
+                         coord_map_func):
+    # subY_BITS=int(np.ceil(np.log2(y_res/subsamp_factor)))
+    connection_list_on = []
+    connection_list_off = []
+
+    sx_res = int(x_res) // int(subsamp_factor_x)
+    row_bits = int(np.ceil(np.log2(x_res)))
+    for j in range(int(y_res)):
+        for i in range(int(x_res)):
+            si = i // subsamp_factor_x
+            sj = j // subsamp_factor_y
+            # ON channels
+            subsampidx = sj * sx_res + si
+            connection_list_on.append((coord_map_func(j, i, 1, row_bits),
+                                       subsampidx, weight, 1.))
+            # OFF channels only on segment borders
+            # if((j+1)%(y_res/subsamp_factor)==0 or (i+1)%(x_res/subsamp_factor)==0 or j==0 or i==0):
+            connection_list_off.append((coord_map_func(j, i, 0, row_bits),
+                                        subsampidx, weight, 1.))
+
+    return connection_list_on, connection_list_off
+
+def parse_connections(connections, x_res, y_res, subsamp_factor_x, subsamp_factor_y, pre_or_post):
+    connection_list_on = []
+    connection_list_off = []
+    for conn in connections:
+        if pre_or_post == 'pre':
+            id = conn[0]
+        else:
+            id = conn[1]
+        # do something with the neuron id to make it the actual id on breakout
+
+    return connection_list_on, connection_list_off
 
 def split_ex_in(connections):
     excite = []
@@ -48,10 +100,10 @@ def get_scores(game_pop, simulator):
         simulator.graph_mapper, simulator.buffer_manager, simulator.machine_time_step)
     return scores.tolist()
 
-def thread_bandit(connections, arms, split=4, runtime=2000, exposure_time=200, noise_rate=100, noise_weight=0.01,
+def thread_breakout(connections, arms, split=4, runtime=2000, exposure_time=200, noise_rate=100, noise_weight=0.01,
                   reward=0, size_f=False, spike_f=False, top=True):
     def helper(args):
-        return bandit_test(*args)
+        return breakout_test(*args)
 
     step_size = len(connections) / split
     if step_size == 0:
@@ -77,7 +129,7 @@ def thread_bandit(connections, arms, split=4, runtime=2000, exposure_time=200, n
         if pool_result[i] == 'fail' and len(connection_threads[i][0]) > 1:
             print "splitting ", len(connection_threads[i][0]), " into ", new_split, " pieces"
             problem_arms = connection_threads[i][1]
-            pool_result[i] = thread_bandit(connection_threads[i][0], problem_arms, new_split, runtime,
+            pool_result[i] = thread_breakout(connection_threads[i][0], problem_arms, new_split, runtime,
                                                 exposure_time, noise_rate, noise_weight, reward, spike_f, top=False)
 
     agent_fitness = []
@@ -104,7 +156,7 @@ def thread_bandit(connections, arms, split=4, runtime=2000, exposure_time=200, n
     return agent_fitness
 
 
-def bandit_test(connections, arms, split=4, runtime=2000, exposure_time=200, noise_rate=100, noise_weight=0.01,
+def breakout_test(connections, arms, split=4, runtime=2000, exposure_time=200, noise_rate=100, noise_weight=0.01,
                 reward=0, spike_f=False, seed=0):
     np.random.seed(seed)
     sleep = 10 * np.random.random()
@@ -112,8 +164,8 @@ def bandit_test(connections, arms, split=4, runtime=2000, exposure_time=200, noi
     max_attempts = 2
     try_except = 0
     while try_except < max_attempts:
-        bandit = []
-        bandit_count = -1
+        breakout = []
+        breakout_count = -1
         output = []
         excite = []
         excite_count = -1
@@ -144,13 +196,13 @@ def bandit_test(connections, arms, split=4, runtime=2000, exposure_time=200, noi
                 failures.append(i)
                 print "agent {} was not properly connected to the game".format(i)
             else:
-                bandit_count += 1
-                bandit.append(
-                    p.Population(len(arms), Bandit(arms, exposure_time, reward_based=reward,
-                                                   label='bandit_pop_{}-{}'.format(bandit_count, i))))
+                breakout_count += 1
+                breakout.append(
+                    p.Population(len(arms), b_out(x_factor=x_factor, y_factor=y_factor, bricking=bricking,
+                                                   label='breakout_pop_{}-{}'.format(breakout_count, i))))
                 output.append(
-                    p.Population(len(arms), p.IF_cond_exp(), label='output_{}-{}'.format(bandit_count, i)))
-                p.Projection(output[bandit_count], bandit[bandit_count], p.AllToAllConnector(), p.StaticSynapse())
+                    p.Population(len(arms), p.IF_cond_exp(), label='output_{}-{}'.format(breakout_count, i)))
+                p.Projection(output[breakout_count], breakout[breakout_count], p.AllToAllConnector(), p.StaticSynapse())
                 if e_size > 0:
                     excite_count += 1
                     excite.append(
@@ -171,42 +223,43 @@ def bandit_test(connections, arms, split=4, runtime=2000, exposure_time=200, noi
                         inhib[inhib_count].record('spikes')
                     inhib_marker.append(i)
                 if len(in2e) != 0:
+
                     [in_ex, in_in] = split_ex_in(in2e)
                     if len(in_ex) != 0:
-                        p.Projection(bandit[bandit_count], excite[excite_count], p.FromListConnector(in_ex),
+                        p.Projection(breakout[breakout_count], excite[excite_count], p.FromListConnector(in_ex),
                                      receptor_type='excitatory')
                     if len(in_in) != 0:
-                        p.Projection(bandit[bandit_count], excite[excite_count], p.FromListConnector(in_in),
+                        p.Projection(breakout[breakout_count], excite[excite_count], p.FromListConnector(in_in),
                                      receptor_type='inhibitory')
                 if len(in2i) != 0:
                     [in_ex, in_in] = split_ex_in(in2i)
                     if len(in_ex) != 0:
-                        p.Projection(bandit[bandit_count], inhib[inhib_count], p.FromListConnector(in_ex),
+                        p.Projection(breakout[breakout_count], inhib[inhib_count], p.FromListConnector(in_ex),
                                      receptor_type='excitatory')
                     if len(in_in) != 0:
-                        p.Projection(bandit[bandit_count], inhib[inhib_count], p.FromListConnector(in_in),
+                        p.Projection(breakout[breakout_count], inhib[inhib_count], p.FromListConnector(in_in),
                                      receptor_type='inhibitory')
                 if len(in2in) != 0:
                     [in_ex, in_in] = split_ex_in(in2in)
                     if len(in_ex) != 0:
-                        p.Projection(bandit[bandit_count], bandit[bandit_count], p.FromListConnector(in_ex),
+                        p.Projection(breakout[breakout_count], breakout[breakout_count], p.FromListConnector(in_ex),
                                      receptor_type='excitatory')
                     if len(in_in) != 0:
-                        p.Projection(bandit[bandit_count], bandit[bandit_count], p.FromListConnector(in_in),
+                        p.Projection(breakout[breakout_count], breakout[breakout_count], p.FromListConnector(in_in),
                                      receptor_type='inhibitory')
                 if len(in2out) != 0:
                     [in_ex, in_in] = split_ex_in(in2out)
                     if len(in_ex) != 0:
-                        p.Projection(bandit[bandit_count], output[bandit_count], p.FromListConnector(in_ex),
+                        p.Projection(breakout[breakout_count], output[breakout_count], p.FromListConnector(in_ex),
                                      receptor_type='excitatory')
                     if len(in_in) != 0:
-                        p.Projection(bandit[bandit_count], output[bandit_count], p.FromListConnector(in_in),
+                        p.Projection(breakout[breakout_count], output[breakout_count], p.FromListConnector(in_in),
                                      receptor_type='inhibitory')
                 if len(e2in) != 0:
-                    p.Projection(excite[excite_count], bandit[bandit_count], p.FromListConnector(e2in),
+                    p.Projection(excite[excite_count], breakout[breakout_count], p.FromListConnector(e2in),
                                  receptor_type='excitatory')
                 if len(i2in) != 0:
-                    p.Projection(inhib[inhib_count], bandit[bandit_count], p.FromListConnector(i2in),
+                    p.Projection(inhib[inhib_count], breakout[breakout_count], p.FromListConnector(i2in),
                                  receptor_type='inhibitory')
                 if len(e2e) != 0:
                     p.Projection(excite[excite_count], excite[excite_count], p.FromListConnector(e2e),
@@ -221,48 +274,48 @@ def bandit_test(connections, arms, split=4, runtime=2000, exposure_time=200, noi
                     p.Projection(inhib[inhib_count], inhib[inhib_count], p.FromListConnector(i2i),
                                  receptor_type='inhibitory')
                 if len(e2out) != 0:
-                    p.Projection(excite[excite_count], output[bandit_count], p.FromListConnector(e2out),
+                    p.Projection(excite[excite_count], output[breakout_count], p.FromListConnector(e2out),
                                  receptor_type='excitatory')
                 if len(i2out) != 0:
-                    p.Projection(inhib[inhib_count], output[bandit_count], p.FromListConnector(i2out),
+                    p.Projection(inhib[inhib_count], output[breakout_count], p.FromListConnector(i2out),
                                  receptor_type='inhibitory')
                 if len(out2e) != 0:
                     [out_ex, out_in] = split_ex_in(out2e)
                     if len(out_ex) != 0:
-                        p.Projection(output[bandit_count], excite[excite_count], p.FromListConnector(out_ex),
+                        p.Projection(output[breakout_count], excite[excite_count], p.FromListConnector(out_ex),
                                      receptor_type='excitatory')
                     if len(out_in) != 0:
-                        p.Projection(output[bandit_count], excite[excite_count], p.FromListConnector(out_in),
+                        p.Projection(output[breakout_count], excite[excite_count], p.FromListConnector(out_in),
                                      receptor_type='inhibitory')
                 if len(out2i) != 0:
                     [out_ex, out_in] = split_ex_in(out2i)
                     if len(out_ex) != 0:
-                        p.Projection(output[bandit_count], inhib[inhib_count], p.FromListConnector(out_ex),
+                        p.Projection(output[breakout_count], inhib[inhib_count], p.FromListConnector(out_ex),
                                      receptor_type='excitatory')
                     if len(out_in) != 0:
-                        p.Projection(output[bandit_count], inhib[inhib_count], p.FromListConnector(out_in),
+                        p.Projection(output[breakout_count], inhib[inhib_count], p.FromListConnector(out_in),
                                      receptor_type='inhibitory')
                 if len(out2in) != 0:
                     [out_ex, out_in] = split_ex_in(out2in)
                     if len(out_ex) != 0:
-                        p.Projection(output[bandit_count], bandit[bandit_count], p.FromListConnector(out_ex),
+                        p.Projection(output[breakout_count], breakout[breakout_count], p.FromListConnector(out_ex),
                                      receptor_type='excitatory')
                     if len(out_in) != 0:
-                        p.Projection(output[bandit_count], bandit[bandit_count], p.FromListConnector(out_in),
+                        p.Projection(output[breakout_count], breakout[breakout_count], p.FromListConnector(out_in),
                                      receptor_type='inhibitory')
                 if len(out2out) != 0:
                     [out_ex, out_in] = split_ex_in(out2out)
                     if len(out_ex) != 0:
-                        p.Projection(output[bandit_count], output[bandit_count], p.FromListConnector(out_ex),
+                        p.Projection(output[breakout_count], output[breakout_count], p.FromListConnector(out_ex),
                                      receptor_type='excitatory')
                     if len(out_in) != 0:
-                        p.Projection(output[bandit_count], output[bandit_count], p.FromListConnector(out_in),
+                        p.Projection(output[breakout_count], output[breakout_count], p.FromListConnector(out_in),
                                      receptor_type='inhibitory')
                 if len(e2out) != 0:
-                    p.Projection(excite[excite_count], output[bandit_count], p.FromListConnector(e2out),
+                    p.Projection(excite[excite_count], output[breakout_count], p.FromListConnector(e2out),
                                  receptor_type='excitatory')
                 if len(i2out) != 0:
-                    p.Projection(inhib[inhib_count], output[bandit_count], p.FromListConnector(i2out),
+                    p.Projection(inhib[inhib_count], output[breakout_count], p.FromListConnector(i2out),
                                  receptor_type='inhibitory')
 
         print "\nfinished connections seed = ", seed, "\n"
@@ -325,7 +378,7 @@ def bandit_test(connections, arms, split=4, runtime=2000, exposure_time=200, noi
                 else:
                     inhib_fail += 1
                     print "had an inhib failure"
-            scores.append(get_scores(game_pop=bandit[i - fails], simulator=simulator))
+            scores.append(get_scores(game_pop=breakout[i - fails], simulator=simulator))
             # pop[i].stats = {'fitness': scores[i][len(scores[i]) - 1][0]}  # , 'steps': 0}
         print "\nfinished spikes", seed, "\n"
         if spike_f:
@@ -361,6 +414,6 @@ def print_fitnesses(fitnesses):
 
 
 
-fitnesses = thread_bandit(connections, arms, split, runtime, exposure_time, noise_rate, noise_weight, reward, size_f, spike_f, True)
+fitnesses = thread_breakout(connections, arms, split, runtime, exposure_time, noise_rate, noise_weight, reward, size_f, spike_f, True)
 
 print_fitnesses(fitnesses)

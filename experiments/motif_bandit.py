@@ -53,6 +53,20 @@ def bandit(generations):
     runtime = 41000
     exposure_time = 200
     io_weighting = 1
+    keep_reading = 0
+
+    x_factor = 0
+    y_factor = 8
+    bricking = 0
+
+    if x_factor:
+        inputs = (160 / x_factor) * (128 / y_factor)
+        outputs = 2
+        config = 'breakout '
+    else:
+        inputs = 2
+        outputs = number_of_arms
+        config = 'bandit '
 
     # check max motif count
     motifs = motif_population(max_motif_size=3,
@@ -61,8 +75,10 @@ def bandit(generations):
                               weight_range=(0.005, weight_max),
                               # delay_range=(1, 25),
                               neuron_types=(['excitatory', 'inhibitory']),
-                              io_weight=[2, number_of_arms, io_weighting],
-                              # read_entire_population='motif population 0: conf.csv',
+                              io_weight=[inputs, outputs, io_weighting],
+                              global_io=('highest', 'seeded', 'in'),
+                              # read_entire_population='good_io_motif_3IO.csv',
+                              keep_reading=keep_reading,
                               population_size=agent_pop_size+200)
 
     # todo :add number of different motifs to the fitness function to promote regularity
@@ -71,22 +87,25 @@ def bandit(generations):
 
     agents = agent_population(motifs,
                               pop_size=agent_pop_size,
-                              inputs=2,
-                              outputs=number_of_arms,
+                              inputs=inputs,
+                              outputs=outputs,
                               elitism=elitism,
                               maximum_depth=maximum_depth,
                               viable_parents=viable_parents)
 
-    if motifs.read_entire_population:
-        config = "bandit reward_shape:{}, reward:{}, noise r-w:{}-{}, arms:{}-{}-{}, max_d:{}, size:{}, spikes:{}, " \
-                 "w_max:{}, rents:{}, elitism:{}, pop_size:{}, io:{} read".format(
-                    reward_shape, reward, noise_rate, noise_weight, arms[0], len(arms), random_arms, maximum_depth,
-                    size_fitness, spikes_fitness, weight_max, viable_parents, elitism, agent_pop_size, io_weighting)
-    else:
-        config = "bandit reward_shape:{}, reward:{}, noise r-w:{}-{}, arms:{}-{}-{}, max_d:{}, size:{}, spikes:{}, " \
+    if io_weighting:
+        config += "reward_shape:{}, reward:{}, noise r-w:{}-{}, arms:{}-{}-{}, max_d:{}, size:{}, spikes:{}, " \
                  "w_max:{}, rents:{}, elitism:{}, pop_size:{}, io:{}".format(
                     reward_shape, reward, noise_rate, noise_weight, arms[0], len(arms), random_arms, maximum_depth,
                     size_fitness, spikes_fitness, weight_max, viable_parents, elitism, agent_pop_size, io_weighting)
+    else:
+        config += "reward_shape:{}, reward:{}, noise r-w:{}-{}, arms:{}-{}-{}, max_d:{}, size:{}, spikes:{}, " \
+                 "w_max:{}, rents:{}, elitism:{}, pop_size:{} {}".format(
+                    reward_shape, reward, noise_rate, noise_weight, arms[0], len(arms), random_arms, maximum_depth,
+                    size_fitness, spikes_fitness, weight_max, viable_parents, elitism, agent_pop_size,
+                    motifs.global_io[1])
+    if motifs.read_entire_population:
+        config += ' read:{}'.format(keep_reading)
 
     globals()['pop_size'] = agent_pop_size
     globals()['config'] = config
@@ -100,6 +119,9 @@ def bandit(generations):
     globals()['size_f'] = size_fitness
     globals()['spike_f'] = spikes_fitness
     globals()['exposure_time'] = exposure_time
+    globals()['x_factor'] = x_factor
+    globals()['y_factor'] = y_factor
+    globals()['bricking'] = bricking
     max_fail_score = -int(runtime / exposure_time)
 
     for i in range(generations):
@@ -116,9 +138,9 @@ def bandit(generations):
                 arms.append(arm)
 
         if i == 0:
-            connections = agents.generate_spinn_nets(input=2, output=number_of_arms, max_depth=3)
+            connections = agents.generate_spinn_nets(input=inputs, output=outputs, max_depth=3)
         else:
-            connections = agents.generate_spinn_nets(input=2, output=number_of_arms, max_depth=3, create=False)
+            connections = agents.generate_spinn_nets(input=inputs, output=outputs, max_depth=3, create=False)
 
         # fitnesses = agents.thread_bandit(connections, arms, split=16, runtime=21000, exposure_time=200, reward=reward, noise_rate=noise_rate, noise_weight=noise_weight, size_f=size_fitness, spike_f=spikes_fitness)
 
@@ -126,7 +148,10 @@ def bandit(generations):
         if config != 'test':
             # arms = [0.1, 0.9, 0.2]
             # agents.bandit_test(connections, arms)
-            execfile("../methods/exec_bandit.py", globals())
+            if x_factor:
+                execfile("../methods/exec_breakout.py", globals())
+            else:
+                execfile("../methods/exec_bandit.py", globals())
 
         fitnesses = agents.read_fitnesses(config, max_fail_score)
 
@@ -154,7 +179,7 @@ def bandit(generations):
 
         print "2", motifs.total_weight
 
-        motifs.adjust_weights(agents.agent_pop, reward_shape=reward_shape)
+        motifs.adjust_weights(agents.agent_pop, reward_shape=reward_shape, iteration=i)
 
         print "3", motifs.total_weight
 

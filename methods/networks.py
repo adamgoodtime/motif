@@ -31,6 +31,7 @@ class motif_population(object):
                  static_population=True,
                  population_seed=None,
                  read_entire_population=False,
+                 keep_reading=0,
                  discrete_params=True,
                  weights=True,
                  weight_range=(0, 0.1),
@@ -57,6 +58,7 @@ class motif_population(object):
         self.static_population = static_population
         self.population_seed = population_seed
         self.read_entire_population = read_entire_population
+        self.keep_reading = keep_reading
         self.discrete_params = discrete_params
         self.weights = weights
         self.weight_range = weight_range
@@ -76,7 +78,7 @@ class motif_population(object):
         self.selection_metric = selection_metric
         self.neuron_types = neuron_types
         self.io_weight = io_weight
-        if self.io_weight:
+        if self.io_weight[2]:
             no_io = self.io_weight[0] + self.io_weight[1]
             no_ex_in = int(np.ceil(no_io / self.io_weight[2]))
             for i in range(no_ex_in):
@@ -134,33 +136,37 @@ class motif_population(object):
                 i += 1
 
         else:
-            with open(read_entire_population) as from_file:
-                csvFile = csv.reader(from_file)
-                motif = False
-                for row in csvFile:
-                    temp = row
-                    if temp[0] == 'node':
-                        if motif:
-                            self.insert_motif(deepcopy(motif), weight=motif['weight'], read=True)
-                        motif = {}
-                    atribute = temp[0]
-                    del temp[0]
-                    if atribute == 'depth':
-                        temp = int(temp[0])
-                    elif atribute == 'weight':
-                        temp = literal_eval(temp[0])
-                    elif atribute == 'conn' or atribute == 'io':
-                        for i in range(len(temp)):
-                            temp[i] = literal_eval(temp[i])
-                    elif atribute == 'id':
-                        temp = temp[0]
-                        if temp == '338':
-                            print "hola"
-                    motif['{}'.format(atribute)] = temp
-
-                self.insert_motif(deepcopy(motif), weight=motif['weight'], read=True)
+            self.read_population()
 
         print "done generating motif pop"
+
+    '''Reads a motif population from a csv file and inputs each motif into the set'''
+    def read_population(self):
+        with open(self.read_entire_population) as from_file:
+            csvFile = csv.reader(from_file)
+            motif = False
+            for row in csvFile:
+                temp = row
+                if temp[0] == 'node':
+                    if motif:
+                        self.insert_motif(deepcopy(motif), weight=motif['weight'], read=True)
+                    motif = {}
+                atribute = temp[0]
+                del temp[0]
+                if atribute == 'depth':
+                    temp = int(temp[0])
+                elif atribute == 'weight':
+                    temp = literal_eval(temp[0])
+                elif atribute == 'conn' or atribute == 'io':
+                    for i in range(len(temp)):
+                        temp[i] = literal_eval(temp[i])
+                elif atribute == 'id':
+                    temp = temp[0]
+                motif['{}'.format(atribute)] = temp
+
+            self.insert_motif(deepcopy(motif), weight=motif['weight'], read=True)
+
+        # print "done generating motif pop"
 
     '''Generates a random motif within the allowable configurations and attempts to enter it into the population. If it
     already exists within the population the function will be called again until a novel motif is added.'''
@@ -279,7 +285,17 @@ class motif_population(object):
             if read:
                 motif_id = motif['id']
             else:
-                motif_id = self.motifs_generated
+                does_it_exist = True
+                while does_it_exist:
+                    try:
+                        does_it_exist = self.motif_configs['{}'.format(self.motifs_generated)]
+                        print self.motifs_generated, "existed"
+                        self.motifs_generated += 1
+                    except:
+                        # traceback.print_exc()
+                        motif_id = self.motifs_generated
+                        does_it_exist = False
+
             self.motif_configs['{}'.format(motif_id)] = motif
             self.motif_configs['{}'.format(motif_id)]['weight'] = weight
             self.motif_configs['{}'.format(motif_id)]['id'] = motif_id
@@ -631,13 +647,13 @@ class motif_population(object):
                     post_index = indexed_in.index(conn[1])
                     input_count['{}'.format(conn[1])] = 1
             if pre_ex and post_ex:
-                e2e.append((pre_index, post_index, conn[2], conn[3]))
+                e2e.append([pre_index, post_index, conn[2], conn[3]])
             elif pre_ex and not post_ex:
-                e2i.append((pre_index, post_index, conn[2], conn[3]))
+                e2i.append([pre_index, post_index, conn[2], conn[3]])
             elif not pre_ex and post_ex:
-                i2e.append((pre_index, post_index, conn[2], conn[3]))
+                i2e.append([pre_index, post_index, conn[2], conn[3]])
             elif not pre_ex and not post_ex:
-                i2i.append((pre_index, post_index, conn[2], conn[3]))
+                i2i.append([pre_index, post_index, conn[2], conn[3]])
         pre_ex_count = [[0, 'e', j] for j in range(len(indexed_ex))]
         post_ex_count = [[0, 'e', j] for j in range(len(indexed_ex))]
         pre_in_count = [[0, 'i', j] for j in range(len(indexed_in))]
@@ -657,16 +673,32 @@ class motif_population(object):
         pre_ex_count.sort(reverse=True)
         pre_in_count.sort(key=lambda x: x[0], reverse=True)
         post_ex_count.sort(reverse=True)
+        post_ex_index = deepcopy(post_ex_count)
+        post_ex_index.sort(key=lambda x: x[2])
         post_in_count.sort(reverse=True)
+        post_in_index = deepcopy(post_in_count)
+        post_in_index.sort(key=lambda x: x[2])
         pre_count = pre_ex_count + pre_in_count
         pre_count.sort(reverse=True)
         post_count = post_in_count + post_ex_count
         post_count.sort(reverse=True)
         in2e = []
         in2i = []
+        in2in =[]
+        in2out = []
         e2out = []
         i2out = []
+        e2in = []
+        i2in = []
+        out2e = []
+        out2i = []
+        out2in = []
+        out2out = []
         if self.global_io[0] == 'highest':
+            input_neurons = []
+            output_neurons = []
+            removed_e = []
+            removed_i = []
             if self.global_io[1] == 'seeded':
                 np.random.seed(seed)
                 input_order = range(inputs)
@@ -674,44 +706,205 @@ class motif_population(object):
                 output_order = range(outputs)
                 np.random.shuffle(output_order)
                 io_index = 0
-                for node in pre_count:
-                    if node[1] == 'e':
-                        in2e.append((input_order[io_index], node[2], 0.1, 1))
-                    else:
-                        in2i.append((input_order[io_index], node[2], 0.1, 1))
-                    io_index += 1
-                    if io_index == inputs:
-                        break
-                io_index = 0
                 for node in post_count:
+                    output_neurons.append([node[1], output_order[io_index], node[2]])
                     if node[1] == 'e':
-                        e2out.append((node[2], output_order[io_index], 0.1, 1))
+                        removed_e.append(node[2])
                     else:
-                        i2out.append((node[2], output_order[io_index], 0.1, 1))
+                        removed_i.append(node[2])
                     io_index += 1
                     if io_index == outputs:
+                        break
+                io_index = 0
+                for node in pre_count:
+                    bad_match = False
+                    for neuron in output_neurons:
+                        if node[1] == neuron[0] and node[2] == neuron[2]:
+                            bad_match = True
+                            break
+                    if self.global_io[2] == 'no_in' and not bad_match:
+                        if node[1] == 'e':
+                            if post_ex_index[node[2]][0] != 0:
+                                bad_match = True
+                        if node[1] == 'i':
+                            if post_in_index[node[2]][0] != 0:
+                                bad_match = True
+                    if not bad_match:
+                        input_neurons.append([node[1], input_order[io_index], node[2]])
+                        if node[1] == 'e':
+                            removed_e.append(node[2])
+                        else:
+                            removed_i.append(node[2])
+                        io_index += 1
+                    if io_index == inputs:
                         break
             elif self.global_io[1] == 'unseeded':
                 io_index = 0
-                for node in pre_count:
-                    if node[1] == 'e':
-                        in2e.append((io_index, node[2], 0.1, 1))
-                    else:
-                        in2i.append((io_index, node[2], 0.1, 1))
-                    io_index += 1
-                    if io_index == inputs:
-                        break
-                io_index = 0
                 for node in post_count:
+                    output_neurons.append([node[1], io_index, node[2]])
                     if node[1] == 'e':
-                        e2out.append((node[2], io_index, 0.1, 1))
+                        removed_e.append(node[2])
                     else:
-                        i2out.append((node[2], io_index, 0.1, 1))
+                        removed_i.append(node[2])
                     io_index += 1
                     if io_index == outputs:
                         break
-
-        return in2e, in2i, len(indexed_ex), e2e, e2i, len(indexed_in), i2e, i2i, e2out, i2out
+                io_index = 0
+                for node in pre_count:
+                    bad_match = False
+                    for neuron in output_neurons:
+                        if node[1] == neuron[0] and node[2] == neuron[2]:
+                            bad_match = True
+                            break
+                    if self.global_io[2] == 'no_in' and not bad_match:
+                        if node[1] == 'e':
+                            if post_ex_index[node[2]][0] != 0:
+                                bad_match = True
+                        if node[1] == 'i':
+                            if post_in_index[node[2]][0] != 0:
+                                bad_match = True
+                    if not bad_match:
+                        input_neurons.append([node[1], io_index, node[2]])
+                        if node[1] == 'e':
+                            removed_e.append(node[2])
+                        else:
+                            removed_i.append(node[2])
+                        io_index += 1
+                    if io_index == inputs:
+                        break
+            for neuron in input_neurons:
+                if neuron[0] == 'e':
+                    for conn in e2e:
+                        if conn[0] == neuron[2]:
+                            conn[0] = ['in', neuron[1], neuron[0], 'e']
+                        if conn[1] == neuron[2]:
+                            conn[1] = ['in', neuron[1], neuron[0], 'e']
+                    for conn in e2i:
+                        if conn[0] == neuron[2]:
+                            conn[0] = ['in', neuron[1], neuron[0], 'i']
+                    for conn in i2e:
+                        if conn[1] == neuron[2]:
+                            conn[1] = ['in', neuron[1], neuron[0], 'i']
+                else:
+                    for conn in i2i:
+                        if conn[0] == neuron[2]:
+                            conn[0] = ['in', neuron[1], neuron[0], 'i']
+                        if conn[1] == neuron[2]:
+                            conn[1] = ['in', neuron[1], neuron[0], 'i']
+                    for conn in i2e:
+                        if conn[0] == neuron[2]:
+                            conn[0] = ['in', neuron[1], neuron[0], 'e']
+                    for conn in e2i:
+                        if conn[1] == neuron[2]:
+                            conn[1] = ['in', neuron[1], neuron[0], 'e']
+            for neuron in output_neurons:
+                if neuron[0] == 'e':
+                    for conn in e2e:
+                        if conn[0] == neuron[2]:
+                            conn[0] = ['out', neuron[1], neuron[0], 'e']
+                        if conn[1] == neuron[2]:
+                            conn[1] = ['out', neuron[1], neuron[0], 'e']
+                    for conn in e2i:
+                        if conn[0] == neuron[2]:
+                            conn[0] = ['out', neuron[1], neuron[0], 'i']
+                    for conn in i2e:
+                        if conn[1] == neuron[2]:
+                            conn[1] = ['out', neuron[1], neuron[0], 'i']
+                else:
+                    for conn in i2i:
+                        if conn[0] == neuron[2]:
+                            conn[0] = ['out', neuron[1], neuron[0], 'i']
+                        if conn[1] == neuron[2]:
+                            conn[1] = ['out', neuron[1], neuron[0], 'i']
+                    for conn in i2e:
+                        if conn[0] == neuron[2]:
+                            conn[0] = ['out', neuron[1], neuron[0], 'e']
+                    for conn in e2i:
+                        if conn[1] == neuron[2]:
+                            conn[1] = ['out', neuron[1], neuron[0], 'e']
+            removed_e.sort()
+            removed_i.sort()
+            for i in range(len(removed_e)):
+                j = i + 1
+                while j < len(removed_e):
+                    removed_e[j] -= 1
+                    j += 1
+                for conn in e2e:
+                    if conn[0] > removed_e[i] and not isinstance(conn[0], list):
+                        conn[0] -= 1
+                    if conn[1] > removed_e[i] and not isinstance(conn[1], list):
+                        conn[1] -= 1
+                for conn in e2i:
+                    if conn[0] > removed_e[i] and not isinstance(conn[0], list):
+                        conn[0] -= 1
+                for conn in i2e:
+                    if conn[1] > removed_e[i] and not isinstance(conn[1], list):
+                        conn[1] -= 1
+            for i in range(len(removed_i)):
+                j = i + 1
+                while j < len(removed_i):
+                    removed_i[j] -= 1
+                    j += 1
+                for conn in i2i:
+                    if conn[0] > removed_i[i] and not isinstance(conn[0], list):
+                        conn[0] -= 1
+                    if conn[1] > removed_i[i] and not isinstance(conn[1], list):
+                        conn[1] -= 1
+                for conn in i2e:
+                    if conn[0] > removed_i[i] and not isinstance(conn[0], list):
+                        conn[0] -= 1
+                for conn in e2i:
+                    if conn[1] > removed_i[i] and not isinstance(conn[1], list):
+                        conn[1] -= 1
+            new_list = []
+            list_count = 0
+            for conn_list in [e2e, e2i, i2e, i2i]:
+                for conn in conn_list:
+                    if isinstance(conn[0], list) or isinstance(conn[1], list):
+                        new_list.append(conn)
+                while list_count < len(new_list):
+                    del conn_list[conn_list.index(new_list[list_count])]
+                    list_count += 1
+            for conn in new_list:
+                if isinstance(conn[0], list) and isinstance(conn[1], list):
+                    if conn[0][2] == 'i':
+                        conn[2] *= -1
+                    if conn[0][0] == 'in':
+                        if conn[1][0] == 'in':
+                            in2in.append([conn[0][1], conn[1][1], conn[2], conn[3]])
+                        else:
+                            in2out.append([conn[0][1], conn[1][1], conn[2], conn[3]])
+                    else:
+                        if conn[1][0] == 'in':
+                            out2in.append([conn[0][1], conn[1][1], conn[2], conn[3]])
+                        else:
+                            out2out.append([conn[0][1], conn[1][1], conn[2], conn[3]])
+                elif isinstance(conn[0], list):
+                    if conn[0][2] == 'i':
+                        conn[2] *= -1
+                    if conn[0][0] == 'in':
+                        if conn[0][3] == 'e':
+                            in2e.append([conn[0][1], conn[1], conn[2], conn[3]])
+                        else:
+                            in2i.append([conn[0][1], conn[1], conn[2], conn[3]])
+                    else:
+                        if conn[0][3] == 'e':
+                            out2e.append([conn[0][1], conn[1], conn[2], conn[3]])
+                        else:
+                            out2i.append([conn[0][1], conn[1], conn[2], conn[3]])
+                elif isinstance(conn[1], list):
+                    if conn[1][0] == 'in':
+                        if conn[1][3] == 'e':
+                            e2in.append([conn[0], conn[1][1], conn[2], conn[3]])
+                        else:
+                            i2in.append([conn[0], conn[1][1], conn[2], conn[3]])
+                    else:
+                        if conn[1][3] == 'e':
+                            e2out.append([conn[0], conn[1][1], conn[2], conn[3]])
+                        else:
+                            i2out.append([conn[0], conn[1][1], conn[2], conn[3]])
+        return in2e, in2i, in2in, in2out, e2in, i2in, len(indexed_ex) - len(removed_e), e2e, e2i, \
+               len(indexed_in) - len(removed_i), i2e, i2i, e2out, i2out, out2e, out2i, out2in, out2out
 
     # def convert_population(self, inputs, outputs):
     #     agent_connections = []
@@ -726,7 +919,7 @@ class motif_population(object):
     def convert_individual(self, agent, inputs, outputs):
             # agent_connections.append(self.read_motif(agent))
         agent_conn = self.read_motif(agent[0])
-        if self.io_weight:
+        if self.io_weight[2]:
             spinn_conn = \
                 self.construct_io(agent_conn, agent[1], inputs, outputs)
         else:
@@ -853,7 +1046,7 @@ class motif_population(object):
                     writer.writerow(line)
             file.close()
 
-    def adjust_weights(self, agents, clean=True, fitness_shaping=True, reward_shape=True):
+    def adjust_weights(self, agents, clean=True, fitness_shaping=True, reward_shape=True, iteration=0):
         self.reset_weights()
         if fitness_shaping:
             agents.sort(key=lambda x: x[2])#, reverse=True)
@@ -864,6 +1057,8 @@ class motif_population(object):
                 if fitness_shaping:
                     self.update_weight(components, i)
                 i += 1
+        if iteration < self.keep_reading:
+            self.read_population()
         if clean:
             self.clean_population(reward_shape)
         self.total_weight = 0

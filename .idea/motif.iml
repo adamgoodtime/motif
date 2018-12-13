@@ -15,5 +15,6 @@
     <orderEntry type="module" module-name="sPyNNaker8" />
     <orderEntry type="module" module-name="spalloc" />
     <orderEntry type="module" module-name="n_arm_bandit" />
+    <orderEntry type="module" module-name="BIMPC" />
   </component>
 </module>
