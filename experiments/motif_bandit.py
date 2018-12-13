@@ -128,6 +128,8 @@ def bandit(generations):
 
     for i in range(generations):
 
+        print config
+
         if random_arms:
             arms = []
             for k in range(random_arms):
