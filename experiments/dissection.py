@@ -8,6 +8,7 @@ import multiprocessing
 import pathos.multiprocessing
 import csv
 from ast import literal_eval
+import itertools
 
 #todo here will be where an agent and a motif population will be read in to examine what is present in a well performing agent
 
@@ -178,6 +179,7 @@ def mutate_anal(file_location, config):
     mutate_track['param_d'] = []
     mutate_track['sex'] = []
     mutate_track['asex'] = []
+    mutate_track['both'] = []
     for i in range(3000):
         try:
             with open('{}/mutate keys for {}: {}.csv'.format(file_location, i, config)) as mutate_file:
@@ -267,10 +269,12 @@ def mutate_anal(file_location, config):
                                 mutate_track['param_w'].append(ave_score_change * param_w)
                             if param_d:
                                 mutate_track['param_d'].append(ave_score_change * param_d)
-                            if sex:
+                            if sex == 1:
                                 mutate_track['sex'].append(ave_score_change)
-                            if not sex:
+                            if sex == 0:
                                 mutate_track['asex'].append(ave_score_change)
+                            if sex == 2:
+                                mutate_track['both'].append(ave_score_change)
                             if motif:
                                 mutate_track['motif'].append(ave_fitness_change * motif)
                             if new:
@@ -291,10 +295,12 @@ def mutate_anal(file_location, config):
                                 mutate_track['param_w'].append(ave_fitness_change * param_w)
                             if param_d:
                                 mutate_track['param_d'].append(ave_fitness_change * param_d)
-                            if sex:
+                            if sex == 1:
                                 mutate_track['sex'].append(ave_fitness_change)
-                            if not sex:
+                            if sex == 0:
                                 mutate_track['asex'].append(ave_fitness_change)
+                            if sex == 2:
+                                mutate_track['both'].append(ave_fitness_change)
                             motif = 0
                             nen = 0
                             io = 0
@@ -312,6 +318,7 @@ def mutate_anal(file_location, config):
                         agent_fitness = literal_eval(temp[1])
                         agent_score = literal_eval(temp[2])
         except:
+            traceback.print_exc()
             print "no more files or bad config"
             if i > 10:
                 with open('{}/Mutate over time: {}.csv'.format(file_location, config), 'w') as mutate_file:
@@ -342,36 +349,78 @@ def mutate_anal(file_location, config):
 
 file_location = 'runtime data/The start of screen and good results'
 file_location = 'runtime data/spalloc fails with really good 0.6'
+file_location = 'runtime data/long run of both branches on hard 3 arm problem/io_motif'
 
 weight_max = 0.1
-arm1 = 0.7
-arm2 = 0.3
-arm_len = 4
+
+arm1 = 0.9
+arm2 = 0.1
+arm3 = 0.1
+arm_len = 1
 arms = []
 for i in range(arm_len):
-    arms.append([arm1, arm2])
-    arms.append([arm2, arm1])
+    # arms.append([arm1, arm2])
+    # arms.append([arm2, arm1])
+    for arm in list(itertools.permutations([arm1, arm2, arm3])):
+        arms.append(list(arm))
 # arms = [[0.4, 0.6], [0.6, 0.4], [0.3, 0.7], [0.7, 0.3], [0.2, 0.8], [0.8, 0.2], [0.1, 0.9], [0.9, 0.1]]
-number_of_arms = 1
-split = 1
+if isinstance(arms[0], list):
+    number_of_arms = len(arms[0])
+else:
+    number_of_arms = len(arms)
+
+agent_pop_size = 100
 reward_shape = False
-reward = 0
+reward = 1
 noise_rate = 0
 noise_weight = 0.01
-maximum_depth = 5
+maximum_depth = 10
 size_fitness = False
 spikes_fitness = False
 random_arms = 0
-viable_parents = 1
+viable_parents = 0.3
+elitism = 0.3
+runtime = 41000
+exposure_time = 200
+io_weighting = 1
+read_pop = False
+keep_reading = 0
+
+x_factor = 0
+y_factor = 8
+bricking = 0
+
+if x_factor:
+    inputs = (160 / x_factor) * (128 / y_factor)
+    outputs = 2
+    config = 'breakout {}/{}:{} '.format(x_factor, y_factor, bricking)
+else:
+    inputs = 2
+    outputs = number_of_arms
+    config = 'bandit '
 
 # mutate keys for 0: bandit reward_shape:False, reward:0, noise r-w:0-0.01, arms:[0.6, 0.4]-8-0, max_d5, size:False, spikes:False, w_max0.1, rents0.01.csv
 # mutate keys for 33: bandit reward_shape:False, reward:0, noise r-w:0-0.016789, arms:[0.4, 0.6]-8-0, max_d4, size:False, spikes:False, w_max0.1.csv
 # mutate keys for 0: bandit reward_shape:False, reward:0, noise r-w:0-0.016789, arms:[0.4, 0.6]-8-0, max_d4, size:False, spikes:False, w_max0.1.csv
 # mutate keys for 41: bandit reward_shape:False, reward:0, noise r-w:0-0.016789, arms:[0.4, 0.6]-8-0, max_d4, size:False, spikes:False, w_max0.1.csv
 # runtime data/spalloc fails with really good 0.6/mutate keys for 34: bandit reward_shape:False, reward:0, noise r-w:0-0.01, arms:[0.7, 0.3]-8-0, max_d5, size:False, spikes:False, w_max0.1, rents1.csv
+#experiments/runtime data/long run of both branches on hard 3 arm problem/io_motif/mutate keys for 177: bandit reward_shape:False, reward:1, noise r-w:0-0.01, arms:[0.9, 0.1, 0.1]-6-0, max_d:10, size:False, spikes:False, w_max:0.1, rents:0.3, elitism:0.3, pop_size:100, io:1.csv
+# config = "bandit reward_shape:{}, reward:{}, noise r-w:{}-{}, arms:{}-{}-{}, max_d{}, size:{}, spikes:{}, w_max{}, rents{}".format(
+#     reward_shape, reward, noise_rate, noise_weight, arms[0], len(arms), random_arms, maximum_depth, size_fitness, spikes_fitness, weight_max, viable_parents)
 
-config = "bandit reward_shape:{}, reward:{}, noise r-w:{}-{}, arms:{}-{}-{}, max_d{}, size:{}, spikes:{}, w_max{}, rents{}".format(
-    reward_shape, reward, noise_rate, noise_weight, arms[0], len(arms), random_arms, maximum_depth, size_fitness, spikes_fitness, weight_max, viable_parents)
+if io_weighting:
+    config += "reward_shape:{}, reward:{}, noise r-w:{}-{}, arms:{}-{}-{}, max_d:{}, size:{}, spikes:{}, " \
+              "w_max:{}, rents:{}, elitism:{}, pop_size:{}, io:{}".format(
+        reward_shape, reward, noise_rate, noise_weight, arms[0], len(arms), random_arms, maximum_depth,
+        size_fitness, spikes_fitness, weight_max, viable_parents, elitism, agent_pop_size, io_weighting)
+else:
+    config += "reward_shape:{}, reward:{}, noise r-w:{}-{}, arms:{}-{}-{}, max_d:{}, size:{}, spikes:{}, " \
+              "w_max:{}, rents:{}, elitism:{}, pop_size:{} {}".format(
+        reward_shape, reward, noise_rate, noise_weight, arms[0], len(arms), random_arms, maximum_depth,
+        size_fitness, spikes_fitness, weight_max, viable_parents, elitism, agent_pop_size,
+        motifs.global_io[1])
+if read_pop:
+    config += ' read:{}'.format(keep_reading)
 #
 # config = "bandit reward_shape:{}, reward:{}, noise r-w:{}-{}, arms:{}-{}-{}, max_d{}, size:{}, spikes:{}, w_max{}".format(
 #     reward_shape, reward, noise_rate, noise_weight, arms[0], len(arms), random_arms, maximum_depth, size_fitness, spikes_fitness, weight_max)

@@ -53,7 +53,8 @@ def bandit(generations):
     runtime = 41000
     exposure_time = 200
     io_weighting = 1
-    keep_reading = 0
+    read_pop = 0 #'good_io_motif_3IO.csv'
+    keep_reading = 5
 
     x_factor = 0
     y_factor = 8
@@ -62,7 +63,7 @@ def bandit(generations):
     if x_factor:
         inputs = (160 / x_factor) * (128 / y_factor)
         outputs = 2
-        config = 'breakout '
+        config = 'breakout {}/{}:{} '.format(x_factor, y_factor, bricking)
     else:
         inputs = 2
         outputs = number_of_arms
@@ -77,7 +78,7 @@ def bandit(generations):
                               neuron_types=(['excitatory', 'inhibitory']),
                               io_weight=[inputs, outputs, io_weighting],
                               global_io=('highest', 'seeded', 'in'),
-                              # read_entire_population='good_io_motif_3IO.csv',
+                              read_entire_population=read_pop,
                               keep_reading=keep_reading,
                               population_size=agent_pop_size+200)
 
@@ -90,6 +91,7 @@ def bandit(generations):
                               inputs=inputs,
                               outputs=outputs,
                               elitism=elitism,
+                              sexuality=[5./20., 14./20., 1./20.],
                               maximum_depth=maximum_depth,
                               viable_parents=viable_parents)
 
@@ -104,7 +106,7 @@ def bandit(generations):
                     reward_shape, reward, noise_rate, noise_weight, arms[0], len(arms), random_arms, maximum_depth,
                     size_fitness, spikes_fitness, weight_max, viable_parents, elitism, agent_pop_size,
                     motifs.global_io[1])
-    if motifs.read_entire_population:
+    if read_pop:
         config += ' read:{}'.format(keep_reading)
 
     globals()['pop_size'] = agent_pop_size
