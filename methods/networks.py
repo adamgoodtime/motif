@@ -1057,10 +1057,10 @@ class motif_population(object):
                 if fitness_shaping:
                     self.update_weight(components, i)
                 i += 1
-        if iteration < self.keep_reading:
-            self.read_population()
         if clean:
             self.clean_population(reward_shape)
+        if iteration < self.keep_reading and self.read_entire_population:
+            self.read_population()
         self.total_weight = 0
 
 
