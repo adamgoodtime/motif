@@ -536,9 +536,10 @@ class agent_population(object):
             writer.writerow(["score", agent[3]])
             conn_file.close()
 
-    def save_status(self, config):
+    def save_status(self, config, iteration):
         with open('status for {}.csv'.format(config), 'w') as status_file:
             writer = csv.writer(status_file, delimiter=',', lineterminator='\n')
+            writer.writerow(['on iteration: {}'.format(iteration)])
             writer.writerow(['maximum score'])
             writer.writerow(self.max_score)
             writer.writerow(['average score'])
@@ -623,7 +624,7 @@ class agent_population(object):
         print "minimum score:", self.min_score
         self.save_agent_connections(self.agent_pop[best_agent], iteration, 'score '+config)
         self.save_agent_connections(self.agent_pop[best_agent_s], iteration, 'fitness '+config)
-        self.save_status(config)
+        self.save_status(config, iteration)
         self.save_mutate_keys(iteration, config)
 
     def get_scores(self, game_pop, simulator):
