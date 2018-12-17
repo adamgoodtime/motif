@@ -42,6 +42,8 @@ class agent_population(object):
                  conn_add=0.015,
                  conn_gone=0.015,
                  io_mutate=0.015,
+                 input_shift=0.015,
+                 output_shift=0.015,
                  node_mutate=0.015,
                  motif_add=0.015,
                  motif_gone=0.015,
@@ -67,6 +69,12 @@ class agent_population(object):
         self.conn_add = conn_add
         self.conn_gone = conn_gone
         self.io_mutate = io_mutate
+        if self.motifs.io_weight[2] == 0:
+            self.input_shift = 0
+            self.output_shift = 0
+        else:
+            self.input_shift = input_shift
+            self.output_shift = output_shift
         self.node_mutate = node_mutate
         self.motif_add = motif_add
         self.motif_gone = motif_gone
@@ -258,6 +266,8 @@ class agent_population(object):
             mutate_key['new'] = 0
             mutate_key['node'] = 0
             mutate_key['io'] = 0
+            mutate_key['in_shift'] = 0
+            mutate_key['out_shift'] = 0
             mutate_key['m_add'] = 0
             mutate_key['m_gone'] = 0
             mutate_key['c_add'] = 0
@@ -292,29 +302,38 @@ class agent_population(object):
                     config_copy['depth'] = new_depth + 1
                 mutate_key['motif'] += 1
             # switch with a completely novel motif todo maybe add or make this a motif of motifs of w/e depth
-            elif np.random.random() < self.new_motif:
+            if np.random.random() < self.new_motif:
                 config_copy['node'][i] = self.motifs.generate_motif(weight=0)
                 new_depth = self.motifs.motif_configs[config_copy['node'][i]]['depth']
                 if new_depth >= config_copy['depth']:
                     config_copy['depth'] = new_depth + 1
                 mutate_key['new'] += 1
             # change the IO configurations
-            elif np.random.random() < self.io_mutate:
+            if np.random.random() < self.io_mutate:
                 old_io = config_copy['io'][i]
                 while config_copy['io'][i] == old_io:
                     new_io = (np.random.choice((True, False)), np.random.choice((True, False)))
                     config_copy['io'][i] = new_io
                 mutate_key['io'] += 1
-            else:
-                # switch the base node if it's a base node
-                if np.random.random() < self.node_mutate:
-                    mutate_key['node'] += 1
-                    if config_copy['node'][i] == 'excitatory':
-                        config_copy['node'][i] = 'inhibitory'
-                    elif config_copy['node'][i] == 'inhibitory':
-                        config_copy['node'][i] = 'excitatory'
-                    else:
-                        mutate_key['node'] -= 0.0001
+            # switch the base node if it's a base node
+            if np.random.random() < self.node_mutate and config_copy['node'][i] in self.motifs.neuron_types:
+                mutate_key['node'] += 1
+                new_node = config_copy['node'][i]
+                while config_copy['node'][i] == new_node:
+                    new_node = np.random.choice(self.motifs.neuron_types)
+                config_copy['node'][i] = new_node
+            # shift all input nodes of the motif by the same amount
+            if np.random.random() < self.input_shift:
+                new_node = self.motifs.shift_io('in', config_copy['node'][i])
+                if new_node != config_copy['node'][i]:
+                    config_copy['node'][i] = new_node
+                    mutate_key['in_shift'] += 1
+            # shift all output nodes of the motif by the same amount
+            if np.random.random() < self.output_shift:
+                new_node = self.motifs.shift_io('out', config_copy['node'][i])
+                if new_node != config_copy['node'][i]:
+                    config_copy['node'][i] = new_node
+                    mutate_key['out_shift'] += 1
         # delete a connection
         if np.random.random() < self.conn_gone and len(config_copy['conn']) > 0:
             del config_copy['conn'][np.random.randint(len(config_copy['conn']))]
@@ -382,6 +401,8 @@ class agent_population(object):
             mutate_key['new'] = 0
             mutate_key['node'] = 0
             mutate_key['io'] = 0
+            mutate_key['in_shift'] = 0
+            mutate_key['out_shift'] = 0
             mutate_key['m_add'] = 0
             mutate_key['m_gone'] = 0
             mutate_key['c_add'] = 0

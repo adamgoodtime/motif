@@ -91,7 +91,9 @@ def bandit(generations):
                               inputs=inputs,
                               outputs=outputs,
                               elitism=elitism,
-                              sexuality=[5./20., 14./20., 1./20.],
+                              sexuality=[7./20., 12./20., 1./20.],
+                              # input_shift=0,
+                              # output_shift=0,
                               maximum_depth=maximum_depth,
                               viable_parents=viable_parents)
 

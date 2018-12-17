@@ -368,6 +368,58 @@ class motif_population(object):
             motif = self.insert_motif(motif)
         return [motif, np.random.randint(200)]
 
+    def shift_io(self, in_or_out, motif_id, direction='random', shift='linear'):
+        if direction == 'random':
+            if shift == 'linear':
+                if in_or_out == 'in':
+                    direction = np.random.choice(range(self.io_weight[0] - 1)) + 1
+                else:
+                    direction = np.random.choice(range(self.io_weight[1] - 1)) + 1
+        if motif_id in self.neuron_types:
+            if in_or_out == 'in':
+                if 'input' in motif_id:
+                    input_index = literal_eval(motif_id.replace('input', ''))
+                    input_index += direction
+                    input_index %= self.io_weight[0]
+                    return 'input{}'.format(input_index)
+                else:
+                    return motif_id
+            else:
+                if 'output' in motif_id:
+                    output_index = literal_eval(motif_id.replace('output', ''))
+                    output_index += direction
+                    output_index %= self.io_weight[1]
+                    return 'output{}'.format(output_index)
+                else:
+                    return motif_id
+        motif = self.motif_configs[motif_id]
+        motif_copy = deepcopy(motif)
+        for i in range(len(motif['node'])):
+            if in_or_out == 'in':
+                if 'input' in motif_copy['node'][i]:
+                    input_index = literal_eval(motif_copy['node'][i].replace('input', ''))
+                    input_index += direction
+                    input_index %= self.io_weight[0]
+                    motif_copy['node'][i] = 'input{}'.format(input_index)
+                else:
+                    if motif_copy['node'][i] not in self.neuron_types:
+                        motif_copy['node'][i] = self.shift_io(in_or_out, motif_copy['node'][i], direction, shift)
+            else:
+                if 'output' in motif_copy['node'][i]:
+                    output_index = literal_eval(motif_copy['node'][i].replace('output', ''))
+                    output_index += direction
+                    output_index %= self.io_weight[1]
+                    motif_copy['node'][i] = 'output{}'.format(output_index)
+                else:
+                    if motif_copy['node'][i] not in self.neuron_types:
+                        motif_copy['node'][i] = self.shift_io(in_or_out, motif_copy['node'][i], direction, shift)
+        if motif_copy != motif:
+            new_id = self.insert_motif(motif_copy)
+        else:
+            new_id = motif_id
+        return new_id
+
+
     # def generate_agents(self, pop_size=200, connfig=1, start_small=False, max_depth=2):
     #     print "constructing population of agents"
     #     self.agent_pop = []
