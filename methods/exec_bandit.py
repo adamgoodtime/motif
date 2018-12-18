@@ -137,6 +137,7 @@ def bandit_test(connections, arms, split=4, runtime=2000, exposure_time=200, noi
             print "\nsetup", try_count, " seed = ", seed, "\n", "\n"
             try_count += 1
         print "\nfinished setup seed = ", seed, "\n"
+        print config
         for i in range(len(connections)):
             [in2e, in2i, in2in, in2out, e2in, i2in, e_size, e2e, e2i, i_size,
              i2e, i2i, e2out, i2out, out2e, out2i, out2in, out2out] = connections[i]
@@ -345,6 +346,7 @@ def bandit_test(connections, arms, split=4, runtime=2000, exposure_time=200, noi
     print "before end seed = ", seed
     p.end()
     print "\nafter end seed = ", seed, "\n"
+    print config
 
     return agent_fitness
 

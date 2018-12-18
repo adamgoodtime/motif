@@ -48,13 +48,14 @@ def bandit(generations):
     size_fitness = False
     spikes_fitness = False
     random_arms = 0
-    viable_parents = 0.3
-    elitism = 0.3
+    viable_parents = 0.2
+    elitism = 0.2
     runtime = 41000
     exposure_time = 200
     io_weighting = 1
     read_pop = 0 #'good_io_motif_3IO.csv'
     keep_reading = 5
+    base_mutate = 0
 
     x_factor = 0
     y_factor = 8
@@ -91,7 +92,8 @@ def bandit(generations):
                               inputs=inputs,
                               outputs=outputs,
                               elitism=elitism,
-                              sexuality=[7./20., 12./20., 1./20.],
+                              sexuality=[6./20., 13./20., 1./20.],
+                              base_mutate=base_mutate,
                               # input_shift=0,
                               # output_shift=0,
                               maximum_depth=maximum_depth,
@@ -99,14 +101,15 @@ def bandit(generations):
 
     if io_weighting:
         config += "reward_shape:{}, reward:{}, noise r-w:{}-{}, arms:{}-{}-{}, max_d:{}, size:{}, spikes:{}, " \
-                 "w_max:{}, rents:{}, elitism:{}, pop_size:{}, io:{}".format(
+                 "w_max:{}, rents:{}, elitism:{}, pop_size:{}, mutate:{}, io:{}".format(
                     reward_shape, reward, noise_rate, noise_weight, arms[0], len(arms), random_arms, maximum_depth,
-                    size_fitness, spikes_fitness, weight_max, viable_parents, elitism, agent_pop_size, io_weighting)
+                    size_fitness, spikes_fitness, weight_max, viable_parents, elitism, agent_pop_size, base_mutate,
+                    io_weighting)
     else:
         config += "reward_shape:{}, reward:{}, noise r-w:{}-{}, arms:{}-{}-{}, max_d:{}, size:{}, spikes:{}, " \
-                 "w_max:{}, rents:{}, elitism:{}, pop_size:{} {}".format(
+                 "w_max:{}, rents:{}, elitism:{}, pop_size:{}, mutate:{} {}".format(
                     reward_shape, reward, noise_rate, noise_weight, arms[0], len(arms), random_arms, maximum_depth,
-                    size_fitness, spikes_fitness, weight_max, viable_parents, elitism, agent_pop_size,
+                    size_fitness, spikes_fitness, weight_max, viable_parents, elitism, agent_pop_size, base_mutate,
                     motifs.global_io[1])
     if read_pop:
         config += ' read:{}'.format(keep_reading)

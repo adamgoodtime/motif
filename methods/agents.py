@@ -39,6 +39,7 @@ class agent_population(object):
                  # asexual=0.5,
                  sexuality=[1./3., 1./3., 1./3.],
                  conn_param_mutate=0.1,
+                 base_mutate=0,
                  conn_add=0.015,
                  conn_gone=0.015,
                  io_mutate=0.015,
@@ -66,20 +67,50 @@ class agent_population(object):
         # self.asexual = asexual
         self.sexuality = {'asexual': sexuality[0], 'sexual': sexuality[1], 'both': sexuality[2]}
         self.conn_param_mutate = conn_param_mutate
-        self.conn_add = conn_add
-        self.conn_gone = conn_gone
-        self.io_mutate = io_mutate
+        if base_mutate:
+            self.conn_add = base_mutate
+        else:
+            self.conn_add = conn_add
+        if base_mutate:
+            self.conn_gone = base_mutate
+        else:
+            self.conn_gone = conn_gone
+        if base_mutate:
+            self.io_mutate = base_mutate
+        else:
+            self.io_mutate = io_mutate
         if self.motifs.io_weight[2] == 0:
             self.input_shift = 0
             self.output_shift = 0
         else:
-            self.input_shift = input_shift
-            self.output_shift = output_shift
-        self.node_mutate = node_mutate
-        self.motif_add = motif_add
-        self.motif_gone = motif_gone
-        self.motif_switch = motif_switch
-        self.new_motif = new_motif
+            if base_mutate:
+                self.input_shift = base_mutate
+            else:
+                self.input_shift = input_shift
+            if base_mutate:
+                self.output_shift = base_mutate
+            else:
+                self.output_shift = output_shift
+        if base_mutate:
+            self.node_mutate = base_mutate
+        else:
+            self.node_mutate = node_mutate
+        if base_mutate:
+            self.motif_add = base_mutate
+        else:
+            self.motif_add = motif_add
+        if base_mutate:
+            self.motif_gone = base_mutate
+        else:
+            self.motif_gone = motif_gone
+        if base_mutate:
+            self.motif_switch = base_mutate
+        else:
+            self.motif_switch = motif_switch
+        if base_mutate:
+            self.new_motif = base_mutate
+        else:
+            self.new_motif = new_motif
         self.maximum_depth = maximum_depth
         self.similarity_threshold = similarity_threshold
         self.stagnation_age = stagnation_age
@@ -290,8 +321,9 @@ class agent_population(object):
         motif_size = len(config_copy['node'])
         # loop through each node and randomly mutate
         for i in range(motif_size):
+            prob_resize_factor = 1
             # switch with a randomly selected motif
-            if np.random.random() < self.motif_switch:
+            if np.random.random() * prob_resize_factor < self.motif_switch:
                 selected = False
                 while not selected:
                     selected_motif = self.motifs.select_motif()
@@ -301,35 +333,50 @@ class agent_population(object):
                 if new_depth >= config_copy['depth']:
                     config_copy['depth'] = new_depth + 1
                 mutate_key['motif'] += 1
+                continue
+            else:
+                prob_resize_factor *= 1 - self.motif_switch
             # switch with a completely novel motif todo maybe add or make this a motif of motifs of w/e depth
-            if np.random.random() < self.new_motif:
+            if np.random.random() * prob_resize_factor < self.new_motif:
                 config_copy['node'][i] = self.motifs.generate_motif(weight=0)
                 new_depth = self.motifs.motif_configs[config_copy['node'][i]]['depth']
                 if new_depth >= config_copy['depth']:
                     config_copy['depth'] = new_depth + 1
                 mutate_key['new'] += 1
+                continue
+            else:
+                prob_resize_factor *= 1 - self.new_motif
             # change the IO configurations
-            if np.random.random() < self.io_mutate:
+            if np.random.random() * prob_resize_factor < self.io_mutate:
                 old_io = config_copy['io'][i]
                 while config_copy['io'][i] == old_io:
                     new_io = (np.random.choice((True, False)), np.random.choice((True, False)))
                     config_copy['io'][i] = new_io
                 mutate_key['io'] += 1
+                continue
+            else:
+                prob_resize_factor *= 1 - self.io_mutate
             # switch the base node if it's a base node
-            if np.random.random() < self.node_mutate and config_copy['node'][i] in self.motifs.neuron_types:
+            if np.random.random() * prob_resize_factor < self.node_mutate and config_copy['node'][i] in self.motifs.neuron_types:
                 mutate_key['node'] += 1
                 new_node = config_copy['node'][i]
                 while config_copy['node'][i] == new_node:
                     new_node = np.random.choice(self.motifs.neuron_types)
                 config_copy['node'][i] = new_node
+                continue
+            elif config_copy['node'][i] in self.motifs.neuron_types:
+                prob_resize_factor *= 1 - self.node_mutate
             # shift all input nodes of the motif by the same amount
-            if np.random.random() < self.input_shift:
+            if np.random.random() * prob_resize_factor < self.input_shift:
                 new_node = self.motifs.shift_io('in', config_copy['node'][i])
                 if new_node != config_copy['node'][i]:
                     config_copy['node'][i] = new_node
                     mutate_key['in_shift'] += 1
+                continue
+            else:
+                prob_resize_factor *= 1 - self.input_shift
             # shift all output nodes of the motif by the same amount
-            if np.random.random() < self.output_shift:
+            if np.random.random() * prob_resize_factor < self.output_shift:
                 new_node = self.motifs.shift_io('out', config_copy['node'][i])
                 if new_node != config_copy['node'][i]:
                     config_copy['node'][i] = new_node
