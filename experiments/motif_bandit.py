@@ -44,7 +44,9 @@ def bandit(generations):
     reward = 1
     noise_rate = 0
     noise_weight = 0.01
-    maximum_depth = 10
+    maximum_depth = [5, 20]
+    no_bins = [5, 25]
+    reset_pop = 0
     size_fitness = False
     spikes_fitness = False
     random_arms = 0
@@ -52,8 +54,8 @@ def bandit(generations):
     elitism = 0.2
     runtime = 41000
     exposure_time = 200
-    io_weighting = 1
-    read_pop = 0 #'good_io_motif_3IO.csv'
+    io_weighting = 0.5
+    read_pop = 0  # 'new_io_motif_easy_3.csv'
     keep_reading = 5
     base_mutate = 0
 
@@ -72,8 +74,8 @@ def bandit(generations):
 
     # check max motif count
     motifs = motif_population(max_motif_size=3,
-                              no_weight_bins=15,
-                              no_delay_bins=15,
+                              no_weight_bins=no_bins,
+                              no_delay_bins=no_bins,
                               weight_range=(0.005, weight_max),
                               # delay_range=(1, 25),
                               neuron_types=(['excitatory', 'inhibitory']),
@@ -92,7 +94,7 @@ def bandit(generations):
                               inputs=inputs,
                               outputs=outputs,
                               elitism=elitism,
-                              sexuality=[6./20., 13./20., 1./20.],
+                              sexuality=[3./20., 12./20., 5./20.],
                               base_mutate=base_mutate,
                               # input_shift=0,
                               # output_shift=0,
@@ -101,16 +103,16 @@ def bandit(generations):
 
     if io_weighting:
         config += "reward_shape:{}, reward:{}, noise r-w:{}-{}, arms:{}-{}-{}, max_d:{}, size:{}, spikes:{}, " \
-                 "w_max:{}, rents:{}, elitism:{}, pop_size:{}, mutate:{}, io:{}".format(
+                 "w_max:{}, rents:{}, elitism:{}, pop_size:{}, mutate:{}, bins:{}, reset_pop:{}, io:{}".format(
                     reward_shape, reward, noise_rate, noise_weight, arms[0], len(arms), random_arms, maximum_depth,
                     size_fitness, spikes_fitness, weight_max, viable_parents, elitism, agent_pop_size, base_mutate,
-                    io_weighting)
+                    no_bins, reset_pop, io_weighting)
     else:
         config += "reward_shape:{}, reward:{}, noise r-w:{}-{}, arms:{}-{}-{}, max_d:{}, size:{}, spikes:{}, " \
-                 "w_max:{}, rents:{}, elitism:{}, pop_size:{}, mutate:{} {}".format(
+                 "w_max:{}, rents:{}, elitism:{}, pop_size:{}, mutate:{}, bins:{}, reset_pop:{} {}".format(
                     reward_shape, reward, noise_rate, noise_weight, arms[0], len(arms), random_arms, maximum_depth,
                     size_fitness, spikes_fitness, weight_max, viable_parents, elitism, agent_pop_size, base_mutate,
-                    motifs.global_io[1])
+                    no_bins, reset_pop, motifs.global_io[1])
     if read_pop:
         config += ' read:{}'.format(keep_reading)
 
@@ -148,12 +150,15 @@ def bandit(generations):
 
         if i == 0:
             connections = agents.generate_spinn_nets(input=inputs, output=outputs, max_depth=3)
+        elif reset_pop:
+            if i % reset_pop:
+                connections = agents.generate_spinn_nets(input=inputs, output=outputs, max_depth=3, create='reset')
         else:
             connections = agents.generate_spinn_nets(input=inputs, output=outputs, max_depth=3, create=False)
 
         # fitnesses = agents.thread_bandit(connections, arms, split=16, runtime=21000, exposure_time=200, reward=reward, noise_rate=noise_rate, noise_weight=noise_weight, size_f=size_fitness, spike_f=spikes_fitness)
 
-        # config = 'test'
+        config = 'test'
         if config != 'test':
             # arms = [0.1, 0.9, 0.2]
             # agents.bandit_test(connections, arms)
@@ -181,8 +186,7 @@ def bandit(generations):
 
         agents.pass_fitnesses(fitnesses)
 
-        if config != 'test':
-            agents.status_update(fitnesses, i, config, len(arms))
+        agents.status_update(fitnesses, i, config, len(arms))
 
         print "\nconfig: ", config, "\n"
 
@@ -197,6 +201,10 @@ def bandit(generations):
             agents.save_agents(i, config)
 
         print "4", motifs.total_weight
+
+        motifs.set_delay_bins(no_bins, i, generations)
+        motifs.set_weight_bins(no_bins, i, generations)
+        agents.set_max_d(maximum_depth, i, generations)
 
         agents.evolve(species=False)
 

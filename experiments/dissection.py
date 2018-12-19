@@ -151,18 +151,53 @@ def motif_tracking(file_location, config):
             #     writer.writerow(motif)
         weight_file.close()
 
+    with open('{}/50 Weights over time: {}.csv'.format(file_location, config), 'w') as weight_file:
+        writer = csv.writer(weight_file, delimiter=',', lineterminator='\n')
+        for motif in weights_over_time:
+            data = [motif]
+            entries = 0
+            for weight in weights_over_time[motif]:
+                if weight != 0:
+                    entries += 1
+                data.append(weight)
+            if entries > 50:
+                writer.writerow(data)
+            # for motif in iteration:
+            #     writer.writerow(motif)
+        weight_file.close()
+
+    with open('{}/100 Weights over time: {}.csv'.format(file_location, config), 'w') as weight_file:
+        writer = csv.writer(weight_file, delimiter=',', lineterminator='\n')
+        for motif in weights_over_time:
+            data = [motif]
+            entries = 0
+            for weight in weights_over_time[motif]:
+                if weight != 0:
+                    entries += 1
+                data.append(weight)
+            if entries > 100:
+                writer.writerow(data)
+            # for motif in iteration:
+            #     writer.writerow(motif)
+        weight_file.close()
+
 def read_motif(motif_id, iteration, file_location, config):
     motifs = motif_population(max_motif_size=3,
                               no_weight_bins=5,
                               no_delay_bins=5,
                               weight_range=(0.005, weight_max),
                               # delay_range=(2, 2.00001),
+                              io_weight=io_weight,
                               read_entire_population='{}/Motif population {}: {}.csv'.format(file_location, iteration, config),
-                              population_size=200)
+                              population_size=100)
 
     motif = motifs.motif_configs[motif_id]
     motif_struct = motifs.read_motif(motif_id)
-    # print motif_struct
+    motif1 = motifs.motif_configs[motif_id-1]
+    motif_struct1 = motifs.read_motif(motif_id-1)
+    motif2 = motifs.motif_configs[motif_id-2]
+    motif_struct2 = motifs.read_motif(motif_id-2)
+    print motif_struct
 
 def mutate_anal(file_location, config):
     print "attempting file - {}/mutate keys for {}: {}.csv".format(file_location, 0, config)
@@ -177,6 +212,8 @@ def mutate_anal(file_location, config):
     mutate_track['c_gone'] = []
     mutate_track['param_w'] = []
     mutate_track['param_d'] = []
+    mutate_track['in_shift'] = []
+    mutate_track['out_shift'] = []
     mutate_track['sex'] = []
     mutate_track['asex'] = []
     mutate_track['both'] = []
@@ -207,6 +244,10 @@ def mutate_anal(file_location, config):
                         param_w = literal_eval(temp[1])
                     elif temp[0] == 'param_d':
                         param_d = literal_eval(temp[1])
+                    elif temp[0] == 'in_shift':
+                        in_shift = literal_eval(temp[1])
+                    elif temp[0] == 'out_shift':
+                        out_shift = literal_eval(temp[1])
                     elif temp[0] == 'mum':
                         mum = literal_eval(temp[1])
                         mum_fitness = mum[0]
@@ -269,6 +310,10 @@ def mutate_anal(file_location, config):
                                 mutate_track['param_w'].append(ave_score_change * param_w)
                             if param_d:
                                 mutate_track['param_d'].append(ave_score_change * param_d)
+                            if param_w:
+                                mutate_track['in_shift'].append(ave_score_change * in_shift)
+                            if param_d:
+                                mutate_track['out_shift'].append(ave_score_change * out_shift)
                             if sex == 1:
                                 mutate_track['sex'].append(ave_score_change)
                             if sex == 0:
@@ -295,6 +340,10 @@ def mutate_anal(file_location, config):
                                 mutate_track['param_w'].append(ave_fitness_change * param_w)
                             if param_d:
                                 mutate_track['param_d'].append(ave_fitness_change * param_d)
+                            if param_w:
+                                mutate_track['in_shift'].append(ave_fitness_change * in_shift)
+                            if param_d:
+                                mutate_track['out_shift'].append(ave_fitness_change * out_shift)
                             if sex == 1:
                                 mutate_track['sex'].append(ave_fitness_change)
                             if sex == 0:
@@ -350,12 +399,13 @@ def mutate_anal(file_location, config):
 file_location = 'runtime data/The start of screen and good results'
 file_location = 'runtime data/spalloc fails with really good 0.6'
 file_location = 'runtime data/long run of both branches on hard 3 arm problem/io_motif'
+file_location = 'runtime data/io_shift'
 
 weight_max = 0.1
 
-arm1 = 0.9
-arm2 = 0.1
-arm3 = 0.1
+arm1 = 0.98
+arm2 = 0.01
+arm3 = 0.01
 arm_len = 1
 arms = []
 for i in range(arm_len):
@@ -373,18 +423,19 @@ agent_pop_size = 100
 reward_shape = False
 reward = 1
 noise_rate = 0
-noise_weight = 0.01
+noise_weight = 0.215
 maximum_depth = 10
 size_fitness = False
 spikes_fitness = False
 random_arms = 0
-viable_parents = 0.3
-elitism = 0.3
+viable_parents = 0.2
+elitism = 0.2
 runtime = 41000
 exposure_time = 200
-io_weighting = 1
-read_pop = False
-keep_reading = 0
+io_weight = 1
+read_pop = 0 #'new_io_motif_easy_3.csv'
+keep_reading = 5
+base_mutate = 0
 
 x_factor = 0
 y_factor = 8
@@ -412,12 +463,13 @@ if io_weighting:
     config += "reward_shape:{}, reward:{}, noise r-w:{}-{}, arms:{}-{}-{}, max_d:{}, size:{}, spikes:{}, " \
               "w_max:{}, rents:{}, elitism:{}, pop_size:{}, io:{}".format(
         reward_shape, reward, noise_rate, noise_weight, arms[0], len(arms), random_arms, maximum_depth,
-        size_fitness, spikes_fitness, weight_max, viable_parents, elitism, agent_pop_size, io_weighting)
+        size_fitness, spikes_fitness, weight_max, viable_parents, elitism, agent_pop_size,
+        io_weighting)
 else:
     config += "reward_shape:{}, reward:{}, noise r-w:{}-{}, arms:{}-{}-{}, max_d:{}, size:{}, spikes:{}, " \
-              "w_max:{}, rents:{}, elitism:{}, pop_size:{} {}".format(
+              "w_max:{}, rents:{}, elitism:{}, pop_size:{}, mutate:{} {}".format(
         reward_shape, reward, noise_rate, noise_weight, arms[0], len(arms), random_arms, maximum_depth,
-        size_fitness, spikes_fitness, weight_max, viable_parents, elitism, agent_pop_size,
+        size_fitness, spikes_fitness, weight_max, viable_parents, elitism, agent_pop_size, base_mutate,
         motifs.global_io[1])
 if read_pop:
     config += ' read:{}'.format(keep_reading)
@@ -425,6 +477,6 @@ if read_pop:
 # config = "bandit reward_shape:{}, reward:{}, noise r-w:{}-{}, arms:{}-{}-{}, max_d{}, size:{}, spikes:{}, w_max{}".format(
 #     reward_shape, reward, noise_rate, noise_weight, arms[0], len(arms), random_arms, maximum_depth, size_fitness, spikes_fitness, weight_max)
 
-# motif_tracking(file_location, config)
-# read_motif('152946', 96, file_location, config)
-mutate_anal(file_location, config)
+motif_tracking(file_location, config)
+# read_motif('479003', 250, file_location, config)
+# mutate_anal(file_location, config)

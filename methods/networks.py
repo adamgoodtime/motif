@@ -62,14 +62,20 @@ class motif_population(object):
         self.discrete_params = discrete_params
         self.weights = weights
         self.weight_range = weight_range
-        self.no_weight_bins = no_weight_bins
+        if isinstance(no_weight_bins, list):
+            self.no_weight_bins = no_weight_bins[0]
+        else:
+            self.no_weight_bins = no_weight_bins
         weight_bin_range = self.weight_range[1] - self.weight_range[0]
         self.weight_bin_width = weight_bin_range / (self.no_weight_bins - 1)
         self.initial_weight = initial_weight
         self.weight_stdev = weight_stdev
         self.delays = delays
         self.delay_range = delay_range
-        self.no_delay_bins = no_delay_bins
+        if isinstance(no_delay_bins, list):
+            self.no_delay_bins = no_delay_bins[0]
+        else:
+            self.no_delay_bins = no_delay_bins
         delay_bin_range = self.delay_range[1] - self.delay_range[0]
         self.delay_bin_width = delay_bin_range / (self.no_delay_bins - 1)
         self.delay_stdev = delay_stdev
@@ -167,6 +173,26 @@ class motif_population(object):
             self.insert_motif(deepcopy(motif), weight=motif['weight'], read=True)
 
         # print "done generating motif pop"
+
+    def set_delay_bins(self, bins, iteration, max_iterations):
+        if isinstance(bins, list):
+            bins_range = bins[1] - bins[0]
+            bin_width = max_iterations / float(bins_range + 1)
+            self.no_delay_bins = bins[0] + int(iteration / bin_width)
+        else:
+            self.no_delay_bins = bins
+        delay_bin_range = self.delay_range[1] - self.delay_range[0]
+        self.delay_bin_width = delay_bin_range / (self.no_delay_bins - 1)
+
+    def set_weight_bins(self, bins, iteration, max_iterations):
+        if isinstance(bins, list):
+            bins_range = bins[1] - bins[0]
+            bin_width = max_iterations / float(bins_range + 1)
+            self.no_weight_bins = bins[0] + int(iteration / bin_width)
+        else:
+            self.no_weight_bins = bins
+        weight_bin_range = self.weight_range[1] - self.weight_range[0]
+        self.weight_bin_width = weight_bin_range / (self.no_weight_bins - 1)
 
     '''Generates a random motif within the allowable configurations and attempts to enter it into the population. If it
     already exists within the population the function will be called again until a novel motif is added.'''

@@ -111,7 +111,10 @@ class agent_population(object):
             self.new_motif = base_mutate
         else:
             self.new_motif = new_motif
-        self.maximum_depth = maximum_depth
+        if isinstance(maximum_depth, list):
+            self.maximum_depth = maximum_depth[0]
+        else:
+            self.maximum_depth = maximum_depth
         self.similarity_threshold = similarity_threshold
         self.stagnation_age = stagnation_age
         self.inputs = inputs
@@ -129,6 +132,14 @@ class agent_population(object):
         self.min_score = []
         self.total_average = []
 
+    def set_max_d(self, depth, iteration, max_iterations):
+        if isinstance(depth, list):
+            depth_range = depth[1] - depth[0]
+            depth_width = max_iterations / float(depth_range + 1)
+            self.maximum_depth = depth[0] + int(iteration / depth_width)
+        else:
+            self.maximum_depth = depth
+
     def generate_spinn_nets(self, input=None, output=None, create=True, max_depth=2):
         if input is None:
             input = self.inputs
@@ -136,6 +147,8 @@ class agent_population(object):
             output = self.outputs
         agent_connections = []
         if create:
+            if create == 'reset':
+                self.agent_pop = []
             self.generate_population(max_depth)
         for agent in self.agent_pop:
             agent_connections.append(self.convert_agent(agent, input, output))
@@ -669,10 +682,11 @@ class agent_population(object):
         print "maximum score:", self.max_score
         print "average score:", self.average_score
         print "minimum score:", self.min_score
-        self.save_agent_connections(self.agent_pop[best_agent], iteration, 'score '+config)
-        self.save_agent_connections(self.agent_pop[best_agent_s], iteration, 'fitness '+config)
-        self.save_status(config, iteration)
-        self.save_mutate_keys(iteration, config)
+        if config != 'test':
+            self.save_agent_connections(self.agent_pop[best_agent], iteration, 'score '+config)
+            self.save_agent_connections(self.agent_pop[best_agent_s], iteration, 'fitness '+config)
+            self.save_status(config, iteration)
+            self.save_mutate_keys(iteration, config)
 
     def get_scores(self, game_pop, simulator):
         g_vertex = game_pop._vertex
