@@ -165,7 +165,8 @@ def bandit(generations):
             if x_factor:
                 execfile("../methods/exec_breakout.py", globals())
             else:
-                execfile("../methods/exec_bandit.py", globals())
+                # execfile("../methods/exec_bandit.py", globals())
+                execfile("../methods/exec_bandit2.py", globals())
 
         fitnesses = agents.read_fitnesses(config, max_fail_score)
 

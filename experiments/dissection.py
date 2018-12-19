@@ -187,16 +187,16 @@ def read_motif(motif_id, iteration, file_location, config):
                               no_delay_bins=5,
                               weight_range=(0.005, weight_max),
                               # delay_range=(2, 2.00001),
-                              io_weight=io_weight,
+                              io_weight=[inputs, outputs, io_weight],
                               read_entire_population='{}/Motif population {}: {}.csv'.format(file_location, iteration, config),
                               population_size=100)
 
     motif = motifs.motif_configs[motif_id]
     motif_struct = motifs.read_motif(motif_id)
-    motif1 = motifs.motif_configs[motif_id-1]
-    motif_struct1 = motifs.read_motif(motif_id-1)
-    motif2 = motifs.motif_configs[motif_id-2]
-    motif_struct2 = motifs.read_motif(motif_id-2)
+    # motif1 = motifs.motif_configs[motif_id-1]
+    # motif_struct1 = motifs.read_motif(motif_id-1)
+    # motif2 = motifs.motif_configs[motif_id-2]
+    # motif_struct2 = motifs.read_motif(motif_id-2)
     print motif_struct
 
 def mutate_anal(file_location, config):
@@ -459,12 +459,12 @@ else:
 # config = "bandit reward_shape:{}, reward:{}, noise r-w:{}-{}, arms:{}-{}-{}, max_d{}, size:{}, spikes:{}, w_max{}, rents{}".format(
 #     reward_shape, reward, noise_rate, noise_weight, arms[0], len(arms), random_arms, maximum_depth, size_fitness, spikes_fitness, weight_max, viable_parents)
 
-if io_weighting:
+if io_weight:
     config += "reward_shape:{}, reward:{}, noise r-w:{}-{}, arms:{}-{}-{}, max_d:{}, size:{}, spikes:{}, " \
               "w_max:{}, rents:{}, elitism:{}, pop_size:{}, io:{}".format(
         reward_shape, reward, noise_rate, noise_weight, arms[0], len(arms), random_arms, maximum_depth,
         size_fitness, spikes_fitness, weight_max, viable_parents, elitism, agent_pop_size,
-        io_weighting)
+        io_weight)
 else:
     config += "reward_shape:{}, reward:{}, noise r-w:{}-{}, arms:{}-{}-{}, max_d:{}, size:{}, spikes:{}, " \
               "w_max:{}, rents:{}, elitism:{}, pop_size:{}, mutate:{} {}".format(
@@ -477,6 +477,6 @@ if read_pop:
 # config = "bandit reward_shape:{}, reward:{}, noise r-w:{}-{}, arms:{}-{}-{}, max_d{}, size:{}, spikes:{}, w_max{}".format(
 #     reward_shape, reward, noise_rate, noise_weight, arms[0], len(arms), random_arms, maximum_depth, size_fitness, spikes_fitness, weight_max)
 
-motif_tracking(file_location, config)
-# read_motif('479003', 250, file_location, config)
+# motif_tracking(file_location, config)
+read_motif('795149', 450, file_location, config)
 # mutate_anal(file_location, config)
