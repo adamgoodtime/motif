@@ -158,7 +158,7 @@ def bandit(generations):
 
         # fitnesses = agents.thread_bandit(connections, arms, split=16, runtime=21000, exposure_time=200, reward=reward, noise_rate=noise_rate, noise_weight=noise_weight, size_f=size_fitness, spike_f=spikes_fitness)
 
-        config = 'test'
+        # config = 'test'
         if config != 'test':
             # arms = [0.1, 0.9, 0.2]
             # agents.bandit_test(connections, arms)
