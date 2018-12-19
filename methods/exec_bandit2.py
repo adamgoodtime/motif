@@ -191,10 +191,10 @@ def bandit_test(connections, arms, split=4, runtime=2000, exposure_time=200, noi
                 #     [in_ex, in_in] = split_ex_in(in2in)
                 #     if len(in_ex) != 0:
                 #         p.Projection(bandit[bandit_count], bandit[bandit_count], p.FromListConnector(in_ex),
-                                     receptor_type='excitatory')
-                    if len(in_in) != 0:
-                        p.Projection(bandit[bandit_count], bandit[bandit_count], p.FromListConnector(in_in),
-                                     receptor_type='inhibitory')
+                #                      receptor_type='excitatory')
+                #     if len(in_in) != 0:
+                #         p.Projection(bandit[bandit_count], bandit[bandit_count], p.FromListConnector(in_in),
+                #                      receptor_type='inhibitory')
                 if len(in2out) != 0:
                     [in_ex, in_in] = split_ex_in(in2out)
                     if len(in_ex) != 0:
