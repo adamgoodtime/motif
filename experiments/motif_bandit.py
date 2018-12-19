@@ -55,7 +55,7 @@ def bandit(generations):
     runtime = 41000
     exposure_time = 200
     io_weighting = 0.5
-    read_pop = 0  # 'new_io_motif_easy_3.csv'
+    read_pop = 0 # 'new_io_motif_easy_3.csv'
     keep_reading = 5
     base_mutate = 0
 
@@ -102,14 +102,14 @@ def bandit(generations):
                               viable_parents=viable_parents)
 
     if io_weighting:
-        config += "reward_shape:{}, reward:{}, noise r-w:{}-{}, arms:{}-{}-{}, max_d:{}, size:{}, spikes:{}, " \
-                 "w_max:{}, rents:{}, elitism:{}, pop_size:{}, mutate:{}, bins:{}, reset_pop:{}, io:{}".format(
+        config += "shape:{}, reward:{}, noise r-w:{}-{}, arms:{}-{}-{}, max_d:{}, size:{}, spike:{}, " \
+                 "w_max:{}, rents:{}, elite:{}, psize:{}, mutate:{}, bins:{}, reset:{}, io:{}".format(
                     reward_shape, reward, noise_rate, noise_weight, arms[0], len(arms), random_arms, maximum_depth,
                     size_fitness, spikes_fitness, weight_max, viable_parents, elitism, agent_pop_size, base_mutate,
                     no_bins, reset_pop, io_weighting)
     else:
-        config += "reward_shape:{}, reward:{}, noise r-w:{}-{}, arms:{}-{}-{}, max_d:{}, size:{}, spikes:{}, " \
-                 "w_max:{}, rents:{}, elitism:{}, pop_size:{}, mutate:{}, bins:{}, reset_pop:{} {}".format(
+        config += "shape:{}, reward:{}, noise r-w:{}-{}, arms:{}-{}-{}, max_d:{}, size:{}, spike:{}, " \
+                 "w_max:{}, rents:{}, elite:{}, psize:{}, mutate:{}, bins:{}, reset:{} {}".format(
                     reward_shape, reward, noise_rate, noise_weight, arms[0], len(arms), random_arms, maximum_depth,
                     size_fitness, spikes_fitness, weight_max, viable_parents, elitism, agent_pop_size, base_mutate,
                     no_bins, reset_pop, motifs.global_io[1])
