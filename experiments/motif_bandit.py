@@ -54,7 +54,7 @@ def bandit(generations):
     elitism = 0.2
     runtime = 41000
     exposure_time = 200
-    io_weighting = 0.5
+    io_weighting = 1
     read_pop = 0 # 'new_io_motif_easy_3.csv'
     keep_reading = 5
     base_mutate = 0
@@ -166,7 +166,8 @@ def bandit(generations):
                 execfile("../methods/exec_breakout.py", globals())
             else:
                 # execfile("../methods/exec_bandit.py", globals())
-                execfile("../methods/exec_bandit2.py", globals())
+                # execfile("../methods/exec_bandit2.py", globals())
+                execfile("../methods/exec_bandit3.py", globals())
 
         fitnesses = agents.read_fitnesses(config, max_fail_score)
 

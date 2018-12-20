@@ -664,7 +664,7 @@ class motif_population(object):
                 print "somethin fucky"
 
         return in2e, in2i, in2in, in2out, e2in, i2in, len(indexed_ex), e2e, e2i, \
-               len(indexed_in), i2e, i2i, e2out, i2out, out2e, out2i, out2in, out2out
+                    len(indexed_in), i2e, i2i, e2out, i2out, out2e, out2i, out2in, out2out
 
     def construct_connections(self, agent_connections, seed, inputs, outputs):
         indexed_ex = []

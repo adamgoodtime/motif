@@ -16,5 +16,6 @@
     <orderEntry type="module" module-name="spalloc" />
     <orderEntry type="module" module-name="n_arm_bandit" />
     <orderEntry type="module" module-name="BIMPC" />
+    <orderEntry type="module" module-name="bandit_arm" />
   </component>
 </module>

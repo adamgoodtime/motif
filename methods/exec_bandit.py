@@ -259,12 +259,6 @@ def bandit_test(connections, arms, split=4, runtime=2000, exposure_time=200, noi
                     if len(out_in) != 0:
                         p.Projection(output[bandit_count], output[bandit_count], p.FromListConnector(out_in),
                                      receptor_type='inhibitory')
-                if len(e2out) != 0:
-                    p.Projection(excite[excite_count], output[bandit_count], p.FromListConnector(e2out),
-                                 receptor_type='excitatory')
-                if len(i2out) != 0:
-                    p.Projection(inhib[inhib_count], output[bandit_count], p.FromListConnector(i2out),
-                                 receptor_type='inhibitory')
 
         print "\nfinished connections seed = ", seed, "\n"
         simulator = get_simulator()

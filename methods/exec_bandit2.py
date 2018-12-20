@@ -141,7 +141,7 @@ def bandit_test(connections, arms, split=4, runtime=2000, exposure_time=200, noi
         for i in range(len(connections)):
             [in2e, in2i, in2in, in2out, e2in, i2in, e_size, e2e, e2i, i_size,
              i2e, i2i, e2out, i2out, out2e, out2i, out2in, out2out] = connections[i]
-            if len(in2e) == 0 and len(in2i) == 0 and len(in2in) == 0 and len(in2out) == 0:
+            if len(in2e) == 0 and len(in2i) == 0 and len(in2out) == 0:
                 failures.append(i)
                 print "agent {} was not properly connected to the game".format(i)
             else:
@@ -259,12 +259,6 @@ def bandit_test(connections, arms, split=4, runtime=2000, exposure_time=200, noi
                     if len(out_in) != 0:
                         p.Projection(output[bandit_count], output[bandit_count], p.FromListConnector(out_in),
                                      receptor_type='inhibitory')
-                if len(e2out) != 0:
-                    p.Projection(excite[excite_count], output[bandit_count], p.FromListConnector(e2out),
-                                 receptor_type='excitatory')
-                if len(i2out) != 0:
-                    p.Projection(inhib[inhib_count], output[bandit_count], p.FromListConnector(i2out),
-                                 receptor_type='inhibitory')
 
         print "\nfinished connections seed = ", seed, "\n"
         simulator = get_simulator()
