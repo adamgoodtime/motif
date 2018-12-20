@@ -11,7 +11,7 @@ import time
 import socket
 import numpy as np
 from spinn_bandit.python_models.bandit import Bandit
-from arm.spinn_arm.python_models.arm import Arm
+from spinn_arm.python_models.arm import Arm
 import math
 import itertools
 from copy import deepcopy
