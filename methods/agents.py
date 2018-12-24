@@ -39,6 +39,7 @@ class agent_population(object):
                  # asexual=0.5,
                  sexuality=[1./3., 1./3., 1./3.],
                  conn_param_mutate=0.1,
+                 param_mutate_stdev=0.15,
                  base_mutate=0,
                  conn_add=0.015,
                  conn_gone=0.015,
@@ -67,6 +68,7 @@ class agent_population(object):
         # self.asexual = asexual
         self.sexuality = {'asexual': sexuality[0], 'sexual': sexuality[1], 'both': sexuality[2]}
         self.conn_param_mutate = conn_param_mutate
+        self.param_mutate_stdev = param_mutate_stdev
         if base_mutate:
             self.conn_add = base_mutate
         else:
@@ -419,7 +421,11 @@ class agent_population(object):
             if np.random.random() < self.conn_param_mutate:
                 old_weight = config_copy['conn'][i][2]
                 while old_weight == config_copy['conn'][i][2]:
-                    bin = np.random.randint(0, self.motifs.no_weight_bins)
+                    change = np.random.normal(0, self.param_mutate_stdev)
+                    change *= (self.motifs.weight_range[1] - self.motifs.weight_range[0])
+                    bin_change = int(round(change / self.motifs.weight_bin_width))
+                    bin = bin_change + ((old_weight - self.motifs.weight_range[0]) / self.motifs.weight_bin_width)
+                    bin %= (self.motifs.no_weight_bins - 1)
                     new_weight = self.motifs.weight_range[0] + (bin * self.motifs.weight_bin_width)
                     config_copy['conn'][i][2] = new_weight
                 mutate_key['param_w'] += 1
@@ -427,7 +433,11 @@ class agent_population(object):
             if np.random.random() < self.conn_param_mutate:
                 old_delay = config_copy['conn'][i][3]
                 while old_delay == config_copy['conn'][i][3]:
-                    bin = np.random.randint(0, self.motifs.no_weight_bins)
+                    change = np.random.normal(0, self.param_mutate_stdev)
+                    change *= (self.motifs.delay_range[1] - self.motifs.delay_range[0])
+                    bin_change = int(round(change / self.motifs.delay_bin_width))
+                    bin = bin_change + ((old_weight - self.motifs.delay_range[0]) / self.motifs.delay_bin_width)
+                    bin %= (self.motifs.no_delay_bins - 1)
                     new_delay = self.motifs.delay_range[0] + (bin * self.motifs.delay_bin_width)
                     config_copy['conn'][i][3] = new_delay
                 mutate_key['param_d'] += 1
