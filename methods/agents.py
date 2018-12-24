@@ -436,7 +436,7 @@ class agent_population(object):
                     change = np.random.normal(0, self.param_mutate_stdev)
                     change *= (self.motifs.delay_range[1] - self.motifs.delay_range[0])
                     bin_change = int(round(change / self.motifs.delay_bin_width))
-                    bin = bin_change + ((old_weight - self.motifs.delay_range[0]) / self.motifs.delay_bin_width)
+                    bin = bin_change + ((old_delay - self.motifs.delay_range[0]) / self.motifs.delay_bin_width)
                     bin %= (self.motifs.no_delay_bins - 1)
                     new_delay = self.motifs.delay_range[0] + (bin * self.motifs.delay_bin_width)
                     config_copy['conn'][i][3] = new_delay
