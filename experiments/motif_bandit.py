@@ -16,16 +16,16 @@ def bandit(generations):
 
     weight_max = 0.1
 
-    arm1 = 0.9
-    arm2 = 0.1
-    arm3 = 0.1
-    arm_len = 1
+    arm1 = 0.8
+    arm2 = 0.2
+    # arm3 = 0.1
+    arm_len = 4
     arms = []
     for i in range(arm_len):
-        # arms.append([arm1, arm2])
-        # arms.append([arm2, arm1])
-        for arm in list(itertools.permutations([arm1, arm2, arm3])):
-            arms.append(list(arm))
+        arms.append([arm1, arm2])
+        arms.append([arm2, arm1])
+        # for arm in list(itertools.permutations([arm1, arm2, arm3])):
+        #     arms.append(list(arm))
     # arms = [[0.4, 0.6], [0.6, 0.4], [0.3, 0.7], [0.7, 0.3], [0.2, 0.8], [0.8, 0.2], [0.1, 0.9], [0.9, 0.1]]
     '''arms = [[0.1, 0.2, 0.9, 0.3, 0.2, 0.1, 0.2, 0.1], [0.9, 0.1, 0.1, 0.2, 0.3, 0.2, 0.1, 0.2],
             [0.3, 0.9, 0.2, 0.1, 0.1, 0.2, 0.2, 0.1], [0.2, 0.1, 0.1, 0.9, 0.2, 0.3, 0.1, 0.2],

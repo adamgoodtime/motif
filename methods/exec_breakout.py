@@ -69,15 +69,18 @@ def subsample_connection(x_res, y_res, subsamp_factor_x, subsamp_factor_y, weigh
 
     return connection_list_on, connection_list_off
 
-def parse_connections(connections, x_res, y_res, subsamp_factor_x, subsamp_factor_y, pre_or_post):
+def parse_connections(connections, x_res, y_res, pre_or_post, subsamp_factor_x=1, subsamp_factor_y=1, colour_bits=2):
     connection_list_on = []
     connection_list_off = []
     for conn in connections:
         if pre_or_post == 'pre':
-            id = conn[0]
+            neuron_id = conn[0]
         else:
-            id = conn[1]
+            neuron_id = conn[1]
         # do something with the neuron id to make it the actual id on breakout
+        row = neuron_id % x_res
+        col = (neuron_id - row) / y_res
+
 
     return connection_list_on, connection_list_off
 
@@ -207,18 +210,20 @@ def breakout_test(connections, arms, split=4, runtime=2000, exposure_time=200, n
                     excite_count += 1
                     excite.append(
                         p.Population(e_size, p.IF_cond_exp(), label='excite_pop_{}-{}'.format(excite_count, i)))
-                    excite_noise = p.Population(e_size, p.SpikeSourcePoisson(rate=noise_rate))
-                    p.Projection(excite_noise, excite[excite_count], p.OneToOneConnector(),
-                                 p.StaticSynapse(weight=noise_weight), receptor_type='excitatory')
+                    if noise_rate:
+                        excite_noise = p.Population(e_size, p.SpikeSourcePoisson(rate=noise_rate))
+                        p.Projection(excite_noise, excite[excite_count], p.OneToOneConnector(),
+                                     p.StaticSynapse(weight=noise_weight), receptor_type='excitatory')
                     if spike_f:
                         excite[excite_count].record('spikes')
                     excite_marker.append(i)
                 if i_size > 0:
                     inhib_count += 1
                     inhib.append(p.Population(i_size, p.IF_cond_exp(), label='inhib_pop_{}-{}'.format(inhib_count, i)))
-                    inhib_noise = p.Population(i_size, p.SpikeSourcePoisson(rate=noise_rate))
-                    p.Projection(inhib_noise, inhib[inhib_count], p.OneToOneConnector(),
-                                 p.StaticSynapse(weight=noise_weight), receptor_type='excitatory')
+                    if noise_rate:
+                        inhib_noise = p.Population(i_size, p.SpikeSourcePoisson(rate=noise_rate))
+                        p.Projection(inhib_noise, inhib[inhib_count], p.OneToOneConnector(),
+                                     p.StaticSynapse(weight=noise_weight), receptor_type='excitatory')
                     if spike_f:
                         inhib[inhib_count].record('spikes')
                     inhib_marker.append(i)

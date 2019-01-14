@@ -165,7 +165,7 @@ def bandit_test(connections, arms, split=4, runtime=2000, exposure_time=200, noi
                 arm_collection = []
                 for j in range(len(arms)):
                     arm_collection.append(p.Population(
-                        int(np.ceil(np.log2(len(arms)))), Arm(j, reward_delay=exposure_time, no_arms=len(arms)),
+                        int(np.ceil(np.log2(len(arms)))), Arm(arm_id=j, reward_delay=exposure_time, no_arms=len(arms)),
                         label='arm_pop{}:{}:{}'.format(bandit_count, i, j)))
                     p.Projection(arm_collection[j], bandit[bandit_count], p.AllToAllConnector(), p.StaticSynapse())
                 bandit_arms.append(arm_collection)
@@ -176,18 +176,20 @@ def bandit_test(connections, arms, split=4, runtime=2000, exposure_time=200, noi
                     excite_count += 1
                     excite.append(
                         p.Population(e_size, p.IF_cond_exp(), label='excite_pop_{}-{}'.format(excite_count, i)))
-                    excite_noise = p.Population(e_size, p.SpikeSourcePoisson(rate=noise_rate))
-                    p.Projection(excite_noise, excite[excite_count], p.OneToOneConnector(),
-                                 p.StaticSynapse(weight=noise_weight), receptor_type='excitatory')
+                    if noise_rate:
+                        excite_noise = p.Population(e_size, p.SpikeSourcePoisson(rate=noise_rate))
+                        p.Projection(excite_noise, excite[excite_count], p.OneToOneConnector(),
+                                     p.StaticSynapse(weight=noise_weight), receptor_type='excitatory')
                     if spike_f:
                         excite[excite_count].record('spikes')
                     excite_marker.append(i)
                 if i_size > 0:
                     inhib_count += 1
                     inhib.append(p.Population(i_size, p.IF_cond_exp(), label='inhib_pop_{}-{}'.format(inhib_count, i)))
-                    inhib_noise = p.Population(i_size, p.SpikeSourcePoisson(rate=noise_rate))
-                    p.Projection(inhib_noise, inhib[inhib_count], p.OneToOneConnector(),
-                                 p.StaticSynapse(weight=noise_weight), receptor_type='excitatory')
+                    if noise_rate:
+                        inhib_noise = p.Population(i_size, p.SpikeSourcePoisson(rate=noise_rate))
+                        p.Projection(inhib_noise, inhib[inhib_count], p.OneToOneConnector(),
+                                     p.StaticSynapse(weight=noise_weight), receptor_type='excitatory')
                     if spike_f:
                         inhib[inhib_count].record('spikes')
                     inhib_marker.append(i)
