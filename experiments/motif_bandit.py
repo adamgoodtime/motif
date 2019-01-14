@@ -44,8 +44,8 @@ def bandit(generations):
     reward = 1
     noise_rate = 0
     noise_weight = 0.01
-    maximum_depth = [5, 20]
-    no_bins = [5, 25]
+    maximum_depth = [5, 30]
+    no_bins = [5, 125]
     reset_pop = 0
     size_fitness = False
     spikes_fitness = False
@@ -55,15 +55,16 @@ def bandit(generations):
     runtime = 41000
     exposure_time = 200
     io_weighting = 1
-    read_pop = 0 # 'new_io_motif_easy_3.csv'
+    read_pop = 0  # 'new_io_motif_easy_3.csv'
     keep_reading = 5
     base_mutate = 0
+    exec_thing = 3
 
-    x_factor = 0
+    x_factor = 8
     y_factor = 8
     bricking = 0
 
-    if x_factor:
+    if exec_thing == 'breakout':
         inputs = (160 / x_factor) * (128 / y_factor)
         outputs = 2
         config = 'breakout {}/{}:{} '.format(x_factor, y_factor, bricking)
@@ -102,17 +103,17 @@ def bandit(generations):
                               viable_parents=viable_parents)
 
     if io_weighting:
-        config += "shape:{}, reward:{}, noise r-w:{}-{}, arms:{}-{}-{}, max_d:{}, size:{}, spike:{}, " \
-                 "w_max:{}, rents:{}, elite:{}, psize:{}, mutate:{}, bins:{}, reset:{}, io:{}".format(
-                    reward_shape, reward, noise_rate, noise_weight, arms[0], len(arms), random_arms, maximum_depth,
-                    size_fitness, spikes_fitness, weight_max, viable_parents, elitism, agent_pop_size, base_mutate,
-                    no_bins, reset_pop, io_weighting)
+        config += "ex:{}, shape:{}, reward:{}, n r-w:{}-{}, arms:{}-{}-{}, max_d:{}, size:{}, spike:{}, " \
+                 "w_max:{}, rents:{}, elite:{}, psize:{}, mute:{}, bins:{}, reset:{}, io:{}".format(
+                    exec_thing, reward_shape, reward, noise_rate, noise_weight, arms[0], len(arms), random_arms,
+                    maximum_depth, size_fitness, spikes_fitness, weight_max, viable_parents, elitism, agent_pop_size,
+                    base_mutate, no_bins, reset_pop, io_weighting)
     else:
-        config += "shape:{}, reward:{}, noise r-w:{}-{}, arms:{}-{}-{}, max_d:{}, size:{}, spike:{}, " \
-                 "w_max:{}, rents:{}, elite:{}, psize:{}, mutate:{}, bins:{}, reset:{} {}".format(
-                    reward_shape, reward, noise_rate, noise_weight, arms[0], len(arms), random_arms, maximum_depth,
-                    size_fitness, spikes_fitness, weight_max, viable_parents, elitism, agent_pop_size, base_mutate,
-                    no_bins, reset_pop, motifs.global_io[1])
+        config += "ex:{}, shape:{}, reward:{}, n r-w:{}-{}, arms:{}-{}-{}, max_d:{}, size:{}, spike:{}, " \
+                 "w_max:{}, rents:{}, elite:{}, psize:{}, mute:{}, bins:{}, reset:{} {}".format(
+                    exec_thing, reward_shape, reward, noise_rate, noise_weight, arms[0], len(arms), random_arms,
+                    maximum_depth, size_fitness, spikes_fitness, weight_max, viable_parents, elitism, agent_pop_size,
+                    base_mutate, no_bins, reset_pop, motifs.global_io[1])
     if read_pop:
         config += ' read:{}'.format(keep_reading)
 
@@ -162,12 +163,14 @@ def bandit(generations):
         if config != 'test':
             # arms = [0.1, 0.9, 0.2]
             # agents.bandit_test(connections, arms)
-            if x_factor:
-                execfile("../methods/exec_breakout.py", globals())
-            else:
-                # execfile("../methods/exec_bandit.py", globals())
-                # execfile("../methods/exec_bandit2.py", globals())
+            if exec_thing == 1:
+                execfile("../methods/exec_bandit.py", globals())
+            elif exec_thing == 2:
+                execfile("../methods/exec_bandit2.py", globals())
+            elif exec_thing == 3:
                 execfile("../methods/exec_bandit3.py", globals())
+            else:
+                execfile("../methods/exec_breakout.py", globals())
 
         fitnesses = agents.read_fitnesses(config, max_fail_score)
 
