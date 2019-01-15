@@ -148,6 +148,7 @@ def bandit_test(connections, arms, split=4, runtime=2000, exposure_time=200, noi
                 bandit_count += 1
                 bandit.append(
                     p.Population(len(arms), Bandit(arms, exposure_time, reward_based=reward,
+                                                   rand_seed=[np.random.randint(10000) for i in range(4)],
                                                    label='bandit_pop_{}-{}'.format(bandit_count, i))))
                 output.append(
                     p.Population(len(arms), p.IF_cond_exp(), label='output_{}-{}'.format(bandit_count, i)))
