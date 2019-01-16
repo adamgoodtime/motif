@@ -58,7 +58,7 @@ def bandit(generations):
     read_pop = 0  # 'new_io_motif_easy_3.csv'
     keep_reading = 5
     base_mutate = 0
-    exec_thing = 3
+    exec_thing = 'breakout'
 
     x_factor = 8
     y_factor = 8
@@ -67,7 +67,7 @@ def bandit(generations):
     if exec_thing == 'breakout':
         inputs = (160 / x_factor) * (128 / y_factor)
         outputs = 2
-        config = 'breakout {}/{}:{} '.format(x_factor, y_factor, bricking)
+        config = 'bout {}-{}:{} '.format(x_factor, y_factor, bricking)
     else:
         inputs = 2
         outputs = number_of_arms
@@ -105,13 +105,13 @@ def bandit(generations):
     if io_weighting:
         config += "ex:{}, shape:{}, reward:{}, n r-w:{}-{}, arms:{}-{}-{}, max_d:{}, size:{}, spike:{}, " \
                  "w_max:{}, rents:{}, elite:{}, psize:{}, mute:{}, bins:{}, reset:{}, io:{}".format(
-                    exec_thing, reward_shape, reward, noise_rate, noise_weight, arms[0], len(arms), random_arms,
+                    exec_thing, reward_shape, reward, noise_rate, noise_weight, arms[0][0], len(arms), random_arms,
                     maximum_depth, size_fitness, spikes_fitness, weight_max, viable_parents, elitism, agent_pop_size,
                     base_mutate, no_bins, reset_pop, io_weighting)
     else:
         config += "ex:{}, shape:{}, reward:{}, n r-w:{}-{}, arms:{}-{}-{}, max_d:{}, size:{}, spike:{}, " \
                  "w_max:{}, rents:{}, elite:{}, psize:{}, mute:{}, bins:{}, reset:{} {}".format(
-                    exec_thing, reward_shape, reward, noise_rate, noise_weight, arms[0], len(arms), random_arms,
+                    exec_thing, reward_shape, reward, noise_rate, noise_weight, arms[0][0], len(arms), random_arms,
                     maximum_depth, size_fitness, spikes_fitness, weight_max, viable_parents, elitism, agent_pop_size,
                     base_mutate, no_bins, reset_pop, motifs.global_io[1])
     if read_pop:

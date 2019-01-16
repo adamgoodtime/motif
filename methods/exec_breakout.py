@@ -25,6 +25,7 @@ import threading
 import pathos.multiprocessing
 from spinn_front_end_common.utilities import globals_variables
 from spinn_breakout import Breakout as b_out
+from spinn_arm.python_models.arm import Arm
 
 max_fail_score = -int(runtime / exposure_time)
 setup_retry_time = 60
@@ -73,22 +74,29 @@ def parse_connections(connections, x_res, y_res, pre_or_post, subsamp_factor_x=1
     connection_list_on = []
     connection_list_off = []
     for conn in connections:
+        conn = list(conn)
         if pre_or_post == 'pre':
             neuron_id = conn[0]
         else:
             neuron_id = conn[1]
         # do something with the neuron id to make it the actual id on breakout
-        row = neuron_id % x_res
-        col = (neuron_id - row) / y_res
-        x_bits = np.uint32(np.ceil(np.log2(x_res)))
-        y_bits = np.uint32(np.ceil(np.log2(y_res)))
-        row = row << (x_bits + y_bits + colour_bits)
-        col = col << (y_bits + colour_bits)
-        new_id = row + col
+        col = neuron_id % (160 / x_res)
+        row = (neuron_id - col) / (160 / x_res)
+        x_bits = np.int(np.ceil(np.log2(160 / x_res)))
+        y_bits = np.int(np.ceil(np.log2(128 / y_res)))
+        shift_col = col << (y_bits + colour_bits)
+        shift_row = row << (colour_bits)
+        new_id = shift_row + shift_col
         if pre_or_post == 'pre':
             conn[0] = new_id
+            connection_list_off.append(deepcopy(conn))
+            conn[0] += 1
+            connection_list_on.append(deepcopy(conn))
         else:
             conn[1] = new_id
+            connection_list_off.append(deepcopy(conn))
+            conn[1] += 1
+            connection_list_on.append(deepcopy(conn))
 
     return connection_list_on#, connection_list_off
 
@@ -166,6 +174,19 @@ def thread_breakout(connections, arms, split=4, runtime=2000, exposure_time=200,
             agent_fitness.append(arm_results)
     return agent_fitness
 
+def connect_to_arms(pre_pop, from_list, arms, r_type):
+    arm_conn_list = []
+    for i in range(len(arms)):
+        arm_conn_list.append([])
+    for conn in from_list:
+        arm_conn_list[conn[1]].append([conn[0], 0, conn[1], conn[2]])
+        # print "out:", conn[1]
+        # if conn[1] == 2:
+        #     print '\nit is possible\n'
+    for i in range(len(arms)):
+        if len(arm_conn_list[i]) != 0:
+            p.Projection(pre_pop, arms[i], p.FromListConnector(arm_conn_list[i]), p.StaticSynapse(), receptor_type=r_type)
+
 
 def breakout_test(connections, arms, split=4, runtime=2000, exposure_time=200, noise_rate=100, noise_weight=0.01,
                 reward=0, spike_f=False, seed=0):
@@ -177,6 +198,7 @@ def breakout_test(connections, arms, split=4, runtime=2000, exposure_time=200, n
     while try_except < max_attempts:
         breakout = []
         breakout_count = -1
+        breakout_arms = []
         output = []
         excite = []
         excite_count = -1
@@ -203,17 +225,27 @@ def breakout_test(connections, arms, split=4, runtime=2000, exposure_time=200, n
         for i in range(len(connections)):
             [in2e, in2i, in2in, in2out, e2in, i2in, e_size, e2e, e2i, i_size,
              i2e, i2i, e2out, i2out, out2e, out2i, out2in, out2out] = connections[i]
-            if len(in2e) == 0 and len(in2i) == 0 and len(in2in) == 0 and len(in2out) == 0:
+            if len(in2e) == 0 and len(in2i) == 0 and len(in2out) == 0:
                 failures.append(i)
                 print "agent {} was not properly connected to the game".format(i)
             else:
                 breakout_count += 1
                 this_breakout = b_out(x_factor=x_factor, y_factor=y_factor, bricking=bricking,
+                                                   random_seed=[np.random.randint(0xffff) for i in range(4)],
                                                    label='breakout_pop_{}-{}'.format(breakout_count, i))
                 breakout.append(p.Population(this_breakout._n_neurons, this_breakout))
-                output.append(
-                    p.Population(2, p.IF_cond_exp(), label='output_{}-{}'.format(breakout_count, i)))
-                p.Projection(output[breakout_count], breakout[breakout_count], p.AllToAllConnector(), p.StaticSynapse())
+                arm_collection = []
+                for j in range(2):
+                    arm_collection.append(p.Population(int(np.ceil(np.log2(2))),
+                                                       Arm(arm_id=j, reward_delay=exposure_time,
+                                                           rand_seed=[np.random.randint(0xffff) for i in range(4)],
+                                                           no_arms=2, arm_prob=1),
+                                                       label='arm_pop{}:{}:{}'.format(breakout_count, i, j)))
+                    p.Projection(arm_collection[j], breakout[breakout_count], p.AllToAllConnector(), p.StaticSynapse())
+                breakout_arms.append(arm_collection)
+                # output.append(
+                #     p.Population(2, p.IF_cond_exp(), label='output_{}-{}'.format(breakout_count, i)))
+                # p.Projection(output[breakout_count], breakout[breakout_count], p.AllToAllConnector(), p.StaticSynapse())
                 if e_size > 0:
                     excite_count += 1
                     excite.append(
@@ -253,25 +285,23 @@ def breakout_test(connections, arms, split=4, runtime=2000, exposure_time=200, n
                     if len(in_in) != 0:
                         p.Projection(breakout[breakout_count], inhib[inhib_count], p.FromListConnector(in_in),
                                      receptor_type='inhibitory')
-                if len(in2in) != 0:
-                    in2in = parse_connections(in2in, x_factor, y_factor, 'pre')
-                    in2in = parse_connections(in2in, x_factor, y_factor, 'post')
-                    [in_ex, in_in] = split_ex_in(in2in)
-                    if len(in_ex) != 0:
-                        p.Projection(breakout[breakout_count], breakout[breakout_count], p.FromListConnector(in_ex),
-                                     receptor_type='excitatory')
-                    if len(in_in) != 0:
-                        p.Projection(breakout[breakout_count], breakout[breakout_count], p.FromListConnector(in_in),
-                                     receptor_type='inhibitory')
-                if len(in2out) != 0:
-                    in2out = parse_connections(in2out, x_factor, y_factor, 'pre')
-                    [in_ex, in_in] = split_ex_in(in2out)
-                    if len(in_ex) != 0:
-                        p.Projection(breakout[breakout_count], output[breakout_count], p.FromListConnector(in_ex),
-                                     receptor_type='excitatory')
-                    if len(in_in) != 0:
-                        p.Projection(breakout[breakout_count], output[breakout_count], p.FromListConnector(in_in),
-                                     receptor_type='inhibitory')
+                # if len(in2in) != 0:
+                #     in2in = parse_connections(in2in, x_factor, y_factor, 'pre')
+                #     in2in = parse_connections(in2in, x_factor, y_factor, 'post')
+                #     [in_ex, in_in] = split_ex_in(in2in)
+                #     if len(in_ex) != 0:
+                #         p.Projection(breakout[breakout_count], breakout[breakout_count], p.FromListConnector(in_ex),
+                #                      receptor_type='excitatory')
+                #     if len(in_in) != 0:
+                #         p.Projection(breakout[breakout_count], breakout[breakout_count], p.FromListConnector(in_in),
+                #                      receptor_type='inhibitory')
+                # if len(in2out) != 0:
+                #     in2out = parse_connections(in2out, x_factor, y_factor, 'pre')
+                #     [in_ex, in_in] = split_ex_in(in2out)
+                #     if len(in_ex) != 0:
+                #         connect_to_arms(breakout[breakout_count], in_ex, breakout_arms[breakout_count], 'excitatory')
+                #     if len(in_in) != 0:
+                #         connect_to_arms(breakout[breakout_count], in_in, breakout_arms[breakout_count], 'inhibitory')
                 # if len(e2in) != 0:
                 #     p.Projection(excite[excite_count], breakout[breakout_count], p.FromListConnector(e2in),
                 #                  receptor_type='excitatory')
@@ -291,27 +321,25 @@ def breakout_test(connections, arms, split=4, runtime=2000, exposure_time=200, n
                     p.Projection(inhib[inhib_count], inhib[inhib_count], p.FromListConnector(i2i),
                                  receptor_type='inhibitory')
                 if len(e2out) != 0:
-                    p.Projection(excite[excite_count], output[breakout_count], p.FromListConnector(e2out),
-                                 receptor_type='excitatory')
+                        connect_to_arms(excite[excite_count], e2out, breakout_arms[breakout_count], 'excitatory')
                 if len(i2out) != 0:
-                    p.Projection(inhib[inhib_count], output[breakout_count], p.FromListConnector(i2out),
-                                 receptor_type='inhibitory')
-                if len(out2e) != 0:
-                    [out_ex, out_in] = split_ex_in(out2e)
-                    if len(out_ex) != 0:
-                        p.Projection(output[breakout_count], excite[excite_count], p.FromListConnector(out_ex),
-                                     receptor_type='excitatory')
-                    if len(out_in) != 0:
-                        p.Projection(output[breakout_count], excite[excite_count], p.FromListConnector(out_in),
-                                     receptor_type='inhibitory')
-                if len(out2i) != 0:
-                    [out_ex, out_in] = split_ex_in(out2i)
-                    if len(out_ex) != 0:
-                        p.Projection(output[breakout_count], inhib[inhib_count], p.FromListConnector(out_ex),
-                                     receptor_type='excitatory')
-                    if len(out_in) != 0:
-                        p.Projection(output[breakout_count], inhib[inhib_count], p.FromListConnector(out_in),
-                                     receptor_type='inhibitory')
+                        connect_to_arms(inhib[inhib_count], i2out, breakout_arms[breakout_count], 'inhibitory')
+                # if len(out2e) != 0:
+                #     [out_ex, out_in] = split_ex_in(out2e)
+                #     if len(out_ex) != 0:
+                #         p.Projection(output[breakout_count], excite[excite_count], p.FromListConnector(out_ex),
+                #                      receptor_type='excitatory')
+                #     if len(out_in) != 0:
+                #         p.Projection(output[breakout_count], excite[excite_count], p.FromListConnector(out_in),
+                #                      receptor_type='inhibitory')
+                # if len(out2i) != 0:
+                #     [out_ex, out_in] = split_ex_in(out2i)
+                #     if len(out_ex) != 0:
+                #         p.Projection(output[breakout_count], inhib[inhib_count], p.FromListConnector(out_ex),
+                #                      receptor_type='excitatory')
+                #     if len(out_in) != 0:
+                #         p.Projection(output[breakout_count], inhib[inhib_count], p.FromListConnector(out_in),
+                #                      receptor_type='inhibitory')
                 # if len(out2in) != 0:
                 #     [out_ex, out_in] = split_ex_in(out2in)
                 #     if len(out_ex) != 0:
@@ -320,20 +348,14 @@ def breakout_test(connections, arms, split=4, runtime=2000, exposure_time=200, n
                 #     if len(out_in) != 0:
                 #         p.Projection(output[breakout_count], breakout[breakout_count], p.FromListConnector(out_in),
                 #                      receptor_type='inhibitory')
-                if len(out2out) != 0:
-                    [out_ex, out_in] = split_ex_in(out2out)
-                    if len(out_ex) != 0:
-                        p.Projection(output[breakout_count], output[breakout_count], p.FromListConnector(out_ex),
-                                     receptor_type='excitatory')
-                    if len(out_in) != 0:
-                        p.Projection(output[breakout_count], output[breakout_count], p.FromListConnector(out_in),
-                                     receptor_type='inhibitory')
-                if len(e2out) != 0:
-                    p.Projection(excite[excite_count], output[breakout_count], p.FromListConnector(e2out),
-                                 receptor_type='excitatory')
-                if len(i2out) != 0:
-                    p.Projection(inhib[inhib_count], output[breakout_count], p.FromListConnector(i2out),
-                                 receptor_type='inhibitory')
+                # if len(out2out) != 0:
+                #     [out_ex, out_in] = split_ex_in(out2out)
+                #     if len(out_ex) != 0:
+                #         p.Projection(output[breakout_count], output[breakout_count], p.FromListConnector(out_ex),
+                #                      receptor_type='excitatory')
+                #     if len(out_in) != 0:
+                #         p.Projection(output[breakout_count], output[breakout_count], p.FromListConnector(out_in),
+                #                      receptor_type='inhibitory')
 
         print "\nfinished connections seed = ", seed, "\n"
         simulator = get_simulator()

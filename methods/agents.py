@@ -616,7 +616,10 @@ class agent_population(object):
             writer.writerow(self.average_score)
             writer.writerow(['minimum score'])
             writer.writerow(self.min_score)
+            writer.writerow([''])
             writer.writerow([time.localtime()])
+            writer.writerow([''])
+            writer.writerow([config])
             status_file.close()
 
     def save_mutate_keys(self, iteration, config):
