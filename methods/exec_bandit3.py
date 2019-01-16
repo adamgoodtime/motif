@@ -159,9 +159,9 @@ def bandit_test(connections, arms, split=4, runtime=2000, exposure_time=200, noi
                 print "agent {} was not properly connected to the game".format(i)
             else:
                 bandit_count += 1
-                removed_prob_arms = [1 for i in range(len(arms))]
+                # removed_prob_arms = [1 for i in range(len(arms))]
                 bandit.append(
-                    p.Population(len(arms), Bandit(removed_prob_arms, exposure_time, reward_based=reward,
+                    p.Population(len(arms), Bandit(arms, exposure_time, reward_based=reward,
                                                    rand_seed=[np.random.randint(10000) for i in range(4)],
                                                    label='bandit_pop_{}-{}'.format(bandit_count, i))))
                 arm_collection = []
@@ -169,7 +169,7 @@ def bandit_test(connections, arms, split=4, runtime=2000, exposure_time=200, noi
                     arm_collection.append(p.Population(int(np.ceil(np.log2(len(arms)))),
                                                        Arm(arm_id=j, reward_delay=exposure_time,
                                                            rand_seed=[np.random.randint(10000) for i in range(4)],
-                                                           no_arms=len(arms), arm_prob=arms[j]),
+                                                           no_arms=len(arms), arm_prob=1),
                                                        label='arm_pop{}:{}:{}'.format(bandit_count, i, j)))
                     p.Projection(arm_collection[j], bandit[bandit_count], p.AllToAllConnector(), p.StaticSynapse())
                 bandit_arms.append(arm_collection)
