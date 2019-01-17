@@ -464,7 +464,7 @@ def bandit_test(connections, arms, split=4, runtime=2000, exposure_time=200, noi
     print "before end = ", seed
     p.end()
     print "\nafter end = ", seed, "\n"
-    print config 
+    print config
     return agent_fitness
 
 def print_fitnesses(fitnesses):

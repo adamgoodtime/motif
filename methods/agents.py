@@ -249,7 +249,6 @@ class agent_population(object):
             list_similarity[1] += 1
         for motif in copy_a:
             list_similarity[1] += 1
-
         list_similarity = list_similarity[0] / list_similarity[1]
 
         conn_similarity = [0, 0]

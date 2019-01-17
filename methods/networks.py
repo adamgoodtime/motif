@@ -33,6 +33,7 @@ class motif_population(object):
                  read_entire_population=False,
                  keep_reading=0,
                  discrete_params=True,
+                 plasticity=True,
                  weights=True,
                  weight_range=(0, 0.1),
                  no_weight_bins=7,
@@ -60,6 +61,7 @@ class motif_population(object):
         self.read_entire_population = read_entire_population
         self.keep_reading = keep_reading
         self.discrete_params = discrete_params
+        self.plasticity = plasticity
         self.weights = weights
         self.weight_range = weight_range
         if isinstance(no_weight_bins, list):
@@ -109,7 +111,7 @@ class motif_population(object):
         population from scratch
         '''
         if not read_entire_population:
-            print "generating population"
+            print "generating the population"
             if self.population_seed is not None:
                 for seed in self.population_seed:
                     # or just make this an insert and start = motifs_gened
@@ -223,6 +225,10 @@ class motif_population(object):
                         conn.append(self.weight_range[0] + (bin * self.weight_bin_width))
                         bin = np.random.randint(0, self.no_delay_bins)
                         conn.append(self.delay_range[0] + (bin * self.delay_bin_width))
+                        if np.random.choice(true_or_false) and self.plasticity:
+                            conn.append('plastic')
+                        else:
+                            conn.append('non-plastic')
                         if conn[2] != 0:
                             synapses.append(conn)
         # moves the generated motifs properties into a dict representing the motif
@@ -492,7 +498,7 @@ class motif_population(object):
             node_count += 1
         return node_array
 
-    def connect_nodes(self, pre_node, pre_count, post_node, post_count, layer, upper, weight, delay):
+    def connect_nodes(self, pre_node, pre_count, post_node, post_count, layer, upper, weight, delay, plasticity):
         pre_ids = []
         post_ids = []
         connections = []
@@ -508,7 +514,7 @@ class motif_population(object):
             self.collect_IO(post_node, 'post', new_post_count, layer + 1, post_ids)
         for pre in pre_ids:
             for post in post_ids:
-                connections.append([pre, post, weight, delay])
+                connections.append([pre, post, weight, delay, plasticity])
         return connections
 
     def read_motif(self, motif_id, layer=0, upper=[]):
@@ -519,10 +525,11 @@ class motif_population(object):
             post = conn[1]
             weight = conn[2]
             delay = conn[3]
+            plasticity = conn[4]
             pre_node = motif['node'][pre]
             post_node = motif['node'][post]
             all_connections += self.connect_nodes(pre_node, pre, post_node, post, layer,
-                                                  upper, weight, delay)
+                                                  upper, weight, delay, plasticity)
         node_count = 0
         for node in motif['node']:
             if node not in self.neuron_types:
@@ -629,37 +636,37 @@ class motif_population(object):
                     in_post = literal_eval(conn[1][0].replace('input', '')) + 1
                     post_index = in_post
             if pre_ex and post_ex:
-                e2e.append((pre_index, post_index, conn[2], conn[3]))
+                e2e.append((pre_index, post_index, conn[2], conn[3], conn[4]))
             elif pre_ex and post_in:
-                e2i.append((pre_index, post_index, conn[2], conn[3]))
+                e2i.append((pre_index, post_index, conn[2], conn[3], conn[4]))
             elif pre_in and post_ex:
-                i2e.append((pre_index, post_index, conn[2], conn[3]))
+                i2e.append((pre_index, post_index, conn[2], conn[3], conn[4]))
             elif pre_in and post_in:
-                i2i.append((pre_index, post_index, conn[2], conn[3]))
+                i2i.append((pre_index, post_index, conn[2], conn[3], conn[4]))
             elif pre_ex and in_post:
-                e2in.append((pre_index, post_index-1, conn[2], conn[3]))
+                e2in.append((pre_index, post_index-1, conn[2], conn[3], conn[4]))
             elif pre_ex and out_post:
-                e2out.append((pre_index, post_index-1, conn[2], conn[3]))
+                e2out.append((pre_index, post_index-1, conn[2], conn[3], conn[4]))
             elif pre_in and in_post:
-                i2in.append((pre_index, post_index-1, conn[2], conn[3]))
+                i2in.append((pre_index, post_index-1, conn[2], conn[3], conn[4]))
             elif pre_in and out_post:
-                i2out.append((pre_index, post_index-1, conn[2], conn[3]))
+                i2out.append((pre_index, post_index-1, conn[2], conn[3], conn[4]))
             elif in_pre and post_ex:
-                in2e.append((pre_index-1, post_index, conn[2], conn[3]))
+                in2e.append((pre_index-1, post_index, conn[2], conn[3], conn[4]))
             elif in_pre and post_in:
-                in2i.append((pre_index-1, post_index, conn[2], conn[3]))
+                in2i.append((pre_index-1, post_index, conn[2], conn[3], conn[4]))
             elif in_pre and in_post:
-                in2in.append((pre_index-1, post_index-1, conn[2], conn[3]))
+                in2in.append((pre_index-1, post_index-1, conn[2], conn[3], conn[4]))
             elif in_pre and out_post:
-                in2out.append((pre_index-1, post_index-1, conn[2], conn[3]))
+                in2out.append((pre_index-1, post_index-1, conn[2], conn[3], conn[4]))
             elif out_pre and post_ex:
-                out2e.append((pre_index-1, post_index, conn[2], conn[3]))
+                out2e.append((pre_index-1, post_index, conn[2], conn[3], conn[4]))
             elif out_pre and post_in:
-                out2i.append((pre_index-1, post_index, conn[2], conn[3]))
+                out2i.append((pre_index-1, post_index, conn[2], conn[3], conn[4]))
             elif out_pre and in_post:
-                out2in.append((pre_index-1, post_index-1, conn[2], conn[3]))
+                out2in.append((pre_index-1, post_index-1, conn[2], conn[3], conn[4]))
             elif out_pre and out_post:
-                out2out.append((pre_index-1, post_index-1, conn[2], conn[3]))
+                out2out.append((pre_index-1, post_index-1, conn[2], conn[3], conn[4]))
             else:
                 print "somethin fucky"
 
@@ -725,13 +732,13 @@ class motif_population(object):
                     post_index = indexed_in.index(conn[1])
                     input_count['{}'.format(conn[1])] = 1
             if pre_ex and post_ex:
-                e2e.append([pre_index, post_index, conn[2], conn[3]])
+                e2e.append([pre_index, post_index, conn[2], conn[3], conn[4]])
             elif pre_ex and not post_ex:
-                e2i.append([pre_index, post_index, conn[2], conn[3]])
+                e2i.append([pre_index, post_index, conn[2], conn[3], conn[4]])
             elif not pre_ex and post_ex:
-                i2e.append([pre_index, post_index, conn[2], conn[3]])
+                i2e.append([pre_index, post_index, conn[2], conn[3], conn[4]])
             elif not pre_ex and not post_ex:
-                i2i.append([pre_index, post_index, conn[2], conn[3]])
+                i2i.append([pre_index, post_index, conn[2], conn[3], conn[4]])
         pre_ex_count = [[0, 'e', j] for j in range(len(indexed_ex))]
         post_ex_count = [[0, 'e', j] for j in range(len(indexed_ex))]
         pre_in_count = [[0, 'i', j] for j in range(len(indexed_in))]
@@ -949,38 +956,38 @@ class motif_population(object):
                         conn[2] *= -1
                     if conn[0][0] == 'in':
                         if conn[1][0] == 'in':
-                            in2in.append([conn[0][1], conn[1][1], conn[2], conn[3]])
+                            in2in.append([conn[0][1], conn[1][1], conn[2], conn[3], conn[4]])
                         else:
-                            in2out.append([conn[0][1], conn[1][1], conn[2], conn[3]])
+                            in2out.append([conn[0][1], conn[1][1], conn[2], conn[3], conn[4]])
                     else:
                         if conn[1][0] == 'in':
-                            out2in.append([conn[0][1], conn[1][1], conn[2], conn[3]])
+                            out2in.append([conn[0][1], conn[1][1], conn[2], conn[3], conn[4]])
                         else:
-                            out2out.append([conn[0][1], conn[1][1], conn[2], conn[3]])
+                            out2out.append([conn[0][1], conn[1][1], conn[2], conn[3], conn[4]])
                 elif isinstance(conn[0], list):
                     if conn[0][2] == 'i':
                         conn[2] *= -1
                     if conn[0][0] == 'in':
                         if conn[0][3] == 'e':
-                            in2e.append([conn[0][1], conn[1], conn[2], conn[3]])
+                            in2e.append([conn[0][1], conn[1], conn[2], conn[3], conn[4]])
                         else:
-                            in2i.append([conn[0][1], conn[1], conn[2], conn[3]])
+                            in2i.append([conn[0][1], conn[1], conn[2], conn[3], conn[4]])
                     else:
                         if conn[0][3] == 'e':
-                            out2e.append([conn[0][1], conn[1], conn[2], conn[3]])
+                            out2e.append([conn[0][1], conn[1], conn[2], conn[3], conn[4]])
                         else:
-                            out2i.append([conn[0][1], conn[1], conn[2], conn[3]])
+                            out2i.append([conn[0][1], conn[1], conn[2], conn[3], conn[4]])
                 elif isinstance(conn[1], list):
                     if conn[1][0] == 'in':
                         if conn[1][3] == 'e':
-                            e2in.append([conn[0], conn[1][1], conn[2], conn[3]])
+                            e2in.append([conn[0], conn[1][1], conn[2], conn[3], conn[4]])
                         else:
-                            i2in.append([conn[0], conn[1][1], conn[2], conn[3]])
+                            i2in.append([conn[0], conn[1][1], conn[2], conn[3], conn[4]])
                     else:
                         if conn[1][3] == 'e':
-                            e2out.append([conn[0], conn[1][1], conn[2], conn[3]])
+                            e2out.append([conn[0], conn[1][1], conn[2], conn[3], conn[4]])
                         else:
-                            i2out.append([conn[0], conn[1][1], conn[2], conn[3]])
+                            i2out.append([conn[0], conn[1][1], conn[2], conn[3], conn[4]])
         return in2e, in2i, in2in, in2out, e2in, i2in, len(indexed_ex) - len(removed_e), e2e, e2i, \
                len(indexed_in) - len(removed_i), i2e, i2i, e2out, i2out, out2e, out2i, out2in, out2out
 
@@ -1004,6 +1011,7 @@ class motif_population(object):
             spinn_conn = \
                 self.construct_connections(agent_conn, agent[1], inputs, outputs)
         return spinn_conn
+
 
     def list_motifs(self, motif_id, list=[]):
         list.append(motif_id)
