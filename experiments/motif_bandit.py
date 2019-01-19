@@ -16,8 +16,8 @@ def bandit(generations):
 
     weight_max = 0.1
 
-    arm1 = 0.8
-    arm2 = 0.2
+    arm1 = 0.9
+    arm2 = 0.1
     # arm3 = 0.1
     arm_len = 4
     arms = []
@@ -45,7 +45,7 @@ def bandit(generations):
     noise_rate = 0
     noise_weight = 0.01
     maximum_depth = [5, 30]
-    no_bins = [5, 125]
+    no_bins = [5, 75]
     reset_pop = 0
     size_fitness = False
     spikes_fitness = False
@@ -58,7 +58,7 @@ def bandit(generations):
     read_pop = 0  # 'new_io_motif_easy_3.csv'
     keep_reading = 5
     base_mutate = 0
-    exec_thing = 'breakout'
+    exec_thing = 3
 
     x_factor = 8
     y_factor = 8
@@ -159,7 +159,7 @@ def bandit(generations):
 
         # fitnesses = agents.thread_bandit(connections, arms, split=16, runtime=21000, exposure_time=200, reward=reward, noise_rate=noise_rate, noise_weight=noise_weight, size_f=size_fitness, spike_f=spikes_fitness)
 
-        # config = 'test'
+        config = 'test'
         if config != 'test':
             # arms = [0.1, 0.9, 0.2]
             # agents.bandit_test(connections, arms)

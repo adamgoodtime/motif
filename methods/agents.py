@@ -51,6 +51,7 @@ class agent_population(object):
                  motif_gone=0.015,
                  motif_switch=0.015,
                  new_motif=0.015,
+                 switch_plasticity=0.015,
                  maximum_depth=5,
                  similarity_threshold=0.4,
                  stagnation_age=25,
@@ -113,6 +114,10 @@ class agent_population(object):
             self.new_motif = base_mutate
         else:
             self.new_motif = new_motif
+        if base_mutate:
+            self.switch_plasticity = base_mutate
+        else:
+            self.switch_plasticity = switch_plasticity
         if isinstance(maximum_depth, list):
             self.maximum_depth = maximum_depth[0]
         else:
@@ -319,6 +324,7 @@ class agent_population(object):
             mutate_key['c_gone'] = 0
             mutate_key['param_w'] = 0
             mutate_key['param_d'] = 0
+            mutate_key['plasticity'] = 0
             mutate_key['sex'] = 0
         # acquire the motif of parent and copy it to avoid messing with both memory locations
         if isinstance(parent, list):
@@ -410,6 +416,10 @@ class agent_population(object):
                 conn.append(self.motifs.weight_range[0] + (bin * self.motifs.weight_bin_width))
                 bin = np.random.randint(0, self.motifs.no_delay_bins)
                 conn.append(self.motifs.delay_range[0] + (bin * self.motifs.delay_bin_width))
+                if np.random.random() < 0.5:
+                    conn.append('plastic')
+                else:
+                    conn.append('non-plastic')
                 if conn[2]:
                     new_conn = True
             config_copy['conn'].append(conn)
@@ -440,6 +450,13 @@ class agent_population(object):
                     new_delay = self.motifs.delay_range[0] + (bin * self.motifs.delay_bin_width)
                     config_copy['conn'][i][3] = new_delay
                 mutate_key['param_d'] += 1
+            # plasticity
+            if np.random.random() < self.switch_plasticity:
+                if config_copy['conn'][i][4] == 'plastic':
+                    config_copy['conn'][i][4] = 'non-plastic'
+                else:
+                    config_copy['conn'][i][4] = 'plastic'
+                mutate_key['plasticity'] += 1
         # insert the new motif and then go through the nodes and mutate them
         motif_id = self.motifs.insert_motif(config_copy)
         if self.motifs.recurse_check(motif_id):
@@ -480,6 +497,7 @@ class agent_population(object):
             mutate_key['param_d'] = 0
             mutate_key['mum'] = [mum[2], mum[3]]
             mutate_key['dad'] = [dad[2], dad[3]]
+            mutate_key['plasticity'] = 0
             mutate_key['sex'] = 1
         child_id = mum[0]
         mum_motif = deepcopy(self.motifs.motif_configs[mum[0]])
