@@ -19,7 +19,7 @@ def bandit(generations):
     arm1 = 1
     arm2 = 0
     # arm3 = 0.1
-    arm_len = 3
+    arm_len = 1
     arms = []
     for i in range(arm_len):
         arms.append([arm1, arm2])
@@ -27,10 +27,11 @@ def bandit(generations):
         # for arm in list(itertools.permutations([arm1, arm2, arm3])):
         #     arms.append(list(arm))
     # arms = [[0.4, 0.6], [0.6, 0.4], [0.3, 0.7], [0.7, 0.3], [0.2, 0.8], [0.8, 0.2], [0.1, 0.9], [0.9, 0.1]]
-    '''arms = [[0.1, 0.2, 0.9, 0.3, 0.2, 0.1, 0.2, 0.1], [0.9, 0.1, 0.1, 0.2, 0.3, 0.2, 0.1, 0.2],
-            [0.3, 0.9, 0.2, 0.1, 0.1, 0.2, 0.2, 0.1], [0.2, 0.1, 0.1, 0.9, 0.2, 0.3, 0.1, 0.2],
-            [0.1, 0.1, 0.1, 0.2, 0.9, 0.2, 0.3, 0.2], [0.1, 0.2, 0.1, 0.2, 0.2, 0.9, 0.1, 0.3],
-            [0.2, 0.1, 0.3, 0.1, 0.2, 0.1, 0.9, 0.2], [0.1, 0.3, 0.2, 0.2, 0.1, 0.2, 0.1, 0.9]]
+    top_prob = 1
+    arms = [[0.1, 0.2, top_prob, 0.3, 0.2, 0.1, 0.2, 0.1], [top_prob, 0.1, 0.1, 0.2, 0.3, 0.2, 0.1, 0.2],
+            [0.3, top_prob, 0.2, 0.1, 0.1, 0.2, 0.2, 0.1], [0.2, 0.1, 0.1, top_prob, 0.2, 0.3, 0.1, 0.2],
+            [0.1, 0.1, 0.1, 0.2, top_prob, 0.2, 0.3, 0.2], [0.1, 0.2, 0.1, 0.2, 0.2, top_prob, 0.1, 0.3],
+            [0.2, 0.1, 0.3, 0.1, 0.2, 0.1, top_prob, 0.2], [0.1, 0.3, 0.2, 0.2, 0.1, 0.2, 0.1, top_prob]]
     # '''
     if isinstance(arms[0], list):
         number_of_arms = len(arms[0])
@@ -99,7 +100,7 @@ def bandit(generations):
                               inputs=inputs,
                               outputs=outputs,
                               elitism=elitism,
-                              sexuality=[3./20., 12./20., 5./20.],
+                              sexuality=[7./20., 10./20., 3./20.],
                               base_mutate=base_mutate,
                               # input_shift=0,
                               # output_shift=0,
