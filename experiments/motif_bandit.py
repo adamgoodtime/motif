@@ -16,10 +16,10 @@ def bandit(generations):
 
     weight_max = 0.1
 
-    arm1 = 0.9
-    arm2 = 0.1
+    arm1 = 1
+    arm2 = 0
     # arm3 = 0.1
-    arm_len = 1
+    arm_len = 3
     arms = []
     for i in range(arm_len):
         arms.append([arm1, arm2])
@@ -52,7 +52,7 @@ def bandit(generations):
     random_arms = 0
     viable_parents = 0.2
     elitism = 0.2
-    runtime = 41000
+    runtime = 21000
     exposure_time = 200
     io_weighting = 1
     read_pop = 0  # 'new_io_motif_easy_3.csv'
@@ -172,7 +172,7 @@ def bandit(generations):
             elif exec_thing == 2:
                 execfile("../methods/exec_bandit2.py", globals())
             elif exec_thing == 3:
-                execfile("../methods/exec_bandit3winning.py", globals())
+                execfile("../methods/exec_bandit3.py", globals())
             else:
                 execfile("../methods/exec_breakout.py", globals())
 

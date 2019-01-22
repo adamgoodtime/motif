@@ -391,7 +391,7 @@ def bandit_test(connections, arms, split=4, runtime=2000, exposure_time=200, noi
                     print "had an inhib failure"
             scores.append(get_scores(game_pop=bandit[i - fails], simulator=simulator))
             # pop[i].stats = {'fitness': scores[i][len(scores[i]) - 1][0]}  # , 'steps': 0}
-        print "\nfinished spikes", seed, "\n"
+        print "\nfinished spikes", seed
         if spike_f:
             agent_fitness.append([scores[i][len(scores[i]) - 1][0], excite_spike_count[i] + inhib_spike_count[i]])
         else:
