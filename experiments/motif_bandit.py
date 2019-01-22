@@ -19,7 +19,7 @@ def bandit(generations):
     arm1 = 0.9
     arm2 = 0.1
     # arm3 = 0.1
-    arm_len = 4
+    arm_len = 1
     arms = []
     for i in range(arm_len):
         arms.append([arm1, arm2])
@@ -172,7 +172,7 @@ def bandit(generations):
             elif exec_thing == 2:
                 execfile("../methods/exec_bandit2.py", globals())
             elif exec_thing == 3:
-                execfile("../methods/exec_bandit3.py", globals())
+                execfile("../methods/exec_bandit3winning.py", globals())
             else:
                 execfile("../methods/exec_breakout.py", globals())
 

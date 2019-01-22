@@ -1,30 +1,22 @@
 import spynnaker8 as p
-# from spynnaker.pyNN.connections. \
-#     spynnaker_live_spikes_connection import SpynnakerLiveSpikesConnection
-# from spinn_front_end_common.utilities.globals_variables import get_simulator
-#
-# import pylab
-# from spynnaker.pyNN.spynnaker_external_device_plugin_manager import \
-#     SpynnakerExternalDevicePluginManager as ex
 import sys, os
 import time
-import socket
 import numpy as np
 from spinn_bandit.python_models.bandit import Bandit
 from spinn_arm.python_models.arm import Arm
-import math
-import itertools
 from copy import deepcopy
-import operator
 from spinn_front_end_common.utilities.globals_variables import get_simulator
 import traceback
-import math
-from methods.networks import motif_population
-import traceback
 import csv
-import threading
 import pathos.multiprocessing
 from spinn_front_end_common.utilities import globals_variables
+from concurrent.futures import ThreadPoolExecutor
+from multiprocessing import Process
+from multiprocessing import Queue
+from typing import Callable
+from typing import Iterable
+from typing import Dict
+from typing import Any
 
 max_fail_score = -int(runtime / exposure_time)
 setup_retry_time = 60
@@ -34,6 +26,124 @@ new_split = 100
 #     timing_dependence=p.SpikePairRule(tau_plus=20., tau_minus=20.0, A_plus=0.003, A_minus=0.003),
 #     weight_dependence=p.AdditiveWeightDependence(w_min=0, w_max=0.1))
 
+
+class ProcessKillingExecutor():
+    """
+    The ProcessKillingExecutor works like an `Executor
+    <https://docs.python.org/dev/library/concurrent.futures.html#executor-objects>`_
+    in that it uses a bunch of processes to execute calls to a function with
+    different arguments asynchronously.
+
+    But other than the `ProcessPoolExecutor
+    <https://docs.python.org/dev/library/concurrent.futures.html#concurrent.futures.ProcessPoolExecutor>`_,
+    the ProcessKillingExecutor forks a new Process for each function call that
+    terminates after the function returns or if a timeout occurs.
+
+    This means that contrary to the Executors and similar classes provided by
+    the Python Standard Library, you can rely on the fact that a process will
+    get killed if a timeout occurs and that absolutely no side can occur
+    between function calls.
+
+    Note that descendant processes of each process will not be terminated
+    they will simply become orphaned.
+    """
+
+    def __init__(self, max_workers=None):
+        self.processes = max_workers or os.cpu_count()
+
+    def map(self,
+            func,
+            iterable,
+            timeout=None,
+            callback_timeout=None,
+            daemon=True):
+        """
+        :param func: the function to execute
+        :param iterable: an iterable of function arguments
+        :param timeout: after this time, the process executing the function
+                will be killed if it did not finish
+        :param callback_timeout: this function will be called, if the task
+                times out. It gets the same arguments as the original function
+        :param daemon: define the child process as daemon
+        """
+        executor = ThreadPoolExecutor(max_workers=self.processes)
+        params = ({'func': func, 'fn_args': p_args, "p_kwargs": {},
+                   'timeout': timeout, 'callback_timeout': callback_timeout,
+                   'daemon': daemon} for p_args in iterable)
+        return executor.map(self._submit_unpack_kwargs, params)
+
+    def _submit_unpack_kwargs(self, params):
+        """ unpack the kwargs and call submit """
+
+        return self.submit(**params)
+
+    def submit(self,
+               func,
+               fn_args,
+               p_kwargs,
+               timeout,
+               callback_timeout,
+               daemon):
+        """
+        Submits a callable to be executed with the given arguments.
+        Schedules the callable to be executed as func(*args, **kwargs) in a new
+         process.
+        :param func: the function to execute
+        :param fn_args: the arguments to pass to the function. Can be one argument
+                or a tuple of multiple args.
+        :param p_kwargs: the kwargs to pass to the function
+        :param timeout: after this time, the process executing the function
+                will be killed if it did not finish
+        :param callback_timeout: this function will be called with the same
+                arguments, if the task times out.
+        :param daemon: run the child process as daemon
+        :return: the result of the function, or None if the process failed or
+                timed out
+        """
+        p_args = fn_args if isinstance(fn_args, tuple) else (fn_args,)
+        queue = Queue()
+        p = Process(target=self._process_run,
+                    args=(queue, func, fn_args,), kwargs=p_kwargs)
+
+        if daemon:
+            p.deamon = True
+
+        p.start()
+        p.join(timeout=timeout)
+        if not queue.empty():
+            return queue.get()
+        if callback_timeout:
+            callback_timeout(*p_args, **p_kwargs)
+        if p.is_alive():
+            p.terminate()
+            p.join()
+
+    @staticmethod
+    def _process_run(queue, func=None,
+                     *args, **kwargs):
+        """
+        Executes the specified function as func(*args, **kwargs).
+        The result will be stored in the shared dictionary
+        :param func: the function to execute
+        :param queue: a Queue
+        """
+        queue.put(func(*args, **kwargs))
+
+
+# def some_task(n, *args, **kwargs):
+#     import time
+#     time.sleep(n/4)
+#     return n ** 2
+#
+#
+# if __name__ == "__main__":
+#     def fun_timeout(n):
+#         print('timeout:', n)
+#     executor = ProcessKillingExecutor(max_workers=2)
+#     generator = executor.map(some_task, [1, 1, 2, 2, 3, 3, 4, 4], timeout=2,
+#                              callback_timeout=fun_timeout)
+#     for elem in generator:
+#         print(elem)
 
 def split_ex_in(connections):
     excite = []
@@ -69,6 +179,9 @@ def thread_bandit(connections, arms, split=4, runtime=2000, exposure_time=200, n
     def helper(args):
         return bandit_test(*args)
 
+    def func_timeout(n):
+        print('timeout:', n)
+
     step_size = len(connections) / split
     if step_size == 0:
         step_size = 1
@@ -83,18 +196,35 @@ def thread_bandit(connections, arms, split=4, runtime=2000, exposure_time=200, n
         connection_threads = [[connections[x:x + step_size], arms, split, runtime, exposure_time, noise_rate,
                                noise_weight, reward, spike_f, np.random.randint(1000000000)] for x in xrange(0, len(connections), step_size)]
 
-    pool = pathos.multiprocessing.Pool(processes=len(connection_threads))
+    executor = ProcessKillingExecutor(max_workers=len(connection_threads))
 
-    pool_result = pool.map(func=helper, iterable=connection_threads)
+    generator = executor.map(helper, connection_threads, timeout=300, callback_timeout=func_timeout)
 
-    pool.close()
-
-    for i in range(len(pool_result)):
-        if pool_result[i] == 'fail' and len(connection_threads[i][0]) > 1:
+    # pool = pathos.multiprocessing.Pool(processes=len(connection_threads))
+    #
+    # pool_result = pool.map(func=helper, iterable=connection_threads)
+    #
+    # pool.close()
+    pool_result = []
+    i = 0
+    for elem in generator:
+        if i > len(connection_threads):
+            break
+        if elem == 'fail' or elem == None and len(connection_threads[i][0]) > 1:
             print "splitting ", len(connection_threads[i][0]), " into ", new_split, " pieces"
             problem_arms = connection_threads[i][1]
-            pool_result[i] = thread_bandit(connection_threads[i][0], problem_arms, new_split, runtime,
-                                                exposure_time, noise_rate, noise_weight, reward, spike_f, top=False)
+            pool_result.append(thread_bandit(connection_threads[i][0], problem_arms, new_split, runtime,
+                                                exposure_time, noise_rate, noise_weight, reward, spike_f, top=False))
+        else:
+            pool_result.append(elem)
+        i += 1
+
+    # for i in range(len(pool_result)):
+    #     if pool_result[i] == 'fail' and len(connection_threads[i][0]) > 1:
+    #         print "splitting ", len(connection_threads[i][0]), " into ", new_split, " pieces"
+    #         problem_arms = connection_threads[i][1]
+    #         pool_result[i] = thread_bandit(connection_threads[i][0], problem_arms, new_split, runtime,
+    #                                             exposure_time, noise_rate, noise_weight, reward, spike_f, top=False)
 
     agent_fitness = []
     for thread in pool_result:
@@ -186,7 +316,7 @@ def bandit_test(connections, arms, split=4, runtime=2000, exposure_time=200, noi
                                                    label='bandit_pop_{}-{}'.format(bandit_count, i))))
                 # added to ensure that the arms and bandit are connected to and from something
                 null_pop = p.Population(1, p.IF_cond_exp(), label='null{}'.format(i))
-                p.Projection(null_pop, bandit[bandit_count], p.OneToOneConnector())
+                p.Projection(bandit[bandit_count], null_pop, p.AllToAllConnector())
                 arm_collection = []
                 for j in range(len(arms)):
                     arm_collection.append(p.Population(int(np.ceil(np.log2(len(arms)))),

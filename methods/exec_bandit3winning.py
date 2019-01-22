@@ -186,9 +186,14 @@ def bandit_test(connections, arms, split=4, runtime=2000, exposure_time=200, noi
                                                    label='bandit_pop_{}-{}'.format(bandit_count, i))))
                 # added to ensure that the arms and bandit are connected to and from something
                 null_pop = p.Population(1, p.IF_cond_exp(), label='null{}'.format(i))
-                p.Projection(null_pop, bandit[bandit_count], p.OneToOneConnector())
+                p.Projection(bandit[bandit_count], null_pop, p.AllToAllConnector())
+                best_arm = 0
+                highest_prob = 0
                 arm_collection = []
                 for j in range(len(arms)):
+                    if arms[j] > highest_prob:
+                        best_arm = j
+                        highest_prob = arms[j]
                     arm_collection.append(p.Population(int(np.ceil(np.log2(len(arms)))),
                                                        Arm(arm_id=j, reward_delay=exposure_time,
                                                            rand_seed=[np.random.randint(0xffff) for k in range(4)],
@@ -197,133 +202,9 @@ def bandit_test(connections, arms, split=4, runtime=2000, exposure_time=200, noi
                     p.Projection(arm_collection[j], bandit[bandit_count], p.AllToAllConnector(), p.StaticSynapse())
                     p.Projection(null_pop, arm_collection[j], p.AllToAllConnector())
                 bandit_arms.append(arm_collection)
-                if e_size > 0:
-                    excite_count += 1
-                    excite.append(
-                        p.Population(e_size, p.IF_cond_exp(), label='excite_pop_{}-{}'.format(excite_count, i)))
-                    if noise_rate:
-                        excite_noise = p.Population(e_size, p.SpikeSourcePoisson(rate=noise_rate))
-                        p.Projection(excite_noise, excite[excite_count], p.OneToOneConnector(),
-                                     p.StaticSynapse(weight=noise_weight), receptor_type='excitatory')
-                    if spike_f:
-                        excite[excite_count].record('spikes')
-                    excite_marker.append(i)
-                if i_size > 0:
-                    inhib_count += 1
-                    inhib.append(p.Population(i_size, p.IF_cond_exp(), label='inhib_pop_{}-{}'.format(inhib_count, i)))
-                    if noise_rate:
-                        inhib_noise = p.Population(i_size, p.SpikeSourcePoisson(rate=noise_rate))
-                        p.Projection(inhib_noise, inhib[inhib_count], p.OneToOneConnector(),
-                                     p.StaticSynapse(weight=noise_weight), receptor_type='excitatory')
-                    if spike_f:
-                        inhib[inhib_count].record('spikes')
-                    inhib_marker.append(i)
-                stdp_model = p.STDPMechanism(
-                    timing_dependence=p.SpikePairRule(
-                        tau_plus=20., tau_minus=20.0, A_plus=0.02, A_minus=0.02),
-                    weight_dependence=p.AdditiveWeightDependence(w_min=0, w_max=0.1))
-                if len(in2e) != 0:
-                    [in_ex, in_in] = split_ex_in(in2e)
-                    if len(in_ex) != 0:
-                        [plastic, non_plastic] = split_plastic(in_ex)
-                        if len(plastic) != 0:
-                            p.Projection(bandit[bandit_count], excite[excite_count], p.FromListConnector(plastic),
-                                         receptor_type='excitatory', synapse_type=stdp_model)
-                        if len(non_plastic) != 0:
-                            p.Projection(bandit[bandit_count], excite[excite_count], p.FromListConnector(non_plastic),
-                                         receptor_type='excitatory')
-                    if len(in_in) != 0:
-                        [plastic, non_plastic] = split_plastic(in_in)
-                        if len(plastic) != 0:
-                            p.Projection(bandit[bandit_count], excite[excite_count], p.FromListConnector(plastic),
-                                         receptor_type='inhibitory', synapse_type=stdp_model)
-                        if len(non_plastic) != 0:
-                            p.Projection(bandit[bandit_count], excite[excite_count], p.FromListConnector(non_plastic),
-                                         receptor_type='inhibitory')
-                if len(in2i) != 0:
-                    [in_ex, in_in] = split_ex_in(in2i)
-                    if len(in_ex) != 0:
-                        [plastic, non_plastic] = split_plastic(in_ex)
-                        if len(plastic) != 0:
-                            p.Projection(bandit[bandit_count], inhib[inhib_count], p.FromListConnector(plastic),
-                                         receptor_type='excitatory', synapse_type=stdp_model)
-                        if len(non_plastic) != 0:
-                            p.Projection(bandit[bandit_count], inhib[inhib_count], p.FromListConnector(non_plastic),
-                                         receptor_type='excitatory')
-                    if len(in_in) != 0:
-                        [plastic, non_plastic] = split_plastic(in_in)
-                        if len(plastic) != 0:
-                            p.Projection(bandit[bandit_count], inhib[inhib_count], p.FromListConnector(plastic),
-                                         receptor_type='inhibitory', synapse_type=stdp_model)
-                        if len(non_plastic) != 0:
-                            p.Projection(bandit[bandit_count], inhib[inhib_count], p.FromListConnector(non_plastic),
-                                         receptor_type='inhibitory')
-                if len(in2out) != 0:
-                    [in_ex, in_in] = split_ex_in(in2out)
-                    if len(in_ex) != 0:
-                        [plastic, non_plastic] = split_plastic(in_ex)
-                        if len(plastic) != 0:
-                            connect_to_arms(bandit[bandit_count], plastic, bandit_arms[bandit_count], 'excitatory',
-                                            True, stdp_model=stdp_model)
-                        if len(non_plastic) != 0:
-                            connect_to_arms(bandit[bandit_count], non_plastic, bandit_arms[bandit_count], 'excitatory',
-                                            True, stdp_model=stdp_model)
-                    if len(in_in) != 0:
-                        [plastic, non_plastic] = split_plastic(in_in)
-                        if len(plastic) != 0:
-                            connect_to_arms(bandit[bandit_count], plastic, bandit_arms[bandit_count], 'inhibitory',
-                                            True, stdp_model=stdp_model)
-                        if len(non_plastic) != 0:
-                            connect_to_arms(bandit[bandit_count], non_plastic, bandit_arms[bandit_count], 'inhibitory',
-                                            True, stdp_model=stdp_model)
-                if len(e2e) != 0:
-                    [plastic, non_plastic] = split_plastic(e2e)
-                    if len(plastic) != 0:
-                        p.Projection(excite[excite_count], excite[excite_count], p.FromListConnector(plastic),
-                                     receptor_type='excitatory', synapse_type=stdp_model)
-                    if len(non_plastic) != 0:
-                        p.Projection(excite[excite_count], excite[excite_count], p.FromListConnector(non_plastic),
-                                     receptor_type='excitatory')
-                if len(e2i) != 0:
-                    [plastic, non_plastic] = split_plastic(e2i)
-                    if len(plastic) != 0:
-                        p.Projection(excite[excite_count], inhib[inhib_count], p.FromListConnector(plastic),
-                                     receptor_type='excitatory', synapse_type=stdp_model)
-                    if len(non_plastic) != 0:
-                        p.Projection(excite[excite_count], inhib[inhib_count], p.FromListConnector(non_plastic),
-                                     receptor_type='excitatory')
-                if len(i2e) != 0:
-                    [plastic, non_plastic] = split_plastic(i2e)
-                    if len(plastic) != 0:
-                        p.Projection(inhib[inhib_count], excite[excite_count], p.FromListConnector(plastic),
-                                     receptor_type='inhibitory', synapse_type=stdp_model)
-                    if len(non_plastic) != 0:
-                        p.Projection(inhib[inhib_count], excite[excite_count], p.FromListConnector(non_plastic),
-                                     receptor_type='inhibitory')
-                if len(i2i) != 0:
-                    [plastic, non_plastic] = split_plastic(i2i)
-                    if len(plastic) != 0:
-                        p.Projection(inhib[inhib_count], inhib[inhib_count], p.FromListConnector(plastic),
-                                     receptor_type='inhibitory', synapse_type=stdp_model)
-                    if len(non_plastic) != 0:
-                        p.Projection(inhib[inhib_count], inhib[inhib_count], p.FromListConnector(non_plastic),
-                                     receptor_type='inhibitory')
-                if len(e2out) != 0:
-                    [plastic, non_plastic] = split_plastic(e2out)
-                    if len(plastic) != 0:
-                        connect_to_arms(excite[excite_count], plastic, bandit_arms[bandit_count], 'excitatory',
-                                            True, stdp_model=stdp_model)
-                    if len(non_plastic) != 0:
-                        connect_to_arms(excite[excite_count], non_plastic, bandit_arms[bandit_count], 'excitatory',
-                                            True, stdp_model=stdp_model)
-                if len(i2out) != 0:
-                    [plastic, non_plastic] = split_plastic(i2out)
-                    if len(plastic) != 0:
-                        connect_to_arms(inhib[inhib_count], plastic, bandit_arms[bandit_count], 'inhibitory',
-                                            True, stdp_model=stdp_model)
-                    if len(non_plastic) != 0:
-                        connect_to_arms(inhib[inhib_count], non_plastic, bandit_arms[bandit_count], 'inhibitory',
-                                            True, stdp_model=stdp_model)
+                winning = p.Population(1, p.SpikeSourcePoisson(rate=15))
+                p.Projection(winning, bandit_arms[bandit_count][best_arm], p.AllToAllConnector(),
+                             p.StaticSynapse(weight=noise_weight), receptor_type='excitatory')
 
         print "\nfinished connections seed = ", seed, "\n"
         simulator = get_simulator()
@@ -376,7 +257,7 @@ def bandit_test(connections, arms, split=4, runtime=2000, exposure_time=200, noi
                     spikes = excite[i - excite_fail - fails].get_data('spikes').segments[0].spiketrains
                     for neuron in spikes:
                         for spike in neuron:
-                            excite_spike_count[i] += 1
+                            excite_spike_count[i] -= 1
                 else:
                     excite_fail += 1
                     print "had an excite failure"
@@ -385,7 +266,7 @@ def bandit_test(connections, arms, split=4, runtime=2000, exposure_time=200, noi
                     spikes = inhib[i - inhib_fail - fails].get_data('spikes').segments[0].spiketrains
                     for neuron in spikes:
                         for spike in neuron:
-                            inhib_spike_count[i] += 1
+                            inhib_spike_count[i] -= 1
                 else:
                     inhib_fail += 1
                     print "had an inhib failure"

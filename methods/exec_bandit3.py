@@ -186,7 +186,7 @@ def bandit_test(connections, arms, split=4, runtime=2000, exposure_time=200, noi
                                                    label='bandit_pop_{}-{}'.format(bandit_count, i))))
                 # added to ensure that the arms and bandit are connected to and from something
                 null_pop = p.Population(1, p.IF_cond_exp(), label='null{}'.format(i))
-                p.Projection(null_pop, bandit[bandit_count], p.OneToOneConnector())
+                p.Projection(bandit[bandit_count], null_pop, p.AllToAllConnector())
                 arm_collection = []
                 for j in range(len(arms)):
                     arm_collection.append(p.Population(int(np.ceil(np.log2(len(arms)))),
