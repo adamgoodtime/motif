@@ -79,6 +79,19 @@ def bandit(generations):
         config += 'pl '
     if averaging_weights:
         config += 'ave '
+    if spikes_fitness:
+        config += 'spikes '
+    if size_fitness:
+        config += 'size '
+    if reward_shape:
+        config += 'shape_r '
+    if reset_pop:
+        config += 'reset:{} '.format(reset_pop)
+    if base_mutate:
+        config += 'mute:{} '.format(base_mutate)
+    if noise_rate:
+        config += 'n r-w:{}-{} '.format(noise_rate, noise_weight)
+
 
     # check max motif count
     motifs = motif_population(max_motif_size=3,
@@ -103,25 +116,21 @@ def bandit(generations):
                               inputs=inputs,
                               outputs=outputs,
                               elitism=elitism,
-                              sexuality=[7./20., 10./20., 3./20.],
+                              sexuality=[6./20., 8./20., 3./20., 3./20.],
                               base_mutate=base_mutate,
                               # input_shift=0,
                               # output_shift=0,
                               maximum_depth=maximum_depth,
                               viable_parents=viable_parents)
 
+    config += "ex:{}, reward:{}, max_d:{}, w_max:{}, rents:{}, elite:{}, psize:{}, bins:{}".format(
+        exec_thing, reward, maximum_depth, weight_max, viable_parents, elitism, agent_pop_size,
+        no_bins)
+
     if io_weighting:
-        config += "ex:{}, shape:{}, reward:{}, n r-w:{}-{}, max_d:{}, size:{}, spike:{}, " \
-                 "w_max:{}, rents:{}, elite:{}, psize:{}, mute:{}, bins:{}, reset:{}, io:{}".format(
-                    exec_thing, reward_shape, reward, noise_rate, noise_weight,
-                    maximum_depth, size_fitness, spikes_fitness, weight_max, viable_parents, elitism, agent_pop_size,
-                    base_mutate, no_bins, reset_pop, io_weighting)
+        config += ", io:{}".format(io_weighting)
     else:
-        config += "ex:{}, shape:{}, reward:{}, n r-w:{}-{}, max_d:{}, size:{}, spike:{}, " \
-                 "w_max:{}, rents:{}, elite:{}, psize:{}, mute:{}, bins:{}, reset:{} {}".format(
-                    exec_thing, reward_shape, reward, noise_rate, noise_weight,
-                    maximum_depth, size_fitness, spikes_fitness, weight_max, viable_parents, elitism, agent_pop_size,
-                    base_mutate, no_bins, reset_pop, motifs.global_io[1])
+        config += " {}".format(motifs.global_io[1])
     if read_pop:
         config += ' read:{}'.format(keep_reading)
 

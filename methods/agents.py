@@ -37,7 +37,7 @@ class agent_population(object):
                  elitism=0.1,
                  viable_parents=0.1,
                  # asexual=0.5,
-                 sexuality=[1./3., 1./3., 1./3.],  # asexual (just mutate), sexual, sexual + mutate
+                 sexuality=[1./4., 1./4., 1./4., 1./4.],  # asexual (just mutate), sexual, sexual + mutate, fresh motif construction
                  conn_param_mutate=0.1,
                  param_mutate_stdev=0.15,
                  base_mutate=0,
@@ -67,7 +67,7 @@ class agent_population(object):
         self.elitism = elitism
         self.viable_parents = viable_parents
         # self.asexual = asexual
-        self.sexuality = {'asexual': sexuality[0], 'sexual': sexuality[1], 'both': sexuality[2]}
+        self.sexuality = {'asexual': sexuality[0], 'sexual': sexuality[1], 'both': sexuality[2], 'fresh': sexuality[3]}
         self.conn_param_mutate = conn_param_mutate
         self.param_mutate_stdev = param_mutate_stdev
         if base_mutate:
@@ -529,6 +529,30 @@ class agent_population(object):
             child_id = self.motifs.insert_motif(mum_motif)
         return child_id
 
+    '''creates a child from motifs of motifs'''
+    def fresh_child(self, mutate_key):
+        mutate_key['motif'] = 0
+        mutate_key['new'] = 0
+        mutate_key['node'] = 0
+        mutate_key['io'] = 0
+        mutate_key['in_shift'] = 0
+        mutate_key['out_shift'] = 0
+        mutate_key['m_add'] = 0
+        mutate_key['m_gone'] = 0
+        mutate_key['c_add'] = 0
+        mutate_key['c_gone'] = 0
+        mutate_key['param_w'] = 0
+        mutate_key['param_d'] = 0
+        mutate_key['mum'] = [self.average_fitness[len(self.average_fitness)-1], self.average_score[len(self.average_fitness)-1]]
+        mutate_key['dad'] = [self.average_fitness[len(self.average_fitness)-1], self.average_score[len(self.average_fitness)-1]]
+        mutate_key['plasticity'] = 0
+        mutate_key['sex'] = 3
+        child = self.motifs.select_motif()
+        for i in range(self.maximum_depth):
+            child = self.motifs.motif_of_motif(child, 1, self.maximum_depth, i)
+            child = self.motifs.insert_motif(child)
+        return child
+
     '''here is where the children (the next generation of the population) are created for both a species and for the 
     entire population if required'''
     def generate_children(self, pop, birthing, fitness_shaping=True):
@@ -570,7 +594,7 @@ class agent_population(object):
                     child = False
                     print "mate d"
             # create a child by first mating 2 parents then mutating the offspring
-            else:
+            elif birthing_type - self.sexuality['asexual'] - self.sexuality['sexual'] - self.sexuality['both'] < 0:
                 if fitness_shaping:
                     mum = parents[self.select_parents(parents)]
                     dad = parents[self.select_parents(parents)]
@@ -589,6 +613,14 @@ class agent_population(object):
                         child = False
                         print "both as3x d"
                 mutate_key['sex'] = 2
+            # create a child but creating motifs of motifs
+            else:
+                mutate_key = {}
+                child = self.fresh_child(mutate_key)
+                # if the child created is beyond the maximum depth allowed for an agent restart and try again
+                if self.motifs.depth_read(child) > self.maximum_depth:
+                    child = False
+                    print "fresh d"
             # if a child is created give it a random seed which is used to seed the random selection of inputs and
             # outputs, now a redundant fucntion giving the current mapping of IO
             if child:
@@ -685,6 +717,7 @@ class agent_population(object):
 
     def status_update(self, combined_fitnesses, iteration, config, len_arms):
         total_scores = [0 for i in range(len(combined_fitnesses))]
+        average_fitness = 0
         worst_score = 1000000
         worst_agent = 'need to higher worst score'
         best_score = -1000000
@@ -704,6 +737,7 @@ class agent_population(object):
             if self.agent_pop[j][2] < worst_fitness:
                 worst_fitness = self.agent_pop[j][2]
                 worst_agent = j
+            average_fitness += self.agent_pop[j][2]
             combined_score = 0
             for i in range(len_arms):
                 if combined_fitnesses[i][j] != 'fail':
@@ -726,12 +760,13 @@ class agent_population(object):
         self.min_score.append(worst_score)
         total_average = 0
         for i in range(len_arms):
-            total_scores[i] /= len(self.agent_pop)
             total_average += total_scores[i]
+        total_average /= len(self.agent_pop)
+        self.average_score.append(total_average)
         # self.average_score.append(total_scores)
         self.max_fitness.append(best_fitness)
-        self.average_score.append(total_average)
         self.min_fitness.append(worst_fitness)
+        self.average_fitness.append(average_fitness / len(self.agent_pop))
         print "maximum fitness:", self.max_fitness
         # print "average fitness:", self.total_average
         print "minimum fitness:", self.min_fitness

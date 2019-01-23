@@ -363,8 +363,9 @@ class motif_population(object):
                         # with a certain P() add a new motif
                         if np.random.random() < config:
                             selected_motif = self.select_motif()
-                            motif['node'][i] = selected_motif
-                            increased_depth = True
+                            if self.motif_configs[selected_motif]['depth'] + current_depth < max_depth:
+                                motif['node'][i] = selected_motif
+                                increased_depth = True
                     # go another layer down if it's not a base node yet
                     else:
                         sub_motif = self.motif_of_motif(node, config, max_depth, current_depth + 1)
