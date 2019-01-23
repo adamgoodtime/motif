@@ -52,6 +52,7 @@ class agent_population(object):
                  motif_switch=0.015,
                  new_motif=0.015,
                  switch_plasticity=0.015,
+                 multiple_mutates=True,
                  maximum_depth=5,
                  similarity_threshold=0.4,
                  stagnation_age=25,
@@ -118,6 +119,7 @@ class agent_population(object):
             self.switch_plasticity = base_mutate
         else:
             self.switch_plasticity = switch_plasticity
+        self.multiple_mutates = multiple_mutates
         if isinstance(maximum_depth, list):
             self.maximum_depth = maximum_depth[0]
         else:
@@ -368,8 +370,9 @@ class agent_population(object):
                 if new_depth >= config_copy['depth']:
                     config_copy['depth'] = new_depth + 1
                 mutate_key['motif'] += 1
-                continue
-            else:
+                if not self.multiple_mutates:
+                    continue
+            elif not self.multiple_mutates:
                 prob_resize_factor *= 1 - self.motif_switch
             # switch with a completely novel motif todo maybe add or make this a motif of motifs of w/e depth
             if np.random.random() * prob_resize_factor < self.new_motif:
@@ -388,8 +391,9 @@ class agent_population(object):
                     new_io = (np.random.choice((True, False)), np.random.choice((True, False)))
                     config_copy['io'][i] = new_io
                 mutate_key['io'] += 1
-                continue
-            else:
+                if not self.multiple_mutates:
+                    continue
+            elif not self.multiple_mutates:
                 prob_resize_factor *= 1 - self.io_mutate
             # switch the base node if it's a base node
             if np.random.random() * prob_resize_factor < self.node_mutate and config_copy['node'][i] in self.motifs.neuron_types:
@@ -398,8 +402,9 @@ class agent_population(object):
                 while config_copy['node'][i] == new_node:
                     new_node = np.random.choice(self.motifs.neuron_types)
                 config_copy['node'][i] = new_node
-                continue
-            elif config_copy['node'][i] in self.motifs.neuron_types:
+                if not self.multiple_mutates:
+                    continue
+            elif config_copy['node'][i] in self.motifs.neuron_types and not self.multiple_mutates:
                 prob_resize_factor *= 1 - self.node_mutate
             # shift all input nodes of the motif by the same amount
             if np.random.random() * prob_resize_factor < self.input_shift:
@@ -407,8 +412,9 @@ class agent_population(object):
                 if new_node != config_copy['node'][i]:
                     config_copy['node'][i] = new_node
                     mutate_key['in_shift'] += 1
-                continue
-            else:
+                if not self.multiple_mutates:
+                    continue
+            elif not self.multiple_mutates:
                 prob_resize_factor *= 1 - self.input_shift
             # shift all output nodes of the motif by the same amount
             if np.random.random() * prob_resize_factor < self.output_shift:
