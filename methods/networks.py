@@ -1053,7 +1053,7 @@ class motif_population(object):
 
     def update_weight(self, motif_ids, weight):
         for motif_id in motif_ids:
-            self.motif_configs['{}'.format(motif_id)]['weight'] = weight
+            self.motif_configs['{}'.format(motif_id)]['weight'] += weight
 
     def delete_motif(self, motif_id):
         del self.motif_configs['{}'.format(motif_id)]
@@ -1132,17 +1132,30 @@ class motif_population(object):
                     writer.writerow(line)
             file.close()
 
-    def adjust_weights(self, agents, clean=True, fitness_shaping=True, reward_shape=True, iteration=0):
+    def average_weights(self, motif_counts):
+        for motif_id in motif_counts:
+            # self.motif_configs['{}'.format(motif_id)]['weight'] += weight
+            self.motif_configs[motif_id]['weight'] /= motif_counts[motif_id]
+
+    def adjust_weights(self, agents, clean=True, fitness_shaping=True, reward_shape=True, average=True, iteration=0):
         self.reset_weights()
+        motif_count = {}
         if fitness_shaping:
             agents.sort(key=lambda x: x[2])#, reverse=True)
             i = 1
             for agent in agents:
                 components = []
                 components = self.list_motifs(agent[0], components)
-                if fitness_shaping:
-                    self.update_weight(components, i)
+                self.update_weight(components, i)
+                if average:
+                    for component in components:
+                        if component in motif_count:
+                            motif_count[component] += 1
+                        else:
+                            motif_count[component] = 1
                 i += 1
+        if average:
+            self.average_weights(motif_count)
         if clean:
             self.clean_population(reward_shape)
         if iteration < self.keep_reading and self.read_entire_population:

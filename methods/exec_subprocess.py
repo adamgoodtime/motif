@@ -84,10 +84,7 @@ def thread_bandit(connections, arms, split=4, runtime=2000, exposure_time=200, n
         connection_threads = [[connections[x:x + step_size], arms, split, runtime, exposure_time, noise_rate,
                                noise_weight, reward, spike_f, np.random.randint(1000000000)] for x in xrange(0, len(connections), step_size)]
 
-    all_processes = []
-    for conn_thread in connection_threads:
-        command = ['python', '']
-        all_processes.append(subprocess.Popen())
+    subprocess.Popen
 
     pool = pathos.multiprocessing.Pool(processes=len(connection_threads))
 

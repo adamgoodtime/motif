@@ -16,18 +16,18 @@ def bandit(generations):
 
     weight_max = 0.1
 
-    arm1 = 1
-    arm2 = 0
-    # arm3 = 0.1
+    arm1 = 0.9
+    arm2 = 0.1
+    arm3 = 0.1
     arm_len = 1
     arms = []
     for i in range(arm_len):
-        arms.append([arm1, arm2])
-        arms.append([arm2, arm1])
-        # for arm in list(itertools.permutations([arm1, arm2, arm3])):
-        #     arms.append(list(arm))
+        # arms.append([arm1, arm2])
+        # arms.append([arm2, arm1])
+        for arm in list(itertools.permutations([arm1, arm2, arm3])):
+            arms.append(list(arm))
     # arms = [[0.4, 0.6], [0.6, 0.4], [0.3, 0.7], [0.7, 0.3], [0.2, 0.8], [0.8, 0.2], [0.1, 0.9], [0.9, 0.1]]
-    top_prob = 1
+    '''top_prob = 1
     arms = [[0.1, 0.2, top_prob, 0.3, 0.2, 0.1, 0.2, 0.1], [top_prob, 0.1, 0.1, 0.2, 0.3, 0.2, 0.1, 0.2],
             [0.3, top_prob, 0.2, 0.1, 0.1, 0.2, 0.2, 0.1], [0.2, 0.1, 0.1, top_prob, 0.2, 0.3, 0.1, 0.2],
             [0.1, 0.1, 0.1, 0.2, top_prob, 0.2, 0.3, 0.2], [0.1, 0.2, 0.1, 0.2, 0.2, top_prob, 0.1, 0.3],
@@ -42,25 +42,26 @@ def bandit(generations):
 
     agent_pop_size = 100
     reward_shape = False
+    averaging_weights = True
     reward = 1
     noise_rate = 0
     noise_weight = 0.01
-    maximum_depth = [5, 30]
-    no_bins = [5, 75]
+    maximum_depth = [7, 30]
+    no_bins = [7, 75]
     reset_pop = 0
     size_fitness = False
     spikes_fitness = False
     random_arms = 0
     viable_parents = 0.2
     elitism = 0.2
-    runtime = 21000
+    runtime = 41000
     exposure_time = 200
     io_weighting = 1
     read_pop = 0  # 'new_io_motif_easy_3.csv'
     keep_reading = 5
     base_mutate = 0
     exec_thing = 3
-    plasticity = True
+    plasticity = False
 
     x_factor = 8
     y_factor = 8
@@ -76,6 +77,8 @@ def bandit(generations):
         config = 'bandit-arms:{}-{}-{} '.format(arms[0][0], len(arms), random_arms)
     if plasticity:
         config += 'pl '
+    if averaging_weights:
+        config += 'ave '
 
     # check max motif count
     motifs = motif_population(max_motif_size=3,
@@ -202,7 +205,7 @@ def bandit(generations):
 
         print "2", motifs.total_weight
 
-        motifs.adjust_weights(agents.agent_pop, reward_shape=reward_shape, iteration=i)
+        motifs.adjust_weights(agents.agent_pop, reward_shape=reward_shape, iteration=i, average=averaging_weights)
 
         print "3", motifs.total_weight
 
