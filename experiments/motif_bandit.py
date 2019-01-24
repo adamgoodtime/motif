@@ -61,6 +61,7 @@ def bandit(generations):
     read_pop = 0  # 'new_io_motif_easy_3.csv'
     keep_reading = 5
     base_mutate = 0
+    multiple_mutates = True
     exec_thing = 3
     plasticity = False
 
@@ -92,6 +93,8 @@ def bandit(generations):
         config += 'reset:{} '.format(reset_pop)
     if base_mutate:
         config += 'mute:{} '.format(base_mutate)
+    if multiple_mutates:
+        config += 'multate '
     if noise_rate:
         config += 'n r-w:{}-{} '.format(noise_rate, noise_weight)
 
@@ -121,6 +124,7 @@ def bandit(generations):
                               elitism=elitism,
                               sexuality=[6./20., 8./20., 3./20., 3./20.],
                               base_mutate=base_mutate,
+                              multiple_mutates=multiple_mutates,
                               # input_shift=0,
                               # output_shift=0,
                               maximum_depth=maximum_depth,
@@ -177,7 +181,8 @@ def bandit(generations):
         else:
             connections = agents.generate_spinn_nets(input=inputs, output=outputs, max_depth=3, create=False)
 
-        # fitnesses = agents.thread_bandit(connections, arms, split=16, runtime=21000, exposure_time=200, reward=reward, noise_rate=noise_rate, noise_weight=noise_weight, size_f=size_fitness, spike_f=spikes_fitness)
+        # fitnesses = agents.thread_bandit(connections, arms, split=16, runtime=21000, exposure_time=200,
+        # reward=reward, noise_rate=noise_rate, noise_weight=noise_weight, size_f=size_fitness, spike_f=spikes_fitness)
 
         # config = 'test'
         if config != 'test':
@@ -252,6 +257,7 @@ print "done"
 
 #ToDo
 '''
+crossover
 create a motif for the input/output population that is connected to the reservoir network
 shifting of upper reference needs to be careful of layers larger than 10
 figure out mapping to inputs
