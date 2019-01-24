@@ -45,7 +45,7 @@ def bandit(generations):
     reward_shape = False
     averaging_weights = True
     reward = 1
-    noise_rate = 100
+    noise_rate = 0
     noise_weight = 0.01
     maximum_depth = [7, 30]
     no_bins = [7, 75]
@@ -56,7 +56,7 @@ def bandit(generations):
     random_arms = 0
     viable_parents = 0.2
     elitism = 0.2
-    runtime = 41000
+    runtime = 1000
     exposure_time = 200
     io_weighting = 1
     read_pop = 0  # 'new_io_motif_easy_3.csv'

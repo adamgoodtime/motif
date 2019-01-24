@@ -169,7 +169,7 @@ def xor_test(connections, arms, split=4, runtime=2000, exposure_time=200, noise_
     sleep = 10 * np.random.random()
     # time.sleep(sleep)
     on_rate = 15
-    off_rate = 1
+    off_rate = 2
     max_attempts = 2
     try_except = 0
     while try_except < max_attempts:
@@ -347,7 +347,7 @@ def xor_test(connections, arms, split=4, runtime=2000, exposure_time=200, noise_
                                      receptor_type='inhibitory', synapse_type=stdp_model)
                     if len(non_plastic) != 0:
                         p.Projection(inhib[inhib_count], output_pop[input_count], p.FromListConnector(non_plastic),
-                                     receptor_type='inhibitory', synapse_type=stdp_model)
+                                     receptor_type='inhibitory')
 
         print "\nfinished connections seed = ", seed, "\n"
         simulator = get_simulator()
@@ -357,8 +357,8 @@ def xor_test(connections, arms, split=4, runtime=2000, exposure_time=200, noise_
                 p.end()
                 print "nothing to run so ending and returning fail"
                 return 'fail'
-            p.run(runtime)
-            try_except = max_attempts
+                p.run(runtime)
+                try_except = max_attempts
             break
         except:
             traceback.print_exc()
@@ -423,6 +423,7 @@ def xor_test(connections, arms, split=4, runtime=2000, exposure_time=200, noise_
                         off_spike += 1
                     else:
                         on_spike += 1
+                j += 1
             if (arms[0] == 1 and arms[1] == 1) or (arms[0] == 0 and arms[1] == 0):
                 if off_spike > on_spike:
                     scores.append(1)
