@@ -64,10 +64,10 @@ def get_scores(game_pop, simulator):
         simulator.graph_mapper, simulator.buffer_manager, simulator.machine_time_step)
     return scores.tolist()
 
-def thread_bandit(connections, arms, split=4, runtime=2000, exposure_time=200, noise_rate=100, noise_weight=0.01,
+def thread_xor(connections, arms, split=4, runtime=2000, exposure_time=200, noise_rate=100, noise_weight=0.01,
                   reward=0, size_f=False, spike_f=False, top=True):
     def helper(args):
-        return bandit_test(*args)
+        return xor_test(*args)
 
     step_size = len(connections) / split
     if step_size == 0:
@@ -93,7 +93,7 @@ def thread_bandit(connections, arms, split=4, runtime=2000, exposure_time=200, n
         if pool_result[i] == 'fail' and len(connection_threads[i][0]) > 1:
             print "splitting ", len(connection_threads[i][0]), " into ", new_split, " pieces"
             problem_arms = connection_threads[i][1]
-            pool_result[i] = thread_bandit(connection_threads[i][0], problem_arms, new_split, runtime,
+            pool_result[i] = thread_xor(connection_threads[i][0], problem_arms, new_split, runtime,
                                                 exposure_time, noise_rate, noise_weight, reward, spike_f, top=False)
 
     agent_fitness = []
@@ -137,17 +137,46 @@ def connect_to_arms(pre_pop, from_list, arms, r_type, plastic, stdp_model):
                 p.Projection(pre_pop, arms[i], p.FromListConnector(arm_conn_list[i]),
                              receptor_type=r_type)
 
-def bandit_test(connections, arms, split=4, runtime=2000, exposure_time=200, noise_rate=100, noise_weight=0.01,
+def connect_inputs(left, right, from_list, post_pop, r_type, plastic, stdp_model):
+    input_conn_list = []
+    for i in range(2):
+        input_conn_list.append([])
+    for conn in from_list:
+        input_conn_list[conn[0]].append((0, conn[1], conn[2], conn[3]))
+        # print "out:", conn[1]
+        # if conn[1] == 2:
+        #     print '\nit is possible\n'
+    for i in range(2):
+        if len(input_conn_list[i]) != 0:
+            if i == 0:
+                if plastic:
+                    p.Projection(left, post_pop, p.FromListConnector(input_conn_list[i]),
+                                 receptor_type=r_type, synapse_type=stdp_model)
+                else:
+                    p.Projection(left, post_pop, p.FromListConnector(input_conn_list[i]),
+                                 receptor_type=r_type)
+            else:
+                if plastic:
+                    p.Projection(right, post_pop, p.FromListConnector(input_conn_list[i]),
+                                 receptor_type=r_type, synapse_type=stdp_model)
+                else:
+                    p.Projection(right, post_pop, p.FromListConnector(input_conn_list[i]),
+                                 receptor_type=r_type)
+
+def xor_test(connections, arms, split=4, runtime=2000, exposure_time=200, noise_rate=100, noise_weight=0.01,
                 reward=0, spike_f=False, seed=0):
     np.random.seed(seed)
     sleep = 10 * np.random.random()
     # time.sleep(sleep)
+    on_rate = 15
+    off_rate = 1
     max_attempts = 2
     try_except = 0
     while try_except < max_attempts:
-        bandit = []
-        bandit_count = -1
-        bandit_arms = []
+        left_input = []
+        right_input = []
+        input_count = -1
+        output_pop = []
         excite = []
         excite_count = -1
         excite_marker = []
@@ -178,25 +207,15 @@ def bandit_test(connections, arms, split=4, runtime=2000, exposure_time=200, noi
                 failures.append(i)
                 print "agent {} was not properly connected to the game".format(i)
             else:
-                bandit_count += 1
-                # removed_prob_arms = [1 for i in range(len(arms))]
-                bandit.append(
-                    p.Population(len(arms), Bandit(arms, exposure_time, reward_based=reward,
-                                                   rand_seed=[np.random.randint(0xffff) for k in range(4)],
-                                                   label='bandit_pop_{}-{}'.format(bandit_count, i))))
-                # added to ensure that the arms and bandit are connected to and from something
-                null_pop = p.Population(1, p.IF_cond_exp(), label='null{}'.format(i))
-                p.Projection(bandit[bandit_count], null_pop, p.AllToAllConnector())
-                arm_collection = []
-                for j in range(len(arms)):
-                    arm_collection.append(p.Population(int(np.ceil(np.log2(len(arms)))),
-                                                       Arm(arm_id=j, reward_delay=exposure_time,
-                                                           rand_seed=[np.random.randint(0xffff) for k in range(4)],
-                                                           no_arms=len(arms), arm_prob=1),
-                                                       label='arm_pop{}:{}:{}'.format(bandit_count, i, j)))
-                    p.Projection(arm_collection[j], bandit[bandit_count], p.AllToAllConnector(), p.StaticSynapse())
-                    p.Projection(null_pop, arm_collection[j], p.AllToAllConnector())
-                bandit_arms.append(arm_collection)
+                input_count += 1
+                if arms[0] == 1:
+                    left_input.append(p.Population(1, p.SpikeSourcePoisson(rate=on_rate)))
+                else:
+                    left_input.append(p.Population(1, p.SpikeSourcePoisson(rate=off_rate)))
+                if arms[1] == 1:
+                    right_input.append(p.Population(1, p.SpikeSourcePoisson(rate=on_rate)))
+                else:
+                    right_input.append(p.Population(1, p.SpikeSourcePoisson(rate=off_rate)))
                 if e_size > 0:
                     excite_count += 1
                     excite.append(
@@ -227,37 +246,37 @@ def bandit_test(connections, arms, split=4, runtime=2000, exposure_time=200, noi
                     if len(in_ex) != 0:
                         [plastic, non_plastic] = split_plastic(in_ex)
                         if len(plastic) != 0:
-                            p.Projection(bandit[bandit_count], excite[excite_count], p.FromListConnector(plastic),
-                                         receptor_type='excitatory', synapse_type=stdp_model)
+                            connect_inputs(left_input[input_count], right_input[input_count], plastic,
+                                           excite[excite_count], 'excitatory', True, stdp_model)
                         if len(non_plastic) != 0:
-                            p.Projection(bandit[bandit_count], excite[excite_count], p.FromListConnector(non_plastic),
-                                         receptor_type='excitatory')
+                            connect_inputs(left_input[input_count], right_input[input_count], non_plastic,
+                                           excite[excite_count], 'excitatory', False, stdp_model)
                     if len(in_in) != 0:
                         [plastic, non_plastic] = split_plastic(in_in)
                         if len(plastic) != 0:
-                            p.Projection(bandit[bandit_count], excite[excite_count], p.FromListConnector(plastic),
-                                         receptor_type='inhibitory', synapse_type=stdp_model)
+                            connect_inputs(left_input[input_count], right_input[input_count], plastic,
+                                           excite[excite_count], 'inhibitory', True, stdp_model)
                         if len(non_plastic) != 0:
-                            p.Projection(bandit[bandit_count], excite[excite_count], p.FromListConnector(non_plastic),
-                                         receptor_type='inhibitory')
+                            connect_inputs(left_input[input_count], right_input[input_count], non_plastic,
+                                           excite[excite_count], 'inhibitory', False, stdp_model)
                 if len(in2i) != 0:
                     [in_ex, in_in] = split_ex_in(in2i)
                     if len(in_ex) != 0:
                         [plastic, non_plastic] = split_plastic(in_ex)
                         if len(plastic) != 0:
-                            p.Projection(bandit[bandit_count], inhib[inhib_count], p.FromListConnector(plastic),
-                                         receptor_type='excitatory', synapse_type=stdp_model)
+                            connect_inputs(left_input[input_count], right_input[input_count], plastic,
+                                           inhib[inhib_count], 'excitatory', True, stdp_model)
                         if len(non_plastic) != 0:
-                            p.Projection(bandit[bandit_count], inhib[inhib_count], p.FromListConnector(non_plastic),
-                                         receptor_type='excitatory')
+                            connect_inputs(left_input[input_count], right_input[input_count], non_plastic,
+                                           inhib[inhib_count], 'excitatory', False, stdp_model)
                     if len(in_in) != 0:
                         [plastic, non_plastic] = split_plastic(in_in)
                         if len(plastic) != 0:
-                            p.Projection(bandit[bandit_count], inhib[inhib_count], p.FromListConnector(plastic),
-                                         receptor_type='inhibitory', synapse_type=stdp_model)
+                            connect_inputs(left_input[input_count], right_input[input_count], plastic,
+                                           inhib[inhib_count], 'inhibitory', True, stdp_model)
                         if len(non_plastic) != 0:
-                            p.Projection(bandit[bandit_count], inhib[inhib_count], p.FromListConnector(non_plastic),
-                                         receptor_type='inhibitory')
+                            connect_inputs(left_input[input_count], right_input[input_count], non_plastic,
+                                           inhib[inhib_count], 'inhibitory', False, stdp_model)
                 if len(in2out) != 0:
                     [in_ex, in_in] = split_ex_in(in2out)
                     if len(in_ex) != 0:
@@ -267,7 +286,7 @@ def bandit_test(connections, arms, split=4, runtime=2000, exposure_time=200, noi
                                             True, stdp_model=stdp_model)
                         if len(non_plastic) != 0:
                             connect_to_arms(bandit[bandit_count], non_plastic, bandit_arms[bandit_count], 'excitatory',
-                                            False, stdp_model=stdp_model)
+                                            True, stdp_model=stdp_model)
                     if len(in_in) != 0:
                         [plastic, non_plastic] = split_plastic(in_in)
                         if len(plastic) != 0:
@@ -275,7 +294,7 @@ def bandit_test(connections, arms, split=4, runtime=2000, exposure_time=200, noi
                                             True, stdp_model=stdp_model)
                         if len(non_plastic) != 0:
                             connect_to_arms(bandit[bandit_count], non_plastic, bandit_arms[bandit_count], 'inhibitory',
-                                            False, stdp_model=stdp_model)
+                                            True, stdp_model=stdp_model)
                 if len(e2e) != 0:
                     [plastic, non_plastic] = split_plastic(e2e)
                     if len(plastic) != 0:
@@ -315,7 +334,7 @@ def bandit_test(connections, arms, split=4, runtime=2000, exposure_time=200, noi
                                             True, stdp_model=stdp_model)
                     if len(non_plastic) != 0:
                         connect_to_arms(excite[excite_count], non_plastic, bandit_arms[bandit_count], 'excitatory',
-                                            False, stdp_model=stdp_model)
+                                            True, stdp_model=stdp_model)
                 if len(i2out) != 0:
                     [plastic, non_plastic] = split_plastic(i2out)
                     if len(plastic) != 0:
@@ -323,7 +342,7 @@ def bandit_test(connections, arms, split=4, runtime=2000, exposure_time=200, noi
                                             True, stdp_model=stdp_model)
                     if len(non_plastic) != 0:
                         connect_to_arms(inhib[inhib_count], non_plastic, bandit_arms[bandit_count], 'inhibitory',
-                                            False, stdp_model=stdp_model)
+                                            True, stdp_model=stdp_model)
 
         print "\nfinished connections seed = ", seed, "\n"
         simulator = get_simulator()
@@ -425,6 +444,6 @@ def print_fitnesses(fitnesses):
 
 
 
-fitnesses = thread_bandit(connections, arms, split, runtime, exposure_time, noise_rate, noise_weight, reward, size_f, spike_f, True)
+fitnesses = thread_xor(connections, arms, split, runtime, exposure_time, noise_rate, noise_weight, reward, size_f, spike_f, True)
 
 print_fitnesses(fitnesses)

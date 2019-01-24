@@ -16,16 +16,16 @@ def bandit(generations):
 
     weight_max = 0.1
 
-    arm1 = 0.9
-    arm2 = 0.1
-    arm3 = 0.1
+    arm1 = 1
+    arm2 = 0
+    # arm3 = 0.1
     arm_len = 1
     arms = []
     for i in range(arm_len):
-        # arms.append([arm1, arm2])
-        # arms.append([arm2, arm1])
-        for arm in list(itertools.permutations([arm1, arm2, arm3])):
-            arms.append(list(arm))
+        arms.append([arm1, arm2])
+        arms.append([arm2, arm1])
+        # for arm in list(itertools.permutations([arm1, arm2, arm3])):
+        #     arms.append(list(arm))
     # arms = [[0.4, 0.6], [0.6, 0.4], [0.3, 0.7], [0.7, 0.3], [0.2, 0.8], [0.8, 0.2], [0.1, 0.9], [0.9, 0.1]]
     '''top_prob = 1
     arms = [[0.1, 0.2, top_prob, 0.3, 0.2, 0.1, 0.2, 0.1], [top_prob, 0.1, 0.1, 0.2, 0.3, 0.2, 0.1, 0.2],
@@ -44,13 +44,14 @@ def bandit(generations):
     reward_shape = False
     averaging_weights = True
     reward = 1
-    noise_rate = 0
+    noise_rate = 100
     noise_weight = 0.01
     maximum_depth = [7, 30]
     no_bins = [7, 75]
     reset_pop = 0
     size_fitness = False
     spikes_fitness = False
+    shape_fitness = True
     random_arms = 0
     viable_parents = 0.2
     elitism = 0.2
@@ -85,6 +86,8 @@ def bandit(generations):
         config += 'size '
     if reward_shape:
         config += 'shape_r '
+    if shape_fitness:
+        config += 'shape_f '
     if reset_pop:
         config += 'reset:{} '.format(reset_pop)
     if base_mutate:
@@ -206,7 +209,7 @@ def bandit(generations):
                 agent_spikes.append(spike_total)
             fitnesses.append(agent_spikes)
 
-        agents.pass_fitnesses(fitnesses)
+        agents.pass_fitnesses(fitnesses, fitness_shaping=shape_fitness)
 
         agents.status_update(fitnesses, i, config, len(arms))
 
