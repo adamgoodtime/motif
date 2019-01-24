@@ -33,6 +33,7 @@ def bandit(generations):
             [0.1, 0.1, 0.1, 0.2, top_prob, 0.2, 0.3, 0.2], [0.1, 0.2, 0.1, 0.2, 0.2, top_prob, 0.1, 0.3],
             [0.2, 0.1, 0.3, 0.1, 0.2, 0.1, top_prob, 0.2], [0.1, 0.3, 0.2, 0.2, 0.1, 0.2, 0.1, top_prob]]
     # '''
+    arms = [[0, 0], [0, 1], [1, 0], [1, 1]]
     if isinstance(arms[0], list):
         number_of_arms = len(arms[0])
     else:
@@ -62,7 +63,7 @@ def bandit(generations):
     keep_reading = 5
     base_mutate = 0
     multiple_mutates = True
-    exec_thing = 3
+    exec_thing = 'xor'
     plasticity = False
 
     x_factor = 8
@@ -194,6 +195,8 @@ def bandit(generations):
                 execfile("../methods/exec_bandit2.py", globals())
             elif exec_thing == 3:
                 execfile("../methods/exec_bandit3.py", globals())
+            elif exec_thing == 'xor':
+                execfile("../methods/exec_xor.py", globals())
             else:
                 execfile("../methods/exec_breakout.py", globals())
 

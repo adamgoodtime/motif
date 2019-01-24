@@ -216,6 +216,11 @@ def xor_test(connections, arms, split=4, runtime=2000, exposure_time=200, noise_
                     right_input.append(p.Population(1, p.SpikeSourcePoisson(rate=on_rate)))
                 else:
                     right_input.append(p.Population(1, p.SpikeSourcePoisson(rate=off_rate)))
+                # choice = []
+                # choice.append(p.Population(1, p.IF_cond_exp(), label='0_pop{}-{}'.format(input_count, i)))
+                # choice.append(p.Population(1, p.IF_cond_exp(), label='0_pop{}-{}'.format(input_count, i)))
+                output_pop.append(p.Population(2, p.IF_cond_exp(), label='output_pop{}-{}'.format(input_count, i)))
+                output_pop[input_count].record('spikes')
                 if e_size > 0:
                     excite_count += 1
                     excite.append(
@@ -282,19 +287,19 @@ def xor_test(connections, arms, split=4, runtime=2000, exposure_time=200, noise_
                     if len(in_ex) != 0:
                         [plastic, non_plastic] = split_plastic(in_ex)
                         if len(plastic) != 0:
-                            connect_to_arms(bandit[bandit_count], plastic, bandit_arms[bandit_count], 'excitatory',
-                                            True, stdp_model=stdp_model)
+                            connect_inputs(left_input[input_count], right_input[input_count], plastic,
+                                           output_pop[input_count], 'excitatory', True, stdp_model)
                         if len(non_plastic) != 0:
-                            connect_to_arms(bandit[bandit_count], non_plastic, bandit_arms[bandit_count], 'excitatory',
-                                            True, stdp_model=stdp_model)
+                            connect_inputs(left_input[input_count], right_input[input_count], non_plastic,
+                                           output_pop[input_count], 'excitatory', False, stdp_model)
                     if len(in_in) != 0:
                         [plastic, non_plastic] = split_plastic(in_in)
                         if len(plastic) != 0:
-                            connect_to_arms(bandit[bandit_count], plastic, bandit_arms[bandit_count], 'inhibitory',
-                                            True, stdp_model=stdp_model)
+                            connect_inputs(left_input[input_count], right_input[input_count], plastic,
+                                           output_pop[input_count], 'inhibitory', True, stdp_model)
                         if len(non_plastic) != 0:
-                            connect_to_arms(bandit[bandit_count], non_plastic, bandit_arms[bandit_count], 'inhibitory',
-                                            True, stdp_model=stdp_model)
+                            connect_inputs(left_input[input_count], right_input[input_count], non_plastic,
+                                           output_pop[input_count], 'inhibitory', False, stdp_model)
                 if len(e2e) != 0:
                     [plastic, non_plastic] = split_plastic(e2e)
                     if len(plastic) != 0:
@@ -330,19 +335,19 @@ def xor_test(connections, arms, split=4, runtime=2000, exposure_time=200, noise_
                 if len(e2out) != 0:
                     [plastic, non_plastic] = split_plastic(e2out)
                     if len(plastic) != 0:
-                        connect_to_arms(excite[excite_count], plastic, bandit_arms[bandit_count], 'excitatory',
-                                            True, stdp_model=stdp_model)
+                        p.Projection(excite[excite_count], output_pop[input_count], p.FromListConnector(plastic),
+                                     receptor_type='excitatory', synapse_type=stdp_model)
                     if len(non_plastic) != 0:
-                        connect_to_arms(excite[excite_count], non_plastic, bandit_arms[bandit_count], 'excitatory',
-                                            True, stdp_model=stdp_model)
+                        p.Projection(excite[excite_count], output_pop[input_count], p.FromListConnector(non_plastic),
+                                     receptor_type='excitatory')
                 if len(i2out) != 0:
                     [plastic, non_plastic] = split_plastic(i2out)
                     if len(plastic) != 0:
-                        connect_to_arms(inhib[inhib_count], plastic, bandit_arms[bandit_count], 'inhibitory',
-                                            True, stdp_model=stdp_model)
+                        p.Projection(inhib[inhib_count], output_pop[input_count], p.FromListConnector(plastic),
+                                     receptor_type='inhibitory', synapse_type=stdp_model)
                     if len(non_plastic) != 0:
-                        connect_to_arms(inhib[inhib_count], non_plastic, bandit_arms[bandit_count], 'inhibitory',
-                                            True, stdp_model=stdp_model)
+                        p.Projection(inhib[inhib_count], output_pop[input_count], p.FromListConnector(non_plastic),
+                                     receptor_type='inhibitory', synapse_type=stdp_model)
 
         print "\nfinished connections seed = ", seed, "\n"
         simulator = get_simulator()
@@ -408,13 +413,32 @@ def xor_test(connections, arms, split=4, runtime=2000, exposure_time=200, noise_
                 else:
                     inhib_fail += 1
                     print "had an inhib failure"
-            scores.append(get_scores(game_pop=bandit[i - fails], simulator=simulator))
+            spikes = output_pop[i - fails].get_data('spikes').segments[0].spiketrains
+            on_spike = 0
+            off_spike = 0
+            j = 0
+            for neuron in spikes:
+                for spike in neuron:
+                    if j == 0:
+                        off_spike += 1
+                    else:
+                        on_spike += 1
+            if (arms[0] == 1 and arms[1] == 1) or (arms[0] == 0 and arms[1] == 0):
+                if off_spike > on_spike:
+                    scores.append(1)
+                else:
+                    scores.append(0)
+            else:
+                if off_spike < on_spike:
+                    scores.append(1)
+                else:
+                    scores.append(0)
             # pop[i].stats = {'fitness': scores[i][len(scores[i]) - 1][0]}  # , 'steps': 0}
         print "\nfinished spikes", seed
         if spike_f:
-            agent_fitness.append([scores[i][len(scores[i]) - 1][0], excite_spike_count[i] + inhib_spike_count[i]])
+            agent_fitness.append([scores[i], excite_spike_count[i] + inhib_spike_count[i]])
         else:
-            agent_fitness.append(scores[i][len(scores[i]) - 1][0])
+            agent_fitness.append(scores[i])
         # print i, "| e:", excite_spike_count[i], "-i:", inhib_spike_count[i], "|\t", scores[i]
     print seed, "\nThe scores for this run of {} agents are:".format(len(connections))
     for i in range(len(connections)):
