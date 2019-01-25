@@ -26,9 +26,9 @@ import threading
 import pathos.multiprocessing
 from spinn_front_end_common.utilities import globals_variables
 
-max_fail_score = 0  # -int(runtime / exposure_time)
+# max_fail_score = 0  # -int(runtime / exposure_time)
 setup_retry_time = 60
-new_split = 100
+# new_split = agent_pop_size
 
 # stdp_model = p.STDPMechanism(
 #     timing_dependence=p.SpikePairRule(tau_plus=20., tau_minus=20.0, A_plus=0.003, A_minus=0.003),

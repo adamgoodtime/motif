@@ -65,6 +65,7 @@ def bandit(generations):
     multiple_mutates = True
     exec_thing = 'xor'
     plasticity = False
+    free_label = 0
 
     x_factor = 8
     y_factor = 8
@@ -98,6 +99,8 @@ def bandit(generations):
         config += 'multate '
     if noise_rate:
         config += 'n r-w:{}-{} '.format(noise_rate, noise_weight)
+    if free_label:
+        config += '{} '.format(free_label)
 
 
     # check max motif count
@@ -105,7 +108,7 @@ def bandit(generations):
                               no_weight_bins=no_bins,
                               no_delay_bins=no_bins,
                               weight_range=(0.005, weight_max),
-                              # delay_range=(1, 25),
+                              # delay_range=(5., 5.0000001),
                               neuron_types=(['excitatory', 'inhibitory']),
                               io_weight=[inputs, outputs, io_weighting],
                               global_io=('highest', 'seeded', 'in'),
@@ -124,6 +127,7 @@ def bandit(generations):
                               outputs=outputs,
                               elitism=elitism,
                               sexuality=[6./20., 8./20., 3./20., 3./20.],
+                              # sexuality=[7./20., 9./20., 4./20., 0],
                               base_mutate=base_mutate,
                               multiple_mutates=multiple_mutates,
                               # input_shift=0,
@@ -157,7 +161,8 @@ def bandit(generations):
     globals()['x_factor'] = x_factor
     globals()['y_factor'] = y_factor
     globals()['bricking'] = bricking
-    max_fail_score = -int(runtime / exposure_time)
+    globals()['new_split'] = agent_pop_size
+    globals()['max_fail_score'] = max_fail_score = 0  # -int(runtime / exposure_time)
 
     for i in range(generations):
 
