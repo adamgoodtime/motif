@@ -33,7 +33,6 @@ def bandit(generations):
             [0.1, 0.1, 0.1, 0.2, top_prob, 0.2, 0.3, 0.2], [0.1, 0.2, 0.1, 0.2, 0.2, top_prob, 0.1, 0.3],
             [0.2, 0.1, 0.3, 0.1, 0.2, 0.1, top_prob, 0.2], [0.1, 0.3, 0.2, 0.2, 0.1, 0.2, 0.1, top_prob]]
     # '''
-    arms = [[0, 0], [0, 1], [1, 0], [1, 1]]
     if isinstance(arms[0], list):
         number_of_arms = len(arms[0])
     else:
@@ -47,11 +46,12 @@ def bandit(generations):
     reward = 1
     noise_rate = 0
     noise_weight = 0.01
-    maximum_depth = [7, 30]
-    no_bins = [7, 75]
+
+    maximum_depth = [4, 30]
+    no_bins = [10, 75]
     reset_pop = 0
     size_fitness = False
-    spikes_fitness = False
+    spikes_fitness = True
     shape_fitness = True
     random_arms = 0
     viable_parents = 0.2
@@ -64,8 +64,10 @@ def bandit(generations):
     base_mutate = 0
     multiple_mutates = True
     exec_thing = 'xor'
-    plasticity = False
+    plasticity = True
     free_label = 0
+
+    max_fail_score = 0
 
     x_factor = 8
     y_factor = 8
@@ -75,6 +77,15 @@ def bandit(generations):
         inputs = (160 / x_factor) * (128 / y_factor)
         outputs = 2
         config = 'bout {}-{}:{} '.format(x_factor, y_factor, bricking)
+    elif exec_thing == 'xor':
+        arms = [[0, 0], [0, 1], [1, 0], [1, 1]]
+        config = 'xor '
+        inputs = 2
+        if reward == 1:
+            outputs = 2
+        else:
+            outputs = 1
+        max_fail_score = -1
     else:
         inputs = 2
         outputs = number_of_arms
@@ -108,7 +119,7 @@ def bandit(generations):
                               no_weight_bins=no_bins,
                               no_delay_bins=no_bins,
                               weight_range=(0.005, weight_max),
-                              # delay_range=(5., 5.0000001),
+                              # delay_range=(10., 10.0000001),
                               neuron_types=(['excitatory', 'inhibitory']),
                               io_weight=[inputs, outputs, io_weighting],
                               global_io=('highest', 'seeded', 'in'),
@@ -162,7 +173,7 @@ def bandit(generations):
     globals()['y_factor'] = y_factor
     globals()['bricking'] = bricking
     globals()['new_split'] = agent_pop_size
-    globals()['max_fail_score'] = max_fail_score = 0  # -int(runtime / exposure_time)
+    globals()['max_fail_score'] = max_fail_score  # -int(runtime / exposure_time)
 
     for i in range(generations):
 

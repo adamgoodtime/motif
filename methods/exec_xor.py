@@ -166,6 +166,7 @@ def connect_inputs(left, right, from_list, post_pop, r_type, plastic, stdp_model
 def xor_test(connections, arms, split=4, runtime=2000, exposure_time=200, noise_rate=100, noise_weight=0.01,
                 reward=0, spike_f=False, seed=0):
     np.random.seed(seed)
+    seed = [seed, arms[0], arms[1]]
     sleep = 10 * np.random.random()
     # time.sleep(sleep)
     on_rate = 15
@@ -209,13 +210,13 @@ def xor_test(connections, arms, split=4, runtime=2000, exposure_time=200, noise_
             else:
                 input_count += 1
                 if arms[0] == 1:
-                    left_input.append(p.Population(1, p.SpikeSourcePoisson(rate=on_rate)))
+                    left_input.append(p.Population(1, p.SpikeSourcePoisson(rate=on_rate), label='left on'))
                 else:
-                    left_input.append(p.Population(1, p.SpikeSourcePoisson(rate=off_rate)))
+                    left_input.append(p.Population(1, p.SpikeSourcePoisson(rate=off_rate), label='left off'))
                 if arms[1] == 1:
-                    right_input.append(p.Population(1, p.SpikeSourcePoisson(rate=on_rate)))
+                    right_input.append(p.Population(1, p.SpikeSourcePoisson(rate=on_rate), label='right on'))
                 else:
-                    right_input.append(p.Population(1, p.SpikeSourcePoisson(rate=off_rate)))
+                    right_input.append(p.Population(1, p.SpikeSourcePoisson(rate=off_rate), label='right off'))
                 # choice = []
                 # choice.append(p.Population(1, p.IF_cond_exp(), label='0_pop{}-{}'.format(input_count, i)))
                 # choice.append(p.Population(1, p.IF_cond_exp(), label='0_pop{}-{}'.format(input_count, i)))
@@ -357,8 +358,8 @@ def xor_test(connections, arms, split=4, runtime=2000, exposure_time=200, noise_
                 p.end()
                 print "nothing to run so ending and returning fail"
                 return 'fail'
-                p.run(runtime)
-                try_except = max_attempts
+            p.run(runtime)
+            try_except = max_attempts
             break
         except:
             traceback.print_exc()
@@ -389,7 +390,7 @@ def xor_test(connections, arms, split=4, runtime=2000, exposure_time=200, noise_
         if i in failures:
             print "worst score for the failure"
             fails += 1
-            scores.append([[max_fail_score], [max_fail_score], [max_fail_score], [max_fail_score]])
+            scores.append(0)
             # agent_fitness.append(scores[i])
             excite_spike_count[i] -= max_fail_score
             inhib_spike_count[i] -= max_fail_score
@@ -419,36 +420,52 @@ def xor_test(connections, arms, split=4, runtime=2000, exposure_time=200, noise_
             j = 0
             for neuron in spikes:
                 for spike in neuron:
-                    if j == 0:
+                    if j == 1:
                         off_spike += 1
                     else:
                         on_spike += 1
                 j += 1
             if (arms[0] == 1 and arms[1] == 1) or (arms[0] == 0 and arms[1] == 0):
-                if off_spike > on_spike:
-                    scores.append(1)
+                if reward == 1:
+                    if off_spike > on_spike:
+                        scores.append([1, on_spike + off_spike])
+                    elif off_spike < on_spike:
+                        scores.append([0, on_spike + off_spike])
+                    else:
+                        scores.append([-1, on_spike + off_spike])
                 else:
-                    scores.append(0)
+                    if on_spike:
+                        scores.append([-1, on_spike + off_spike])
+                    else:
+                        scores.append([1, on_spike + off_spike])
             else:
-                if off_spike < on_spike:
-                    scores.append(1)
+                if reward == 1:
+                    if off_spike < on_spike:
+                        scores.append([1, on_spike + off_spike])
+                    elif off_spike > on_spike:
+                        scores.append([0, on_spike + off_spike])
+                    else:
+                        scores.append([-1, on_spike + off_spike])
                 else:
-                    scores.append(0)
+                    if on_spike:
+                        scores.append([1, on_spike + off_spike])
+                    else:
+                        scores.append([-1, on_spike + off_spike])
             # pop[i].stats = {'fitness': scores[i][len(scores[i]) - 1][0]}  # , 'steps': 0}
         print "\nfinished spikes", seed
         if spike_f:
-            agent_fitness.append([scores[i], excite_spike_count[i] + inhib_spike_count[i]])
+            agent_fitness.append([scores[i][0], excite_spike_count[i] + inhib_spike_count[i] + scores[i][1]])
         else:
-            agent_fitness.append(scores[i])
+            agent_fitness.append(scores[i][0])
         # print i, "| e:", excite_spike_count[i], "-i:", inhib_spike_count[i], "|\t", scores[i]
     print seed, "\nThe scores for this run of {} agents are:".format(len(connections))
     for i in range(len(connections)):
-        print "c:{}, s:{}, si:{}, si0:{}".format(len(connections), len(scores), len(scores[i]), len(scores[i][0]))
+        print "c:{}, s:{}".format(len(connections), len(scores))
         e_string = "e: {}".format(excite_spike_count[i])
         i_string = "i: {}".format(inhib_spike_count[i])
         score_string = ""
-        for j in range(len(scores[i])):
-            score_string += "{:4},".format(scores[i][j][0])
+        for j in range(scores[i]):
+            score_string += "{:4}".format(scores[i][j])
         print "{:3} | {:8} {:8} - ".format(i, e_string, i_string), score_string
     print "before end = ", seed
     p.end()
@@ -467,7 +484,8 @@ def print_fitnesses(fitnesses):
     #     writer.writerow('', '')
     #     file.close()
 
-
+# xor_test(connections, arms, split=4, runtime=runtime, exposure_time=exposure_time, noise_rate=noise_rate, noise_weight=0.01,
+#                 reward=0, spike_f=False, seed=0)
 
 fitnesses = thread_xor(connections, arms, split, runtime, exposure_time, noise_rate, noise_weight, reward, size_f, spike_f, True)
 

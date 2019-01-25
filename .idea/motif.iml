@@ -4,6 +4,7 @@
     <content url="file://$MODULE_DIR$">
       <excludeFolder url="file://$MODULE_DIR$/experiments/application_generated_data_files" />
       <excludeFolder url="file://$MODULE_DIR$/experiments/reports" />
+      <excludeFolder url="file://$MODULE_DIR$/experiments/runtime data" />
     </content>
     <orderEntry type="jdk" jdkName="Python 2.7" jdkType="Python SDK" />
     <orderEntry type="sourceFolder" forTests="false" />
