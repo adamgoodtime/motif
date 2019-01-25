@@ -390,7 +390,7 @@ def xor_test(connections, arms, split=4, runtime=2000, exposure_time=200, noise_
         if i in failures:
             print "worst score for the failure"
             fails += 1
-            scores.append(0)
+            scores.append([0, 100000])
             # agent_fitness.append(scores[i])
             excite_spike_count[i] -= max_fail_score
             inhib_spike_count[i] -= max_fail_score
@@ -464,7 +464,7 @@ def xor_test(connections, arms, split=4, runtime=2000, exposure_time=200, noise_
         e_string = "e: {}".format(excite_spike_count[i])
         i_string = "i: {}".format(inhib_spike_count[i])
         score_string = ""
-        for j in range(scores[i]):
+        for j in range(len(scores[i])):
             score_string += "{:4}".format(scores[i][j])
         print "{:3} | {:8} {:8} - ".format(i, e_string, i_string), score_string
     print "before end = ", seed
