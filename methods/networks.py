@@ -43,6 +43,7 @@ class motif_population(object):
                  delay_range=(1.0, 25.0),
                  no_delay_bins=7,
                  delay_stdev=3.0,
+                 constant_delays=0,
                  initial_hierarchy_depth=1,
                  max_hierarchy_depth=4,
                  selection_metric='fitness',  # fixed, population based, fitness based
@@ -81,6 +82,7 @@ class motif_population(object):
         delay_bin_range = self.delay_range[1] - self.delay_range[0]
         self.delay_bin_width = delay_bin_range / (self.no_delay_bins - 1)
         self.delay_stdev = delay_stdev
+        self.constant_delays = constant_delays
         self.initial_hierarchy_depth = initial_hierarchy_depth
         self.max_hierarchy_depth = max_hierarchy_depth
         self.selection_metric = selection_metric
@@ -636,6 +638,8 @@ class motif_population(object):
                 except:
                     in_post = literal_eval(conn[1][0].replace('input', '')) + 1
                     post_index = in_post
+            if self.constant_delays:
+                conn[4] = self.constant_delays
             if pre_ex and post_ex:
                 e2e.append((pre_index, post_index, conn[2], conn[3], conn[4]))
             elif pre_ex and post_in:
@@ -951,6 +955,8 @@ class motif_population(object):
                 while list_count < len(new_list):
                     del conn_list[conn_list.index(new_list[list_count])]
                     list_count += 1
+            if self.constant_delays:
+                conn[4] = self.constant_delays
             for conn in new_list:
                 if isinstance(conn[0], list) and isinstance(conn[1], list):
                     if conn[0][2] == 'i':

@@ -27,7 +27,12 @@ def bandit(generations):
         # for arm in list(itertools.permutations([arm1, arm2, arm3])):
         #     arms.append(list(arm))
     # arms = [[0.4, 0.6], [0.6, 0.4], [0.3, 0.7], [0.7, 0.3], [0.2, 0.8], [0.8, 0.2], [0.1, 0.9], [0.9, 0.1]]
+    # arms = [[0.3, 0.7], [0.7, 0.3], [0.2, 0.8], [0.8, 0.2], [0.1, 0.9], [0.9, 0.1], [0, 1], [1, 0]
     '''top_prob = 1
+    0.1 = base prob 1
+    0.2 equals base prob 2
+    etc
+    split node and share inputs but half outputs
     arms = [[0.1, 0.2, top_prob, 0.3, 0.2, 0.1, 0.2, 0.1], [top_prob, 0.1, 0.1, 0.2, 0.3, 0.2, 0.1, 0.2],
             [0.3, top_prob, 0.2, 0.1, 0.1, 0.2, 0.2, 0.1], [0.2, 0.1, 0.1, top_prob, 0.2, 0.3, 0.1, 0.2],
             [0.1, 0.1, 0.1, 0.2, top_prob, 0.2, 0.3, 0.2], [0.1, 0.2, 0.1, 0.2, 0.2, top_prob, 0.1, 0.3],
@@ -38,6 +43,7 @@ def bandit(generations):
     else:
         number_of_arms = len(arms)
 
+    threading_tests = False
     split = 1
 
     agent_pop_size = 100
@@ -51,7 +57,7 @@ def bandit(generations):
     no_bins = [10, 75]
     reset_pop = 0
     size_fitness = False
-    spikes_fitness = True
+    spikes_fitness = False
     shape_fitness = True
     random_arms = 0
     viable_parents = 0.2
@@ -61,13 +67,24 @@ def bandit(generations):
     io_weighting = 1
     read_pop = 0  # 'new_io_motif_easy_3.csv'
     keep_reading = 5
+    constant_delays = 0
     base_mutate = 0
     multiple_mutates = True
-    exec_thing = 'xor'
+    exec_thing = 'arms'
     plasticity = True
     free_label = 0
 
     max_fail_score = 0
+
+    encoding = 0
+    time_increment = 20
+    pole_length = 1
+    pole_angle = 0.1
+    reward_based = 1
+    force_increments = 100
+    max_firing_rate = 50
+    number_of_bins = 30
+    central = 1
 
     x_factor = 8
     y_factor = 8
@@ -89,7 +106,7 @@ def bandit(generations):
     else:
         inputs = 2
         outputs = number_of_arms
-        config = 'bandit-arms:{}-{}-{} '.format(arms[0][0], len(arms), random_arms)
+        config = 'bandit:{}-{}-{} '.format(arms[0][0], len(arms), random_arms)
     if plasticity:
         config += 'pl '
     if averaging_weights:
@@ -110,6 +127,8 @@ def bandit(generations):
         config += 'multate '
     if noise_rate:
         config += 'n r-w:{}-{} '.format(noise_rate, noise_weight)
+    if constant_delays:
+        config += 'delay:{}'.format(constant_delays)
     if free_label:
         config += '{} '.format(free_label)
 
@@ -119,6 +138,7 @@ def bandit(generations):
                               no_weight_bins=no_bins,
                               no_delay_bins=no_bins,
                               weight_range=(0.005, weight_max),
+                              constant_delays=constant_delays,
                               # delay_range=(10., 10.0000001),
                               neuron_types=(['excitatory', 'inhibitory']),
                               io_weight=[inputs, outputs, io_weighting],
@@ -159,7 +179,35 @@ def bandit(generations):
 
     globals()['pop_size'] = agent_pop_size
     globals()['config'] = config
+    globals()['inputs'] = inputs
+    globals()['outputs'] = outputs
+    globals()['threading_tests'] = threading_tests
     # globals()['connections'] = connections
+    # experimental_data = {}
+    # experimental_data['arms'] = arms
+    # experimental_data['split'] = split
+    # experimental_data['runtime'] = runtime
+    # experimental_data['reward'] = reward
+    # experimental_data['noise_rate'] = noise_rate
+    # experimental_data['noise_weight'] = noise_weight
+    # experimental_data['size_f'] = size_fitness
+    # experimental_data['spike_f'] = spikes_fitness
+    # experimental_data['exposure_time'] = exposure_time
+    # experimental_data['encoding'] = encoding
+    # experimental_data['time_increment'] = time_increment
+    # experimental_data['pole_length'] = pole_length
+    # experimental_data['pole_angle'] = pole_angle
+    # experimental_data['reward_based'] = reward_based
+    # experimental_data['force_increments'] = force_increments
+    # experimental_data['max_firing_rate'] = max_firing_rate
+    # experimental_data['number_of_bins'] = number_of_bins
+    # experimental_data['central'] = central
+    # experimental_data['x_factor'] = x_factor
+    # experimental_data['y_factor'] = y_factor
+    # experimental_data['bricking'] = bricking
+    # experimental_data['new_split'] = agent_pop_size
+    # experimental_data['max_fail_score'] = max_fail_score  # -int(runtime / exposure_time)
+    # globals()['experimental_data'] = experimental_data
     globals()['arms'] = arms
     globals()['split'] = split
     globals()['runtime'] = runtime
@@ -169,6 +217,15 @@ def bandit(generations):
     globals()['size_f'] = size_fitness
     globals()['spike_f'] = spikes_fitness
     globals()['exposure_time'] = exposure_time
+    globals()['encoding'] = encoding
+    globals()['time_increment'] = time_increment
+    globals()['pole_length'] = pole_length
+    globals()['pole_angle'] = pole_angle
+    globals()['reward_based'] = reward_based
+    globals()['force_increments'] = force_increments
+    globals()['max_firing_rate'] = max_firing_rate
+    globals()['number_of_bins'] = number_of_bins
+    globals()['central'] = central
     globals()['x_factor'] = x_factor
     globals()['y_factor'] = y_factor
     globals()['bricking'] = bricking
@@ -214,7 +271,8 @@ def bandit(generations):
             elif exec_thing == 'xor':
                 execfile("../methods/exec_xor.py", globals())
             else:
-                execfile("../methods/exec_breakout.py", globals())
+                globals()['exec_thing'] = exec_thing
+                execfile("../methods/exec_general.py", globals())
 
         fitnesses = agents.read_fitnesses(config, max_fail_score)
 
