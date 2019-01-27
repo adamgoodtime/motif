@@ -13,7 +13,7 @@ import numpy as np
 from spinn_bandit.python_models.bandit import Bandit
 # from invertedPendulum.model
 # from spinn_pendulum import Pendulum
-from spinn_pendulum.python_models.pendulum import Pendulum
+from python_models.pendulum import Pendulum
 # from python_models.pendulum import Pendulum
 # from python_models.pendulum import Pendulum
 from spinn_arm.python_models.arm import Arm
