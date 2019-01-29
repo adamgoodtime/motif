@@ -211,7 +211,8 @@ def pop_test(connections, test_data, split=4, runtime=2000, exposure_time=200, n
                                            force_increments=force_increments,
                                            max_firing_rate=max_firing_rate,
                                            number_of_bins=number_of_bins,
-                                           central=central,                
+                                           central=central,
+                                           rand_seed=[np.random.randint(0xffff) for i in range(4)],
                                            label='pendulum_pop_{}-{}'.format(model_count, i))
                 elif exec_thing == 'bout':
                     input_model = Breakout(x_factor=x_factor,

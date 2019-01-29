@@ -27,7 +27,7 @@ def bandit(generations):
         # for arm in list(itertools.permutations([arm1, arm2, arm3])):
         #     arms.append(list(arm))
     # arms = [[0.4, 0.6], [0.6, 0.4], [0.3, 0.7], [0.7, 0.3], [0.2, 0.8], [0.8, 0.2], [0.1, 0.9], [0.9, 0.1]]
-    # arms = [[0.3, 0.7], [0.7, 0.3], [0.2, 0.8], [0.8, 0.2], [0.1, 0.9], [0.9, 0.1], [0, 1], [1, 0]
+    arms = [[0.3, 0.7], [0.7, 0.3], [0.2, 0.8], [0.8, 0.2], [0.1, 0.9], [0.9, 0.1], [0, 1], [1, 0]]
     '''top_prob = 1
     0.1 = base prob 1
     0.2 equals base prob 2
@@ -62,7 +62,7 @@ def bandit(generations):
     random_arms = 0
     viable_parents = 0.2
     elitism = 0.2
-    runtime = 1000
+    runtime = 41000
     exposure_time = 200
     io_weighting = 1
     read_pop = 0  # 'new_io_motif_easy_3.csv'
@@ -79,7 +79,7 @@ def bandit(generations):
     encoding = 0
     time_increment = 20
     pole_length = 1
-    pole_angle = 0.1
+    pole_angle = 2.6
     reward_based = 1
     force_increments = 100
     max_firing_rate = 50
@@ -93,7 +93,7 @@ def bandit(generations):
     if exec_thing == 'br':
         inputs = (160 / x_factor) * (128 / y_factor)
         outputs = 2
-        config = 'bout {}-{}:{} '.format(x_factor, y_factor, bricking)
+        config = 'bout {}-{}-{} '.format(x_factor, y_factor, bricking)
     elif exec_thing == 'xor':
         arms = [[0, 0], [0, 1], [1, 0], [1, 1]]
         config = 'xor '
@@ -106,7 +106,7 @@ def bandit(generations):
     else:
         inputs = 2
         outputs = number_of_arms
-        config = 'bandit:{}-{}-{} '.format(arms[0][0], len(arms), random_arms)
+        config = 'bandit-{}-{}-{} '.format(arms[0][0], len(arms), random_arms)
     if plasticity:
         config += 'pl '
     if averaging_weights:
@@ -120,15 +120,15 @@ def bandit(generations):
     if shape_fitness:
         config += 'shape_f '
     if reset_pop:
-        config += 'reset:{} '.format(reset_pop)
+        config += 'reset-{} '.format(reset_pop)
     if base_mutate:
-        config += 'mute:{} '.format(base_mutate)
+        config += 'mute-{} '.format(base_mutate)
     if multiple_mutates:
         config += 'multate '
     if noise_rate:
-        config += 'n r-w:{}-{} '.format(noise_rate, noise_weight)
+        config += 'n r-w-{}-{} '.format(noise_rate, noise_weight)
     if constant_delays:
-        config += 'delay:{}'.format(constant_delays)
+        config += 'delay-{}'.format(constant_delays)
     if free_label:
         config += '{} '.format(free_label)
 
@@ -166,16 +166,16 @@ def bandit(generations):
                               maximum_depth=maximum_depth,
                               viable_parents=viable_parents)
 
-    config += "ex:{}, reward:{}, max_d:{}, w_max:{}, rents:{}, elite:{}, psize:{}, bins:{}".format(
+    config += "ex-{}, reward-{}, max_d-{}, w_max-{}, rents-{}, elite-{}, psize-{}, bins-{}".format(
         exec_thing, reward, maximum_depth, weight_max, viable_parents, elitism, agent_pop_size,
         no_bins)
 
     if io_weighting:
-        config += ", io:{}".format(io_weighting)
+        config += ", io-{}".format(io_weighting)
     else:
         config += " {}".format(motifs.global_io[1])
     if read_pop:
-        config += ' read:{}'.format(keep_reading)
+        config += ' read-{}'.format(keep_reading)
 
     globals()['pop_size'] = agent_pop_size
     globals()['config'] = config

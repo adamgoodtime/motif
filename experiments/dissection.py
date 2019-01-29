@@ -18,6 +18,7 @@ import itertools
 # see how each changes with time and how much weight it has
 
 def motif_tracking(file_location, config):
+    create_files = True
     motifs_over_time = []
     weights_over_time = {}
     print '{}/Motif population {}: {}'.format(file_location, 0, config)
@@ -65,121 +66,132 @@ def motif_tracking(file_location, config):
             motifs_over_time.append(weight_dist)
             print "finished ", i
         except:
+            if i == 0:
+                create_files = False
             print "no file to read"
             break
 
-    with open('{}/Motifs over time: {}.csv'.format(file_location, config), 'w') as weight_file:
-        writer = csv.writer(weight_file, delimiter=',', lineterminator='\n')
-        for iteration in motifs_over_time:
-            writer.writerow(iteration)
-            # for motif in iteration:
-            #     writer.writerow(motif)
-        weight_file.close()
+    if create_files:
+        with open('{}/Motifs over time: {}.csv'.format(file_location, config), 'w') as weight_file:
+            writer = csv.writer(weight_file, delimiter=',', lineterminator='\n')
+            for iteration in motifs_over_time:
+                writer.writerow(iteration)
+                # for motif in iteration:
+                #     writer.writerow(motif)
+            weight_file.close()
+        print "finished 0"
 
-    with open('{}/5 Weights over time: {}.csv'.format(file_location, config), 'w') as weight_file:
-        writer = csv.writer(weight_file, delimiter=',', lineterminator='\n')
-        for motif in weights_over_time:
-            data = [motif]
-            entries = 0
-            for weight in weights_over_time[motif]:
-                if weight != 0:
-                    entries += 1
-                data.append(weight)
-            if entries > 5:
-                writer.writerow(data)
-            # for motif in iteration:
-            #     writer.writerow(motif)
-        weight_file.close()
+        with open('{}/meta data/5 Weights over time: {}.csv'.format(file_location, config), 'w') as weight_file:
+            writer = csv.writer(weight_file, delimiter=',', lineterminator='\n')
+            for motif in weights_over_time:
+                data = [motif]
+                entries = 0
+                for weight in weights_over_time[motif]:
+                    if weight != 0:
+                        entries += 1
+                    data.append(weight)
+                if entries > 5:
+                    writer.writerow(data)
+                # for motif in iteration:
+                #     writer.writerow(motif)
+            weight_file.close()
+        print "finished 5"
 
-    with open('{}/10 Weights over time: {}.csv'.format(file_location, config), 'w') as weight_file:
-        writer = csv.writer(weight_file, delimiter=',', lineterminator='\n')
-        for motif in weights_over_time:
-            data = [motif]
-            entries = 0
-            for weight in weights_over_time[motif]:
-                if weight != 0:
-                    entries += 1
-                data.append(weight)
-            if entries > 10:
-                writer.writerow(data)
-            # for motif in iteration:
-            #     writer.writerow(motif)
-        weight_file.close()
+        with open('{}/meta data/10 Weights over time: {}.csv'.format(file_location, config), 'w') as weight_file:
+            writer = csv.writer(weight_file, delimiter=',', lineterminator='\n')
+            for motif in weights_over_time:
+                data = [motif]
+                entries = 0
+                for weight in weights_over_time[motif]:
+                    if weight != 0:
+                        entries += 1
+                    data.append(weight)
+                if entries > 10:
+                    writer.writerow(data)
+                # for motif in iteration:
+                #     writer.writerow(motif)
+            weight_file.close()
+        print "finished 10"
 
-    with open('{}/1 Weights over time: {}.csv'.format(file_location, config), 'w') as weight_file:
-        writer = csv.writer(weight_file, delimiter=',', lineterminator='\n')
-        for motif in weights_over_time:
-            data = [motif]
-            entries = 0
-            for weight in weights_over_time[motif]:
-                if weight != 0:
-                    entries += 1
-                data.append(weight)
-            if entries > 1:
-                writer.writerow(data)
-            # for motif in iteration:
-            #     writer.writerow(motif)
-        weight_file.close()
+        with open('{}/meta data/1 Weights over time: {}.csv'.format(file_location, config), 'w') as weight_file:
+            writer = csv.writer(weight_file, delimiter=',', lineterminator='\n')
+            for motif in weights_over_time:
+                data = [motif]
+                entries = 0
+                for weight in weights_over_time[motif]:
+                    if weight != 0:
+                        entries += 1
+                    data.append(weight)
+                if entries > 1:
+                    writer.writerow(data)
+                # for motif in iteration:
+                #     writer.writerow(motif)
+            weight_file.close()
+        print "finished 1"
 
-    with open('{}/2 Weights over time: {}.csv'.format(file_location, config), 'w') as weight_file:
-        writer = csv.writer(weight_file, delimiter=',', lineterminator='\n')
-        for motif in weights_over_time:
-            data = [motif]
-            entries = 0
-            for weight in weights_over_time[motif]:
-                if weight != 0:
-                    entries += 1
-                data.append(weight)
-            if entries > 2:
-                writer.writerow(data)
-            # for motif in iteration:
-            #     writer.writerow(motif)
-        weight_file.close()
+        with open('{}/meta data/2 Weights over time: {}.csv'.format(file_location, config), 'w') as weight_file:
+            writer = csv.writer(weight_file, delimiter=',', lineterminator='\n')
+            for motif in weights_over_time:
+                data = [motif]
+                entries = 0
+                for weight in weights_over_time[motif]:
+                    if weight != 0:
+                        entries += 1
+                    data.append(weight)
+                if entries > 2:
+                    writer.writerow(data)
+                # for motif in iteration:
+                #     writer.writerow(motif)
+            weight_file.close()
+        print "finished 2"
 
-    with open('{}/20 Weights over time: {}.csv'.format(file_location, config), 'w') as weight_file:
-        writer = csv.writer(weight_file, delimiter=',', lineterminator='\n')
-        for motif in weights_over_time:
-            data = [motif]
-            entries = 0
-            for weight in weights_over_time[motif]:
-                if weight != 0:
-                    entries += 1
-                data.append(weight)
-            if entries > 20:
-                writer.writerow(data)
-            # for motif in iteration:
-            #     writer.writerow(motif)
-        weight_file.close()
+        with open('{}/meta data/20 Weights over time: {}.csv'.format(file_location, config), 'w') as weight_file:
+            writer = csv.writer(weight_file, delimiter=',', lineterminator='\n')
+            for motif in weights_over_time:
+                data = [motif]
+                entries = 0
+                for weight in weights_over_time[motif]:
+                    if weight != 0:
+                        entries += 1
+                    data.append(weight)
+                if entries > 20:
+                    writer.writerow(data)
+                # for motif in iteration:
+                #     writer.writerow(motif)
+            weight_file.close()
+        print "finished 20"
 
-    with open('{}/50 Weights over time: {}.csv'.format(file_location, config), 'w') as weight_file:
-        writer = csv.writer(weight_file, delimiter=',', lineterminator='\n')
-        for motif in weights_over_time:
-            data = [motif]
-            entries = 0
-            for weight in weights_over_time[motif]:
-                if weight != 0:
-                    entries += 1
-                data.append(weight)
-            if entries > 50:
-                writer.writerow(data)
-            # for motif in iteration:
-            #     writer.writerow(motif)
-        weight_file.close()
+        with open('{}/meta data/50 Weights over time: {}.csv'.format(file_location, config), 'w') as weight_file:
+            writer = csv.writer(weight_file, delimiter=',', lineterminator='\n')
+            for motif in weights_over_time:
+                data = [motif]
+                entries = 0
+                for weight in weights_over_time[motif]:
+                    if weight != 0:
+                        entries += 1
+                    data.append(weight)
+                if entries > 50:
+                    writer.writerow(data)
+                # for motif in iteration:
+                #     writer.writerow(motif)
+            weight_file.close()
+        print "finished 50"
 
-    with open('{}/100 Weights over time: {}.csv'.format(file_location, config), 'w') as weight_file:
-        writer = csv.writer(weight_file, delimiter=',', lineterminator='\n')
-        for motif in weights_over_time:
-            data = [motif]
-            entries = 0
-            for weight in weights_over_time[motif]:
-                if weight != 0:
-                    entries += 1
-                data.append(weight)
-            if entries > 100:
-                writer.writerow(data)
-            # for motif in iteration:
-            #     writer.writerow(motif)
-        weight_file.close()
+        with open('{}/meta data/100 Weights over time: {}.csv'.format(file_location, config), 'w') as weight_file:
+            writer = csv.writer(weight_file, delimiter=',', lineterminator='\n')
+            for motif in weights_over_time:
+                data = [motif]
+                entries = 0
+                for weight in weights_over_time[motif]:
+                    if weight != 0:
+                        entries += 1
+                    data.append(weight)
+                if entries > 100:
+                    writer.writerow(data)
+                # for motif in iteration:
+                #     writer.writerow(motif)
+            weight_file.close()
+        print "finished 100"
 
 def read_motif(motif_id, iteration, file_location, config):
     motifs = motif_population(max_motif_size=3,
@@ -214,9 +226,11 @@ def mutate_anal(file_location, config):
     mutate_track['param_d'] = []
     mutate_track['in_shift'] = []
     mutate_track['out_shift'] = []
+    mutate_track['plasticity'] = []
     mutate_track['sex'] = []
     mutate_track['asex'] = []
     mutate_track['both'] = []
+    mutate_track['fresh'] = []
     for i in range(3000):
         try:
             with open('{}/mutate keys for {}: {}.csv'.format(file_location, i, config)) as mutate_file:
@@ -248,6 +262,8 @@ def mutate_anal(file_location, config):
                         in_shift = literal_eval(temp[1])
                     elif temp[0] == 'out_shift':
                         out_shift = literal_eval(temp[1])
+                    elif temp[0] == 'plasticity':
+                        plasticity = literal_eval(temp[1])
                     elif temp[0] == 'mum':
                         mum = literal_eval(temp[1])
                         mum_fitness = mum[0]
@@ -314,12 +330,16 @@ def mutate_anal(file_location, config):
                                 mutate_track['in_shift'].append(ave_score_change * in_shift)
                             if param_d:
                                 mutate_track['out_shift'].append(ave_score_change * out_shift)
+                            if plasticity:
+                                mutate_track['plasticity'].append(ave_score_change * plasticity)
                             if sex == 1:
                                 mutate_track['sex'].append(ave_score_change)
                             if sex == 0:
                                 mutate_track['asex'].append(ave_score_change)
                             if sex == 2:
                                 mutate_track['both'].append(ave_score_change)
+                            if sex == 3:
+                                mutate_track['fresh'].append(ave_score_change)
                             if motif:
                                 mutate_track['motif'].append(ave_fitness_change * motif)
                             if new:
@@ -344,12 +364,16 @@ def mutate_anal(file_location, config):
                                 mutate_track['in_shift'].append(ave_fitness_change * in_shift)
                             if param_d:
                                 mutate_track['out_shift'].append(ave_fitness_change * out_shift)
+                            if plasticity:
+                                mutate_track['plasticity'].append(ave_fitness_change * plasticity)
                             if sex == 1:
                                 mutate_track['sex'].append(ave_fitness_change)
                             if sex == 0:
                                 mutate_track['asex'].append(ave_fitness_change)
                             if sex == 2:
                                 mutate_track['both'].append(ave_fitness_change)
+                            if sex == 3:
+                                mutate_track['fresh'].append(ave_fitness_change)
                             motif = 0
                             nen = 0
                             io = 0
@@ -370,7 +394,7 @@ def mutate_anal(file_location, config):
             traceback.print_exc()
             print "no more files or bad config"
             if i > 10:
-                with open('{}/Mutate over time: {}.csv'.format(file_location, config), 'w') as mutate_file:
+                with open('{}/meta data/Mutate over time: {}.csv'.format(file_location, config), 'w') as mutate_file:
                     writer = csv.writer(mutate_file, delimiter=',', lineterminator='\n')
                     row = []
                     for operator in mutate_track:
@@ -396,87 +420,143 @@ def mutate_anal(file_location, config):
                     mutate_file.close()
             break
 
-file_location = 'runtime data/The start of screen and good results'
-file_location = 'runtime data/spalloc fails with really good 0.6'
-file_location = 'runtime data/long run of both branches on hard 3 arm problem/io_motif'
-file_location = 'runtime data/io_shift'
+
+file_location = 'runtime data/First of good runs and exploring down to 0.85'
+
+io_weight = 1
 
 weight_max = 0.1
 
-arm1 = 0.98
-arm2 = 0.01
-arm3 = 0.01
-arm_len = 1
+arm1 = 0.85
+arm2 = 0.15
+# arm3 = 0.1
+arm_len = 3
 arms = []
 for i in range(arm_len):
-    # arms.append([arm1, arm2])
-    # arms.append([arm2, arm1])
-    for arm in list(itertools.permutations([arm1, arm2, arm3])):
-        arms.append(list(arm))
+    arms.append([arm1, arm2])
+    arms.append([arm2, arm1])
+    # for arm in list(itertools.permutations([arm1, arm2, arm3])):
+    #     arms.append(list(arm))
 # arms = [[0.4, 0.6], [0.6, 0.4], [0.3, 0.7], [0.7, 0.3], [0.2, 0.8], [0.8, 0.2], [0.1, 0.9], [0.9, 0.1]]
+# arms = [[0.3, 0.7], [0.7, 0.3], [0.2, 0.8], [0.8, 0.2], [0.1, 0.9], [0.9, 0.1], [0, 1], [1, 0]
+'''top_prob = 1
+0.1 = base prob 1
+0.2 equals base prob 2
+etc
+split node and share inputs but half outputs
+arms = [[0.1, 0.2, top_prob, 0.3, 0.2, 0.1, 0.2, 0.1], [top_prob, 0.1, 0.1, 0.2, 0.3, 0.2, 0.1, 0.2],
+        [0.3, top_prob, 0.2, 0.1, 0.1, 0.2, 0.2, 0.1], [0.2, 0.1, 0.1, top_prob, 0.2, 0.3, 0.1, 0.2],
+        [0.1, 0.1, 0.1, 0.2, top_prob, 0.2, 0.3, 0.2], [0.1, 0.2, 0.1, 0.2, 0.2, top_prob, 0.1, 0.3],
+        [0.2, 0.1, 0.3, 0.1, 0.2, 0.1, top_prob, 0.2], [0.1, 0.3, 0.2, 0.2, 0.1, 0.2, 0.1, top_prob]]
+# '''
 if isinstance(arms[0], list):
     number_of_arms = len(arms[0])
 else:
     number_of_arms = len(arms)
 
+threading_tests = False
+split = 1
+
 agent_pop_size = 100
 reward_shape = False
-reward = 1
+averaging_weights = True
+reward = 0
 noise_rate = 0
-noise_weight = 0.215
-maximum_depth = 10
+noise_weight = 0.01
+
+maximum_depth = [4, 30]
+no_bins = [10, 75]
+reset_pop = 0
 size_fitness = False
 spikes_fitness = False
+shape_fitness = True
 random_arms = 0
 viable_parents = 0.2
 elitism = 0.2
 runtime = 41000
 exposure_time = 200
-io_weight = 1
-read_pop = 0 #'new_io_motif_easy_3.csv'
+io_weighting = 1
+read_pop = 0  # 'new_io_motif_easy_3.csv'
 keep_reading = 5
+constant_delays = 0
 base_mutate = 0
+multiple_mutates = True
+exec_thing = 3
+plasticity = False
+free_label = 'base 2'
 
-x_factor = 0
+max_fail_score = 0
+
+encoding = 0
+time_increment = 20
+pole_length = 1
+pole_angle = 2.6
+reward_based = 1
+force_increments = 100
+max_firing_rate = 50
+number_of_bins = 30
+central = 1
+'status for bandit-arms:0.85-6-0 ave shape_f multate base 2 ex:3, reward:0, max_d:[4, 30], w_max:0.1, rents:0.2, elite:0.2, psize:100, bins:[10, 75], io:1'
+x_factor = 8
 y_factor = 8
 bricking = 0
 
-if x_factor:
+if exec_thing == 'br':
     inputs = (160 / x_factor) * (128 / y_factor)
     outputs = 2
-    config = 'breakout {}/{}:{} '.format(x_factor, y_factor, bricking)
+    config = 'bout {}-{}:{} '.format(x_factor, y_factor, bricking)
+elif exec_thing == 'xor':
+    arms = [[0, 0], [0, 1], [1, 0], [1, 1]]
+    config = 'xor '
+    inputs = 2
+    if reward == 1:
+        outputs = 2
+    else:
+        outputs = 1
+    max_fail_score = -1
 else:
     inputs = 2
     outputs = number_of_arms
-    config = 'bandit '
+    config = 'bandit-arms:{}-{}-{} '.format(arms[0][0], len(arms), random_arms)
+if plasticity:
+    config += 'pl '
+if averaging_weights:
+    config += 'ave '
+if spikes_fitness:
+    config += 'spikes '
+if size_fitness:
+    config += 'size '
+if reward_shape:
+    config += 'shape_r '
+if shape_fitness:
+    config += 'shape_f '
+if reset_pop:
+    config += 'reset:{} '.format(reset_pop)
+if base_mutate:
+    config += 'mute:{} '.format(base_mutate)
+if multiple_mutates:
+    config += 'multate '
+if noise_rate:
+    config += 'n r-w:{}-{} '.format(noise_rate, noise_weight)
+if constant_delays:
+    config += 'delay:{}'.format(constant_delays)
+if free_label:
+    config += '{} '.format(free_label)
 
-# mutate keys for 0: bandit reward_shape:False, reward:0, noise r-w:0-0.01, arms:[0.6, 0.4]-8-0, max_d5, size:False, spikes:False, w_max0.1, rents0.01.csv
-# mutate keys for 33: bandit reward_shape:False, reward:0, noise r-w:0-0.016789, arms:[0.4, 0.6]-8-0, max_d4, size:False, spikes:False, w_max0.1.csv
-# mutate keys for 0: bandit reward_shape:False, reward:0, noise r-w:0-0.016789, arms:[0.4, 0.6]-8-0, max_d4, size:False, spikes:False, w_max0.1.csv
-# mutate keys for 41: bandit reward_shape:False, reward:0, noise r-w:0-0.016789, arms:[0.4, 0.6]-8-0, max_d4, size:False, spikes:False, w_max0.1.csv
-# runtime data/spalloc fails with really good 0.6/mutate keys for 34: bandit reward_shape:False, reward:0, noise r-w:0-0.01, arms:[0.7, 0.3]-8-0, max_d5, size:False, spikes:False, w_max0.1, rents1.csv
-#experiments/runtime data/long run of both branches on hard 3 arm problem/io_motif/mutate keys for 177: bandit reward_shape:False, reward:1, noise r-w:0-0.01, arms:[0.9, 0.1, 0.1]-6-0, max_d:10, size:False, spikes:False, w_max:0.1, rents:0.3, elitism:0.3, pop_size:100, io:1.csv
-# config = "bandit reward_shape:{}, reward:{}, noise r-w:{}-{}, arms:{}-{}-{}, max_d{}, size:{}, spikes:{}, w_max{}, rents{}".format(
-#     reward_shape, reward, noise_rate, noise_weight, arms[0], len(arms), random_arms, maximum_depth, size_fitness, spikes_fitness, weight_max, viable_parents)
+config += "ex:{}, reward:{}, max_d:{}, w_max:{}, rents:{}, elite:{}, psize:{}, bins:{}".format(
+        exec_thing, reward, maximum_depth, weight_max, viable_parents, elitism, agent_pop_size,
+        no_bins)
 
-if io_weight:
-    config += "reward_shape:{}, reward:{}, noise r-w:{}-{}, arms:{}-{}-{}, max_d:{}, size:{}, spikes:{}, " \
-              "w_max:{}, rents:{}, elitism:{}, pop_size:{}, io:{}".format(
-        reward_shape, reward, noise_rate, noise_weight, arms[0], len(arms), random_arms, maximum_depth,
-        size_fitness, spikes_fitness, weight_max, viable_parents, elitism, agent_pop_size,
-        io_weight)
+if io_weighting:
+    config += ", io:{}".format(io_weighting)
 else:
-    config += "reward_shape:{}, reward:{}, noise r-w:{}-{}, arms:{}-{}-{}, max_d:{}, size:{}, spikes:{}, " \
-              "w_max:{}, rents:{}, elitism:{}, pop_size:{}, mutate:{} {}".format(
-        reward_shape, reward, noise_rate, noise_weight, arms[0], len(arms), random_arms, maximum_depth,
-        size_fitness, spikes_fitness, weight_max, viable_parents, elitism, agent_pop_size, base_mutate,
-        motifs.global_io[1])
+    config += " {}".format(motifs.global_io[1])
 if read_pop:
     config += ' read:{}'.format(keep_reading)
-#
+
 # config = "bandit reward_shape:{}, reward:{}, noise r-w:{}-{}, arms:{}-{}-{}, max_d{}, size:{}, spikes:{}, w_max{}".format(
 #     reward_shape, reward, noise_rate, noise_weight, arms[0], len(arms), random_arms, maximum_depth, size_fitness, spikes_fitness, weight_max)
 
 # motif_tracking(file_location, config)
-read_motif('795149', 450, file_location, config)
-# mutate_anal(file_location, config)
+# read_motif('193564', 200, file_location, config)
+mutate_anal(file_location, config)
