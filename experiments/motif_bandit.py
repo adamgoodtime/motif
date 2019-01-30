@@ -43,7 +43,7 @@ def bandit(generations):
     else:
         number_of_arms = len(arms)
 
-    threading_tests = False
+    threading_tests = True
     split = 1
 
     agent_pop_size = 100
@@ -70,8 +70,8 @@ def bandit(generations):
     constant_delays = 0
     base_mutate = 0
     multiple_mutates = True
-    exec_thing = 'arms'
-    plasticity = True
+    exec_thing = 'pen'
+    plasticity = False
     free_label = 0
 
     max_fail_score = 0
@@ -79,7 +79,7 @@ def bandit(generations):
     encoding = 0
     time_increment = 20
     pole_length = 1
-    pole_angle = 2.6
+    pole_angle = 0.1
     reward_based = 1
     force_increments = 100
     max_firing_rate = 50
@@ -94,6 +94,8 @@ def bandit(generations):
         inputs = (160 / x_factor) * (128 / y_factor)
         outputs = 2
         config = 'bout {}-{}-{} '.format(x_factor, y_factor, bricking)
+        test_data_set = 'something'
+        number_of_tests = 'something'
     elif exec_thing == 'xor':
         arms = [[0, 0], [0, 1], [1, 0], [1, 1]]
         config = 'xor '
@@ -103,10 +105,21 @@ def bandit(generations):
         else:
             outputs = 1
         max_fail_score = -1
+        test_data_set = arms
+        number_of_tests = len(arms)
+    elif exec_thing == 'pen':
+        inputs = 4
+        outputs = 2
+        pole_angle = [[0.1], [0.2]]
+        config = 'pend-an{}-F{}-R{} '.format(pole_angle, force_increments, max_firing_rate)
+        test_data_set = pole_angle
+        number_of_tests = len(pole_angle)
     else:
+        test_data_set = arms
         inputs = 2
         outputs = number_of_arms
         config = 'bandit-{}-{}-{} '.format(arms[0][0], len(arms), random_arms)
+        number_of_tests = len(arms)
     if plasticity:
         config += 'pl '
     if averaging_weights:
@@ -182,32 +195,6 @@ def bandit(generations):
     globals()['inputs'] = inputs
     globals()['outputs'] = outputs
     globals()['threading_tests'] = threading_tests
-    # globals()['connections'] = connections
-    # experimental_data = {}
-    # experimental_data['arms'] = arms
-    # experimental_data['split'] = split
-    # experimental_data['runtime'] = runtime
-    # experimental_data['reward'] = reward
-    # experimental_data['noise_rate'] = noise_rate
-    # experimental_data['noise_weight'] = noise_weight
-    # experimental_data['size_f'] = size_fitness
-    # experimental_data['spike_f'] = spikes_fitness
-    # experimental_data['exposure_time'] = exposure_time
-    # experimental_data['encoding'] = encoding
-    # experimental_data['time_increment'] = time_increment
-    # experimental_data['pole_length'] = pole_length
-    # experimental_data['pole_angle'] = pole_angle
-    # experimental_data['reward_based'] = reward_based
-    # experimental_data['force_increments'] = force_increments
-    # experimental_data['max_firing_rate'] = max_firing_rate
-    # experimental_data['number_of_bins'] = number_of_bins
-    # experimental_data['central'] = central
-    # experimental_data['x_factor'] = x_factor
-    # experimental_data['y_factor'] = y_factor
-    # experimental_data['bricking'] = bricking
-    # experimental_data['new_split'] = agent_pop_size
-    # experimental_data['max_fail_score'] = max_fail_score  # -int(runtime / exposure_time)
-    # globals()['experimental_data'] = experimental_data
     globals()['arms'] = arms
     globals()['split'] = split
     globals()['runtime'] = runtime
@@ -231,6 +218,7 @@ def bandit(generations):
     globals()['bricking'] = bricking
     globals()['new_split'] = agent_pop_size
     globals()['max_fail_score'] = max_fail_score  # -int(runtime / exposure_time)
+    globals()['test_data_set'] = test_data_set
 
     for i in range(generations):
 
@@ -282,7 +270,7 @@ def bandit(generations):
             agent_spikes = []
             for k in range(agent_pop_size):
                 spike_total = 0
-                for j in range(len(arms)):
+                for j in range(number_of_tests):
                     if isinstance(fitnesses[j][k], list):
                         spike_total -= fitnesses[j][k][1]
                         fitnesses[j][k] = fitnesses[j][k][0]
@@ -293,7 +281,7 @@ def bandit(generations):
 
         agents.pass_fitnesses(fitnesses, fitness_shaping=shape_fitness)
 
-        agents.status_update(fitnesses, i, config, len(arms))
+        agents.status_update(fitnesses, i, config, number_of_tests)
 
         print "\nconfig: ", config, "\n"
 

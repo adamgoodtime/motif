@@ -74,11 +74,6 @@ def thread_experiments(connections, test_data_set, split=4, runtime=2000, exposu
                   reward=0, size_f=False, spike_f=False, top=True):
     def helper(args):
         return pop_test(*args)
-    
-    if exec_thing == 'bandit':
-        test_data_set = arms
-    else:
-        print 'need to pass data for different tests here'
 
     step_size = len(connections) / split
     if step_size == 0:
@@ -206,7 +201,7 @@ def pop_test(connections, test_data, split=4, runtime=2000, exposure_time=200, n
                     input_model = Pendulum(encoding=encoding,
                                            time_increment=time_increment,
                                            pole_length=pole_length,
-                                           pole_angle=pole_angle,
+                                           pole_angle=test_data[0],
                                            reward_based=reward_based,
                                            force_increments=force_increments,
                                            max_firing_rate=max_firing_rate,
@@ -468,7 +463,7 @@ def print_fitnesses(fitnesses):
     #     file.close()
 
 if threading_tests:
-    fitnesses = thread_experiments(connections, arms, split, runtime, exposure_time, noise_rate, noise_weight,
+    fitnesses = thread_experiments(connections, test_data_set, split, runtime, exposure_time, noise_rate, noise_weight,
                                    reward, size_f, spike_f, True)
 else:
     fitnesses = pop_test(connections, test_data=arms[0], split=split, runtime=runtime, exposure_time=exposure_time,
