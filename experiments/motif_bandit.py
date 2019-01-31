@@ -27,7 +27,7 @@ def bandit(generations):
         # for arm in list(itertools.permutations([arm1, arm2, arm3])):
         #     arms.append(list(arm))
     # arms = [[0.4, 0.6], [0.6, 0.4], [0.3, 0.7], [0.7, 0.3], [0.2, 0.8], [0.8, 0.2], [0.1, 0.9], [0.9, 0.1]]
-    arms = [[0.3, 0.7], [0.7, 0.3], [0.2, 0.8], [0.8, 0.2], [0.1, 0.9], [0.9, 0.1], [0, 1], [1, 0]]
+    arms = [[0.4, 0.6], [0.6, 0.4], [0.3, 0.7], [0.7, 0.3], [0.2, 0.8], [0.8, 0.2], [0.1, 0.9], [0.9, 0.1], [0, 1], [1, 0]]
     '''top_prob = 1
     0.1 = base prob 1
     0.2 equals base prob 2
@@ -83,7 +83,7 @@ def bandit(generations):
     reward_based = 1
     force_increments = 100
     max_firing_rate = 50
-    number_of_bins = 30
+    number_of_bins = 3
     central = 1
 
     x_factor = 8
@@ -170,7 +170,7 @@ def bandit(generations):
                               inputs=inputs,
                               outputs=outputs,
                               elitism=elitism,
-                              sexuality=[6./20., 8./20., 3./20., 3./20.],
+                              sexuality=[7./20., 8./20., 3./20., 2./20.],
                               # sexuality=[7./20., 9./20., 4./20., 0],
                               base_mutate=base_mutate,
                               multiple_mutates=multiple_mutates,

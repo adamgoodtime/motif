@@ -476,7 +476,7 @@ class agent_population(object):
                     config_copy['conn'][i][3] = new_delay
                 mutate_key['param_d'] += 1
             # plasticity
-            if np.random.random() < self.switch_plasticity:
+            if np.random.random() < self.switch_plasticity and self.motifs.plasticity:
                 if config_copy['conn'][i][4] == 'plastic':
                     config_copy['conn'][i][4] = 'non-plastic'
                 else:
@@ -604,9 +604,10 @@ class agent_population(object):
                 if self.motifs.depth_read(child) > self.maximum_depth:
                     child = False
                     print "as3x d"
-                if not self.valid_net(child):
-                    child = False
-                    print "as3x v"
+                if child:
+                    if not self.valid_net(child):
+                        child = False
+                        print "as3x v"
             # create a child by mating 2 selected parents
             elif birthing_type - self.sexuality['asexual'] - self.sexuality['sexual'] < 0:
                 if fitness_shaping:
@@ -620,9 +621,10 @@ class agent_population(object):
                 if self.motifs.depth_read(child) > self.maximum_depth:
                     child = False
                     print "mate d"
-                if not self.valid_net(child):
-                    child = False
-                    print "mate v"
+                if child:
+                    if not self.valid_net(child):
+                        child = False
+                        print "mate v"
             # create a child by first mating 2 parents then mutating the offspring
             elif birthing_type - self.sexuality['asexual'] - self.sexuality['sexual'] - self.sexuality['both'] < 0:
                 if fitness_shaping:
@@ -642,9 +644,10 @@ class agent_population(object):
                     if self.motifs.depth_read(child) > self.maximum_depth:
                         child = False
                         print "both as3x d"
-                if not self.valid_net(child):
-                    child = False
-                    print "both v"
+                if child:
+                    if not self.valid_net(child):
+                        child = False
+                        print "both v"
                 mutate_key['sex'] = 2
             # create a child but creating motifs of motifs
             else:
@@ -654,9 +657,10 @@ class agent_population(object):
                 if self.motifs.depth_read(child) > self.maximum_depth:
                     child = False
                     print "fresh d"
-                if not self.valid_net(child):
-                    child = False
-                    print "fresh v"
+                if child:
+                    if not self.valid_net(child):
+                        child = False
+                        print "fresh v"
             # if a child is created give it a random seed which is used to seed the random selection of inputs and
             # outputs, now a redundant fucntion giving the current mapping of IO
             if child:

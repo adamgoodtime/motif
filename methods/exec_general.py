@@ -63,6 +63,24 @@ def split_plastic(connections):
             non_plastic.append([conn[0], conn[1], conn[2], conn[3]])
     return plastic, non_plastic
 
+def connect_to_arms(pre_pop, from_list, arms, r_type, plastic, stdp_model):
+    arm_conn_list = []
+    for i in range(len(arms)):
+        arm_conn_list.append([])
+    for conn in from_list:
+        arm_conn_list[conn[1]].append((conn[0], 0, conn[2], conn[3]))
+        # print "out:", conn[1]
+        # if conn[1] == 2:
+        #     print '\nit is possible\n'
+    for i in range(len(arms)):
+        if len(arm_conn_list[i]) != 0:
+            if plastic:
+                p.Projection(pre_pop, arms[i], p.FromListConnector(arm_conn_list[i]),
+                             receptor_type=r_type, synapse_type=stdp_model)
+            else:
+                p.Projection(pre_pop, arms[i], p.FromListConnector(arm_conn_list[i]),
+                             receptor_type=r_type)
+
 def get_scores(game_pop, simulator):
     g_vertex = game_pop._vertex
     scores = g_vertex.get_data(
@@ -126,24 +144,6 @@ def thread_experiments(connections, test_data_set, split=4, runtime=2000, exposu
                 test_results.append(connections[i][2] + connections[i][5])
             agent_fitness.append(test_results)
     return agent_fitness
-
-def connect_to_arms(pre_pop, from_list, arms, r_type, plastic, stdp_model):
-    arm_conn_list = []
-    for i in range(len(arms)):
-        arm_conn_list.append([])
-    for conn in from_list:
-        arm_conn_list[conn[1]].append((conn[0], 0, conn[2], conn[3]))
-        # print "out:", conn[1]
-        # if conn[1] == 2:
-        #     print '\nit is possible\n'
-    for i in range(len(arms)):
-        if len(arm_conn_list[i]) != 0:
-            if plastic:
-                p.Projection(pre_pop, arms[i], p.FromListConnector(arm_conn_list[i]),
-                             receptor_type=r_type, synapse_type=stdp_model)
-            else:
-                p.Projection(pre_pop, arms[i], p.FromListConnector(arm_conn_list[i]),
-                             receptor_type=r_type)
 
 def pop_test(connections, test_data, split=4, runtime=2000, exposure_time=200, noise_rate=100, noise_weight=0.01,
                 reward=0, spike_f=False, seed=0):

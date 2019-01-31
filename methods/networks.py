@@ -1009,8 +1009,10 @@ class motif_population(object):
     #     return agent_connections
 
     def convert_individual(self, agent, inputs, outputs):
-            # agent_connections.append(self.read_motif(agent))
-        agent_conn = self.read_motif(agent[0])
+        if isinstance(agent, list):
+            agent_conn = self.read_motif(agent[0])
+        else:
+            agent_conn = self.read_motif(agent)
         if self.io_weight[2]:
             spinn_conn = \
                 self.construct_io(agent_conn, agent[1], inputs, outputs)
