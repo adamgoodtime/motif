@@ -70,13 +70,13 @@ def bandit(generations):
     constant_delays = 0
     base_mutate = 0
     multiple_mutates = True
-    exec_thing = 'arms'
+    exec_thing = 'pen'
     plasticity = False
     free_label = 0
 
     max_fail_score = 0
 
-    encoding = 0
+    encoding = 1
     time_increment = 20
     pole_length = 1
     pole_angle = 0.1
@@ -85,6 +85,7 @@ def bandit(generations):
     max_firing_rate = 50
     number_of_bins = 3
     central = 1
+    bin_overlap = 2
 
     x_factor = 8
     y_factor = 8
@@ -109,9 +110,11 @@ def bandit(generations):
         number_of_tests = len(arms)
     elif exec_thing == 'pen':
         inputs = 4
+        if encoding != 0:
+            inputs *= number_of_bins
         outputs = 2
-        pole_angle = [[0.1], [0.2]]
-        config = 'pend-an{}-F{}-R{} '.format(pole_angle, force_increments, max_firing_rate)
+        pole_angle = [[0.1], [0.2], [-0.1], [-0.2]]
+        config = 'pend-an{}-F{}-R{}-B{} '.format(pole_angle[0], force_increments, max_firing_rate, number_of_bins)
         test_data_set = pole_angle
         number_of_tests = len(pole_angle)
     else:
@@ -213,6 +216,7 @@ def bandit(generations):
     globals()['max_firing_rate'] = max_firing_rate
     globals()['number_of_bins'] = number_of_bins
     globals()['central'] = central
+    globals()['bin_overlap'] = bin_overlap
     globals()['x_factor'] = x_factor
     globals()['y_factor'] = y_factor
     globals()['bricking'] = bricking
