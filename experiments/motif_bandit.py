@@ -70,7 +70,7 @@ def bandit(generations):
     constant_delays = 0
     base_mutate = 0
     multiple_mutates = True
-    exec_thing = 'pen'
+    exec_thing = 'arms'
     plasticity = False
     free_label = 0
 

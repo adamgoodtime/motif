@@ -81,6 +81,45 @@ def connect_to_arms(pre_pop, from_list, arms, r_type, plastic, stdp_model):
                 p.Projection(pre_pop, arms[i], p.FromListConnector(arm_conn_list[i]),
                              receptor_type=r_type)
 
+def connect_neuron_array(pre_pop, post_pop, from_list, r_type, pre_post, plastic, stdp_model):
+    if pre_post == 'pre':
+        for conn in from_list:
+            new_conn = deepcopy(conn)
+            new_conn[0] = 0
+            if plastic:
+                p.Projection(pre_pop[conn[0]], post_pop, p.FromListConnector([new_conn]), 
+                             receptor_type=r_type, synapse_type=stdp_model)
+            else:
+                p.Projection(pre_pop[conn[0]], post_pop, p.FromListConnector([new_conn]), 
+                             receptor_type=r_type)
+    elif pre_post == 'post':
+        for conn in from_list:
+            new_conn = deepcopy(conn)
+            new_conn[1] = 0
+            if plastic:
+                p.Projection(pre_pop, post_pop[conn[1]], p.FromListConnector([new_conn]),
+                             receptor_type=r_type, synapse_type=stdp_model)
+            else:
+                p.Projection(pre_pop, post_pop[conn[1]], p.FromListConnector([new_conn]),
+                             receptor_type=r_type)
+    elif pre_post == 'arms':
+        for conn in from_list:
+            new_conn = deepcopy(conn)
+            new_conn[0] = 0
+            connect_to_arms(pre_pop[conn[0]], [new_conn], post_pop, r_type, plastic, stdp_model)
+    else:
+        for conn in from_list:
+            new_conn = deepcopy(conn)
+            new_conn[0] = 0
+            new_conn[1] = 0
+            if plastic:
+                p.Projection(pre_pop[conn[0]], post_pop[conn[1]], p.FromListConnector([new_conn]),
+                             receptor_type=r_type, synapse_type=stdp_model)
+            else:
+                p.Projection(pre_pop[conn[0]], post_pop[conn[1]], p.FromListConnector([new_conn]),
+                             receptor_type=r_type)
+
+
 def get_scores(game_pop, simulator):
     g_vertex = game_pop._vertex
     scores = g_vertex.get_data(
@@ -239,24 +278,30 @@ def pop_test(connections, test_data, split=4, runtime=2000, exposure_time=200, n
                 input_arms.append(arm_collection)
                 if e_size > 0:
                     excite_count += 1
-                    excite.append(
-                        p.Population(e_size, p.IF_cond_exp(), label='excite_pop_{}-{}'.format(excite_count, i)))
-                    if noise_rate:
-                        excite_noise = p.Population(e_size, p.SpikeSourcePoisson(rate=noise_rate))
-                        p.Projection(excite_noise, excite[excite_count], p.OneToOneConnector(),
-                                     p.StaticSynapse(weight=noise_weight), receptor_type='excitatory')
-                    if spike_f:
-                        excite[excite_count].record('spikes')
+                    excite_pop = []
+                    for neuron in range(e_size):
+                        excite_pop.append(
+                            p.Population(1, p.IF_cond_exp(), label='excite_pop_{}-{}-{}'.format(excite_count, i, neuron)))
+                        if noise_rate:
+                            excite_noise = p.Population(1, p.SpikeSourcePoisson(rate=noise_rate))
+                            p.Projection(excite_noise, excite_pop[neuron], p.OneToOneConnector(),
+                                         p.StaticSynapse(weight=noise_weight), receptor_type='excitatory')
+                        if spike_f:
+                            excite_pop[neuron].record('spikes')
+                    excite.append(excite_pop)
                     excite_marker.append(i)
                 if i_size > 0:
                     inhib_count += 1
-                    inhib.append(p.Population(i_size, p.IF_cond_exp(), label='inhib_pop_{}-{}'.format(inhib_count, i)))
-                    if noise_rate:
-                        inhib_noise = p.Population(i_size, p.SpikeSourcePoisson(rate=noise_rate))
-                        p.Projection(inhib_noise, inhib[inhib_count], p.OneToOneConnector(),
-                                     p.StaticSynapse(weight=noise_weight), receptor_type='excitatory')
-                    if spike_f:
-                        inhib[inhib_count].record('spikes')
+                    inhib_pop = []
+                    for neuron in range(i_size):
+                        inhib_pop.append(p.Population(1, p.IF_cond_exp(), label='inhib_pop_{}-{}-{}'.format(inhib_count, i, neuron)))
+                        if noise_rate:
+                            inhib_noise = p.Population(1, p.SpikeSourcePoisson(rate=noise_rate))
+                            p.Projection(inhib_noise, inhib_pop[neuron], p.OneToOneConnector(),
+                                         p.StaticSynapse(weight=noise_weight), receptor_type='excitatory')
+                        if spike_f:
+                            inhib[inhib_count].record('spikes')
+                    inhib.append(inhib_pop)
                     inhib_marker.append(i)
                 stdp_model = p.STDPMechanism(
                     timing_dependence=p.SpikePairRule(
@@ -267,103 +312,103 @@ def pop_test(connections, test_data, split=4, runtime=2000, exposure_time=200, n
                     if len(in_ex) != 0:
                         [plastic, non_plastic] = split_plastic(in_ex)
                         if len(plastic) != 0:
-                            p.Projection(input_pops[model_count], excite[excite_count], p.FromListConnector(plastic),
-                                         receptor_type='excitatory', synapse_type=stdp_model)
+                            connect_neuron_array(input_pops[model_count], excite[excite_count], plastic, 
+                                                 'excitatory', 'post', True, stdp_model)
                         if len(non_plastic) != 0:
-                            p.Projection(input_pops[model_count], excite[excite_count], p.FromListConnector(non_plastic),
-                                         receptor_type='excitatory')
+                            connect_neuron_array(input_pops[model_count], excite[excite_count], non_plastic, 
+                                                 'excitatory', 'post', False, None)
                     if len(in_in) != 0:
                         [plastic, non_plastic] = split_plastic(in_in)
                         if len(plastic) != 0:
-                            p.Projection(input_pops[model_count], excite[excite_count], p.FromListConnector(plastic),
-                                         receptor_type='inhibitory', synapse_type=stdp_model)
+                            connect_neuron_array(input_pops[model_count], excite[excite_count], plastic, 
+                                                 'inhibitory', 'post', True, stdp_model)
                         if len(non_plastic) != 0:
-                            p.Projection(input_pops[model_count], excite[excite_count], p.FromListConnector(non_plastic),
-                                         receptor_type='inhibitory')
+                            connect_neuron_array(input_pops[model_count], excite[excite_count], non_plastic, 
+                                                 'inhibitory', 'post', False, None)
                 if len(in2i) != 0:
                     [in_ex, in_in] = split_ex_in(in2i)
                     if len(in_ex) != 0:
                         [plastic, non_plastic] = split_plastic(in_ex)
                         if len(plastic) != 0:
-                            p.Projection(input_pops[model_count], inhib[inhib_count], p.FromListConnector(plastic),
-                                         receptor_type='excitatory', synapse_type=stdp_model)
+                            connect_neuron_array(input_pops[model_count], inhib[inhib_count], plastic, 
+                                                 'excitatory', 'post', True, stdp_model)
                         if len(non_plastic) != 0:
-                            p.Projection(input_pops[model_count], inhib[inhib_count], p.FromListConnector(non_plastic),
-                                         receptor_type='excitatory')
+                            connect_neuron_array(input_pops[model_count], inhib[inhib_count], non_plastic, 
+                                                 'excitatory', 'post', False, None)
                     if len(in_in) != 0:
                         [plastic, non_plastic] = split_plastic(in_in)
                         if len(plastic) != 0:
-                            p.Projection(input_pops[model_count], inhib[inhib_count], p.FromListConnector(plastic),
-                                         receptor_type='inhibitory', synapse_type=stdp_model)
+                            connect_neuron_array(input_pops[model_count], inhib[inhib_count], plastic, 
+                                                 'inhibitory', 'post', True, stdp_model)
                         if len(non_plastic) != 0:
-                            p.Projection(input_pops[model_count], inhib[inhib_count], p.FromListConnector(non_plastic),
-                                         receptor_type='inhibitory')
-                if len(in2out) != 0:
-                    [in_ex, in_in] = split_ex_in(in2out)
-                    if len(in_ex) != 0:
-                        [plastic, non_plastic] = split_plastic(in_ex)
-                        if len(plastic) != 0:
-                            connect_to_arms(input_pops[model_count], plastic, input_arms[model_count], 'excitatory',
-                                            True, stdp_model=stdp_model)
-                        if len(non_plastic) != 0:
-                            connect_to_arms(input_pops[model_count], non_plastic, input_arms[model_count], 'excitatory',
-                                            False, stdp_model=stdp_model)
-                    if len(in_in) != 0:
-                        [plastic, non_plastic] = split_plastic(in_in)
-                        if len(plastic) != 0:
-                            connect_to_arms(input_pops[model_count], plastic, input_arms[model_count], 'inhibitory',
-                                            True, stdp_model=stdp_model)
-                        if len(non_plastic) != 0:
-                            connect_to_arms(input_pops[model_count], non_plastic, input_arms[model_count], 'inhibitory',
-                                            False, stdp_model=stdp_model)
+                            connect_neuron_array(input_pops[model_count], inhib[inhib_count], non_plastic, 
+                                                 'inhibitory', 'post', False, None)
+                # if len(in2out) != 0:
+                #     [in_ex, in_in] = split_ex_in(in2out)
+                #     if len(in_ex) != 0:
+                #         [plastic, non_plastic] = split_plastic(in_ex)
+                #         if len(plastic) != 0:
+                #             connect_to_arms(input_pops[model_count], plastic, input_arms[model_count], 'excitatory',
+                #                             True, stdp_model=stdp_model)
+                #         if len(non_plastic) != 0:
+                #             connect_to_arms(input_pops[model_count], non_plastic, input_arms[model_count], 'excitatory',
+                #                             False, stdp_model=stdp_model)
+                #     if len(in_in) != 0:
+                #         [plastic, non_plastic] = split_plastic(in_in)
+                #         if len(plastic) != 0:
+                #             connect_to_arms(input_pops[model_count], plastic, input_arms[model_count], 'inhibitory',
+                #                             True, stdp_model=stdp_model)
+                #         if len(non_plastic) != 0:
+                #             connect_to_arms(input_pops[model_count], non_plastic, input_arms[model_count], 'inhibitory',
+                #                             False, stdp_model=stdp_model)
                 if len(e2e) != 0:
                     [plastic, non_plastic] = split_plastic(e2e)
                     if len(plastic) != 0:
-                        p.Projection(excite[excite_count], excite[excite_count], p.FromListConnector(plastic),
-                                     receptor_type='excitatory', synapse_type=stdp_model)
+                        connect_neuron_array(excite[excite_count], excite[excite_count], plastic, 
+                                             'excitatory', 'both', True, stdp_model)
                     if len(non_plastic) != 0:
-                        p.Projection(excite[excite_count], excite[excite_count], p.FromListConnector(non_plastic),
-                                     receptor_type='excitatory')
+                        connect_neuron_array(excite[excite_count], excite[excite_count], non_plastic,
+                                             'excitatory', 'both', False, None)
                 if len(e2i) != 0:
                     [plastic, non_plastic] = split_plastic(e2i)
                     if len(plastic) != 0:
-                        p.Projection(excite[excite_count], inhib[inhib_count], p.FromListConnector(plastic),
-                                     receptor_type='excitatory', synapse_type=stdp_model)
+                        connect_neuron_array(excite[excite_count], inhib[inhib_count], plastic,
+                                             'excitatory', 'both', True, stdp_model)
                     if len(non_plastic) != 0:
-                        p.Projection(excite[excite_count], inhib[inhib_count], p.FromListConnector(non_plastic),
-                                     receptor_type='excitatory')
+                        connect_neuron_array(excite[excite_count], inhib[inhib_count], non_plastic,
+                                             'excitatory', 'both', False, None)
                 if len(i2e) != 0:
                     [plastic, non_plastic] = split_plastic(i2e)
                     if len(plastic) != 0:
-                        p.Projection(inhib[inhib_count], excite[excite_count], p.FromListConnector(plastic),
-                                     receptor_type='inhibitory', synapse_type=stdp_model)
+                        connect_neuron_array(inhib[inhib_count], excite[excite_count], plastic,
+                                             'inhibitory', 'both', True, stdp_model)
                     if len(non_plastic) != 0:
-                        p.Projection(inhib[inhib_count], excite[excite_count], p.FromListConnector(non_plastic),
-                                     receptor_type='inhibitory')
+                        connect_neuron_array(inhib[inhib_count], excite[excite_count], non_plastic,
+                                             'inhibitory', 'both', False, None)
                 if len(i2i) != 0:
                     [plastic, non_plastic] = split_plastic(i2i)
                     if len(plastic) != 0:
-                        p.Projection(inhib[inhib_count], inhib[inhib_count], p.FromListConnector(plastic),
-                                     receptor_type='inhibitory', synapse_type=stdp_model)
+                        connect_neuron_array(inhib[inhib_count], inhib[inhib_count], plastic,
+                                             'inhibitory', 'both', True, stdp_model)
                     if len(non_plastic) != 0:
-                        p.Projection(inhib[inhib_count], inhib[inhib_count], p.FromListConnector(non_plastic),
-                                     receptor_type='inhibitory')
+                        connect_neuron_array(inhib[inhib_count], inhib[inhib_count], non_plastic,
+                                             'inhibitory', 'both', False, None)
                 if len(e2out) != 0:
                     [plastic, non_plastic] = split_plastic(e2out)
                     if len(plastic) != 0:
-                        connect_to_arms(excite[excite_count], plastic, input_arms[model_count], 'excitatory',
-                                            True, stdp_model=stdp_model)
+                        connect_neuron_array(excite[excite_count], input_arms[model_count], plastic,
+                                             'excitatory', 'arms', True, stdp_model)
                     if len(non_plastic) != 0:
-                        connect_to_arms(excite[excite_count], non_plastic, input_arms[model_count], 'excitatory',
-                                            False, stdp_model=stdp_model)
+                        connect_neuron_array(excite[excite_count], input_arms[model_count], non_plastic,
+                                             'excitatory', 'arms', False, None)
                 if len(i2out) != 0:
                     [plastic, non_plastic] = split_plastic(i2out)
                     if len(plastic) != 0:
-                        connect_to_arms(inhib[inhib_count], plastic, input_arms[model_count], 'inhibitory',
-                                            True, stdp_model=stdp_model)
+                        connect_neuron_array(inhib[inhib_count], input_arms[model_count], plastic,
+                                             'inhibitory', 'arms', True, stdp_model)
                     if len(non_plastic) != 0:
-                        connect_to_arms(inhib[inhib_count], non_plastic, input_arms[model_count], 'inhibitory',
-                                            False, stdp_model=stdp_model)
+                        connect_neuron_array(inhib[inhib_count], input_arms[model_count], non_plastic,
+                                             'inhibitory', 'arms', False, None)
 
         print "\nfinished connections seed = ", seed, "\n"
         simulator = get_simulator()
