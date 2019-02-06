@@ -144,7 +144,7 @@ def bandit(generations):
     if noise_rate:
         config += 'n r-w-{}-{} '.format(noise_rate, noise_weight)
     if constant_delays:
-        config += 'delay-{}'.format(constant_delays)
+        config += 'delay-{} '.format(constant_delays)
     if free_label:
         config += '{} '.format(free_label)
 
