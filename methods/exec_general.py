@@ -398,24 +398,24 @@ def pop_test(connections, test_data, split=4, runtime=2000, exposure_time=200, n
                         if len(non_plastic) != 0:
                             p.Projection(output_pop[model_count], inhib[inhib_count], p.FromListConnector(non_plastic),
                                          receptor_type='inhibitory')
-                # if len(out2in) != 0:
-                #     [in_ex, in_in] = split_ex_in(out2in)
-                #     if len(in_ex) != 0:
-                #         [plastic, non_plastic] = split_plastic(in_ex)
-                #         if len(plastic) != 0:
-                #             p.Projection(output_pop[model_count], input_pops[model_count], p.FromListConnector(plastic),
-                #                          receptor_type='excitatory', synapse_type=stdp_model)
-                #         if len(non_plastic) != 0:
-                #             p.Projection(output_pop[model_count], input_pops[model_count], p.FromListConnector(non_plastic),
-                #                          receptor_type='excitatory')
-                #     if len(in_in) != 0:
-                #         [plastic, non_plastic] = split_plastic(in_in)
-                #         if len(plastic) != 0:
-                #             p.Projection(output_pop[model_count], input_pops[model_count], p.FromListConnector(plastic),
-                #                          receptor_type='inhibitory', synapse_type=stdp_model)
-                #         if len(non_plastic) != 0:
-                #             p.Projection(output_pop[model_count], input_pops[model_count], p.FromListConnector(non_plastic),
-                #                          receptor_type='inhibitory')
+                if len(out2in) != 0:
+                    [in_ex, in_in] = split_ex_in(out2in)
+                    if len(in_ex) != 0:
+                        [plastic, non_plastic] = split_plastic(in_ex)
+                        if len(plastic) != 0:
+                            p.Projection(output_pop[model_count], input_pops[model_count], p.FromListConnector(plastic),
+                                         receptor_type='excitatory', synapse_type=stdp_model)
+                        if len(non_plastic) != 0:
+                            p.Projection(output_pop[model_count], input_pops[model_count], p.FromListConnector(non_plastic),
+                                         receptor_type='excitatory')
+                    if len(in_in) != 0:
+                        [plastic, non_plastic] = split_plastic(in_in)
+                        if len(plastic) != 0:
+                            p.Projection(output_pop[model_count], input_pops[model_count], p.FromListConnector(plastic),
+                                         receptor_type='inhibitory', synapse_type=stdp_model)
+                        if len(non_plastic) != 0:
+                            p.Projection(output_pop[model_count], input_pops[model_count], p.FromListConnector(non_plastic),
+                                         receptor_type='inhibitory')
                 if len(out2out) != 0:
                     [in_ex, in_in] = split_ex_in(out2out)
                     if len(in_ex) != 0:
