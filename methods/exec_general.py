@@ -135,12 +135,12 @@ def thread_experiments(connections, test_data_set, split=4, runtime=2000, exposu
         agent_fitness = []
         for i in range(len(test_data_set)):
             test_results = []
-            for j in range(pop_size):
-                test_results.append(copy_fitness[(i * pop_size) + j])
+            for j in range(agent_pop_size):
+                test_results.append(copy_fitness[(i * agent_pop_size) + j])
             agent_fitness.append(test_results)
         if size_f:
             test_results = []
-            for i in range(pop_size):
+            for i in range(agent_pop_size):
                 test_results.append(connections[i][2] + connections[i][5])
             agent_fitness.append(test_results)
     return agent_fitness
@@ -188,15 +188,6 @@ def pop_test(connections, test_data, split=4, runtime=2000, exposure_time=200, n
                 print "agent {} was not properly connected to the game".format(i)
             else:
                 model_count += 1
-                # removed_prob_arms = [1 for i in range(len(arms))]encoding=default_parameters['encoding'],
-                #                  time_increment=default_parameters['time_increment'],
-                #                  pole_length=default_parameters['pole_length'],
-                #                  pole_angle=default_parameters['pole_angle'],
-                #                  reward_based=default_parameters['reward_based'],
-                #                  force_increments=default_parameters['force_increments'],
-                #                  max_firing_rate=default_parameters['max_firing_rate'],
-                #                  number_of_bins=default_parameters['number_of_bins'],
-                #                  central=default_parameters['central'],
                 if exec_thing == 'pen':
                     # one of these variable can be replaced with test_data depending on what needs to be tested
                     input_model = Pendulum(encoding=encoding,
@@ -209,6 +200,7 @@ def pop_test(connections, test_data, split=4, runtime=2000, exposure_time=200, n
                                            number_of_bins=number_of_bins,
                                            central=central,
                                            bin_overlap=bin_overlap,
+                                           tau_force=tau_force,
                                            rand_seed=[np.random.randint(0xffff) for i in range(4)],
                                            label='pendulum_pop_{}-{}'.format(model_count, i))
                 elif exec_thing == 'bout':

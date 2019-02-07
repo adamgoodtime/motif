@@ -9,87 +9,93 @@ import multiprocessing
 import pathos.multiprocessing
 
 connections = []
+weight_max = 0.1
+
+arm1 = 1
+arm2 = 0
+# arm3 = 0.1
+arm_len = 1
+arms = []
+for i in range(arm_len):
+    arms.append([arm1, arm2])
+    arms.append([arm2, arm1])
+    # for arm in list(itertools.permutations([arm1, arm2, arm3])):
+    #     arms.append(list(arm))
+# arms = [[0.4, 0.6], [0.6, 0.4], [0.3, 0.7], [0.7, 0.3], [0.2, 0.8], [0.8, 0.2], [0.1, 0.9], [0.9, 0.1]]
+arms = [[0.4, 0.6], [0.6, 0.4], [0.3, 0.7], [0.7, 0.3], [0.2, 0.8], [0.8, 0.2], [0.1, 0.9], [0.9, 0.1], [0, 1], [1, 0]]
+'''top_prob = 1
+0.1 = base prob 1
+0.2 equals base prob 2
+etc
+split node and share inputs but half outputs
+arms = [[0.1, 0.2, top_prob, 0.3, 0.2, 0.1, 0.2, 0.1], [top_prob, 0.1, 0.1, 0.2, 0.3, 0.2, 0.1, 0.2],
+        [0.3, top_prob, 0.2, 0.1, 0.1, 0.2, 0.2, 0.1], [0.2, 0.1, 0.1, top_prob, 0.2, 0.3, 0.1, 0.2],
+        [0.1, 0.1, 0.1, 0.2, top_prob, 0.2, 0.3, 0.2], [0.1, 0.2, 0.1, 0.2, 0.2, top_prob, 0.1, 0.3],
+        [0.2, 0.1, 0.3, 0.1, 0.2, 0.1, top_prob, 0.2], [0.1, 0.3, 0.2, 0.2, 0.1, 0.2, 0.1, top_prob]]
+# '''
+if isinstance(arms[0], list):
+    number_of_arms = len(arms[0])
+else:
+    number_of_arms = len(arms)
+
+agent_pop_size = 100
+reward_shape = False
+averaging_weights = True
+reward = 1
+noise_rate = 0
+noise_weight = 0.01
+
+threading_tests = True
+split = 1
+new_split = agent_pop_size
+
+maximum_depth = [4, 30]
+no_bins = [10, 75]
+reset_pop = 0
+size_f = False
+spike_f = True
+shape_fitness = True
+random_arms = 0
+viable_parents = 0.2
+elitism = 0.2
+runtime = 41000
+exposure_time = 200
+io_weighting = 1
+read_pop = 0  # 'new_io_motif_easy_3.csv'
+keep_reading = 5
+constant_delays = 0
+base_mutate = 0
+multiple_mutates = True
+exec_thing = 'pen'
+plasticity = False
+free_label = 0
+
+max_fail_score = 0
+
+encoding = 1
+time_increment = 20
+pole_length = 1
+pole_angle = [[0.1], [0.2], [-0.1], [-0.2]]
+reward_based = 1
+force_increments = 100
+max_firing_rate = 50
+number_of_bins = 3
+central = 1
+bin_overlap = 2
+tau_force = 0
+
+x_factor = 8
+y_factor = 8
+bricking = 0
+
+inputs = 0
+outputs = 0
+test_data_set = []
+config = ''
 
 def bandit(generations):
     print "starting"
-    global connections
-
-    weight_max = 0.1
-
-    arm1 = 1
-    arm2 = 0
-    # arm3 = 0.1
-    arm_len = 1
-    arms = []
-    for i in range(arm_len):
-        arms.append([arm1, arm2])
-        arms.append([arm2, arm1])
-        # for arm in list(itertools.permutations([arm1, arm2, arm3])):
-        #     arms.append(list(arm))
-    # arms = [[0.4, 0.6], [0.6, 0.4], [0.3, 0.7], [0.7, 0.3], [0.2, 0.8], [0.8, 0.2], [0.1, 0.9], [0.9, 0.1]]
-    arms = [[0.4, 0.6], [0.6, 0.4], [0.3, 0.7], [0.7, 0.3], [0.2, 0.8], [0.8, 0.2], [0.1, 0.9], [0.9, 0.1], [0, 1], [1, 0]]
-    '''top_prob = 1
-    0.1 = base prob 1
-    0.2 equals base prob 2
-    etc
-    split node and share inputs but half outputs
-    arms = [[0.1, 0.2, top_prob, 0.3, 0.2, 0.1, 0.2, 0.1], [top_prob, 0.1, 0.1, 0.2, 0.3, 0.2, 0.1, 0.2],
-            [0.3, top_prob, 0.2, 0.1, 0.1, 0.2, 0.2, 0.1], [0.2, 0.1, 0.1, top_prob, 0.2, 0.3, 0.1, 0.2],
-            [0.1, 0.1, 0.1, 0.2, top_prob, 0.2, 0.3, 0.2], [0.1, 0.2, 0.1, 0.2, 0.2, top_prob, 0.1, 0.3],
-            [0.2, 0.1, 0.3, 0.1, 0.2, 0.1, top_prob, 0.2], [0.1, 0.3, 0.2, 0.2, 0.1, 0.2, 0.1, top_prob]]
-    # '''
-    if isinstance(arms[0], list):
-        number_of_arms = len(arms[0])
-    else:
-        number_of_arms = len(arms)
-
-    threading_tests = True
-    split = 1
-
-    agent_pop_size = 100
-    reward_shape = False
-    averaging_weights = True
-    reward = 1
-    noise_rate = 0
-    noise_weight = 0.01
-
-    maximum_depth = [4, 30]
-    no_bins = [10, 75]
-    reset_pop = 0
-    size_fitness = False
-    spikes_fitness = False
-    shape_fitness = True
-    random_arms = 0
-    viable_parents = 0.2
-    elitism = 0.2
-    runtime = 41000
-    exposure_time = 200
-    io_weighting = 1
-    read_pop = 0  # 'new_io_motif_easy_3.csv'
-    keep_reading = 5
-    constant_delays = 0
-    base_mutate = 0
-    multiple_mutates = True
-    exec_thing = 'arms'
-    plasticity = False
-    free_label = 0
-
-    max_fail_score = 0
-
-    encoding = 1
-    time_increment = 20
-    pole_length = 1
-    pole_angle = 0.1
-    reward_based = 1
-    force_increments = 100
-    max_firing_rate = 50
-    number_of_bins = 3
-    central = 1
-    bin_overlap = 2
-
-    x_factor = 8
-    y_factor = 8
-    bricking = 0
+    global connections, arms, max_fail_score, pole_angle, inputs, outputs, config, test_data_set
 
     if exec_thing == 'br':
         inputs = (160 / x_factor) * (128 / y_factor)
@@ -113,8 +119,7 @@ def bandit(generations):
         if encoding != 0:
             inputs *= number_of_bins
         outputs = 2
-        pole_angle = [[0.1], [0.2], [-0.1], [-0.2]]
-        config = 'pend-an{}-F{}-R{}-B{} '.format(pole_angle[0], force_increments, max_firing_rate, number_of_bins)
+        config = 'pend-an{}-{}-F{}-R{}-B{} '.format(pole_angle[0], len(pole_angle), force_increments, max_firing_rate, number_of_bins)
         test_data_set = pole_angle
         number_of_tests = len(pole_angle)
     else:
@@ -127,9 +132,9 @@ def bandit(generations):
         config += 'pl '
     if averaging_weights:
         config += 'ave '
-    if spikes_fitness:
+    if spike_f:
         config += 'spikes '
-    if size_fitness:
+    if size_f:
         config += 'size '
     if reward_shape:
         config += 'shape_r '
@@ -193,37 +198,6 @@ def bandit(generations):
     if read_pop:
         config += ' read-{}'.format(keep_reading)
 
-    globals()['pop_size'] = agent_pop_size
-    globals()['config'] = config
-    globals()['inputs'] = inputs
-    globals()['outputs'] = outputs
-    globals()['threading_tests'] = threading_tests
-    globals()['arms'] = arms
-    globals()['split'] = split
-    globals()['runtime'] = runtime
-    globals()['reward'] = reward
-    globals()['noise_rate'] = noise_rate
-    globals()['noise_weight'] = noise_weight
-    globals()['size_f'] = size_fitness
-    globals()['spike_f'] = spikes_fitness
-    globals()['exposure_time'] = exposure_time
-    globals()['encoding'] = encoding
-    globals()['time_increment'] = time_increment
-    globals()['pole_length'] = pole_length
-    globals()['pole_angle'] = pole_angle
-    globals()['reward_based'] = reward_based
-    globals()['force_increments'] = force_increments
-    globals()['max_firing_rate'] = max_firing_rate
-    globals()['number_of_bins'] = number_of_bins
-    globals()['central'] = central
-    globals()['bin_overlap'] = bin_overlap
-    globals()['x_factor'] = x_factor
-    globals()['y_factor'] = y_factor
-    globals()['bricking'] = bricking
-    globals()['new_split'] = agent_pop_size
-    globals()['max_fail_score'] = max_fail_score  # -int(runtime / exposure_time)
-    globals()['test_data_set'] = test_data_set
-
     for i in range(generations):
 
         print config
@@ -270,7 +244,7 @@ def bandit(generations):
 
         print "1", motifs.total_weight
 
-        if spikes_fitness:
+        if spike_f:
             agent_spikes = []
             for k in range(agent_pop_size):
                 spike_total = 0
