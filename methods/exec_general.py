@@ -11,11 +11,7 @@ import time
 import socket
 import numpy as np
 from spinn_bandit.python_models.bandit import Bandit
-# from invertedPendulum.model
-# from spinn_pendulum import Pendulum
 from python_models.pendulum import Pendulum
-# from python_models.pendulum import Pendulum
-# from python_models.pendulum import Pendulum
 from spinn_arm.python_models.arm import Arm
 from spinn_breakout import Breakout
 import math
@@ -201,19 +197,19 @@ def pop_test(connections, test_data, split=4, runtime=2000, exposure_time=200, n
                                            central=central,
                                            bin_overlap=bin_overlap,
                                            tau_force=tau_force,
-                                           rand_seed=[np.random.randint(0xffff) for i in range(4)],
+                                           rand_seed=[np.random.randint(0xffff) for j in range(4)],
                                            label='pendulum_pop_{}-{}'.format(model_count, i))
                 elif exec_thing == 'bout':
                     input_model = Breakout(x_factor=x_factor,
                                            y_factor=y_factor,
                                            bricking=bricking,
-                                           random_seed=[np.random.randint(0xffff) for i in range(4)],
+                                           random_seed=[np.random.randint(0xffff) for j in range(4)],
                                            label='breakout_pop_{}-{}'.format(model_count, i))
                 else:
                     input_model = Bandit(arms=test_data,
                                          reward_delay=exposure_time,
                                          reward_based=reward,
-                                         rand_seed=[np.random.randint(0xffff) for k in range(4)],
+                                         rand_seed=[np.random.randint(0xffff) for j in range(4)],
                                          label='bandit_pop_{}-{}'.format(model_count, i))
                 input_pop_size = input_model.neurons()
                 input_pops.append(p.Population(input_pop_size, input_model))
@@ -226,6 +222,8 @@ def pop_test(connections, test_data, split=4, runtime=2000, exposure_time=200, n
                                                                       tau_syn_E=0.5,
                                                                       tau_syn_I=0.5),
                                                label='output_pop_{}-{}'.format(model_count, i)))
+                if spike_f == 'out':
+                    output_pop[model_count].record('spikes')
                 p.Projection(output_pop[model_count], input_pops[model_count], p.AllToAllConnector())
                 if e_size > 0:
                     excite_count += 1
@@ -460,6 +458,7 @@ def pop_test(connections, test_data, split=4, runtime=2000, exposure_time=200, n
     excite_fail = 0
     inhib_spike_count = [0 for i in range(len(connections))]
     inhib_fail = 0
+    output_spike_count = [0 for i in range(len(connections))]
     print "reading the spikes of ", config, '\n', seed
     for i in range(len(connections)):
         print "started processing fitness of: ", i, '/', len(connections)
@@ -472,6 +471,11 @@ def pop_test(connections, test_data, split=4, runtime=2000, exposure_time=200, n
             inhib_spike_count[i] -= max_fail_score
         else:
             if spike_f:
+                if spike_f == 'out':
+                    spikes = output_pop[i - fails].get_data('spikes').segments[0].spiketrains
+                    for neuron in spikes:
+                        for spike in neuron:
+                            output_spike_count[i] += 1
                 if i in excite_marker:
                     print "counting excite spikes"
                     spikes = excite[i - excite_fail - fails].get_data('spikes').segments[0].spiketrains
@@ -494,7 +498,7 @@ def pop_test(connections, test_data, split=4, runtime=2000, exposure_time=200, n
             # pop[i].stats = {'fitness': scores[i][len(scores[i]) - 1][0]}  # , 'steps': 0}
         print "\nfinished spikes", seed
         if spike_f:
-            agent_fitness.append([scores[i][len(scores[i]) - 1][0], excite_spike_count[i] + inhib_spike_count[i]])
+            agent_fitness.append([scores[i][len(scores[i]) - 1][0], excite_spike_count[i] + inhib_spike_count[i] + output_spike_count[i]])
         else:
             agent_fitness.append(scores[i][len(scores[i]) - 1][0])
         # print i, "| e:", excite_spike_count[i], "-i:", inhib_spike_count[i], "|\t", scores[i]

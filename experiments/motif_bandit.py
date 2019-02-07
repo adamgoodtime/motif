@@ -53,7 +53,7 @@ maximum_depth = [4, 30]
 no_bins = [10, 75]
 reset_pop = 0
 size_f = False
-spike_f = True
+spike_f = 'out'
 shape_fitness = True
 random_arms = 0
 viable_parents = 0.2
@@ -133,7 +133,10 @@ def bandit(generations):
     if averaging_weights:
         config += 'ave '
     if spike_f:
-        config += 'spikes '
+        if spike_f == 'out':
+            config += 'out-spikes '
+        else:
+            config += 'spikes '
     if size_f:
         config += 'size '
     if reward_shape:
@@ -254,6 +257,7 @@ def bandit(generations):
                         fitnesses[j][k] = fitnesses[j][k][0]
                     else:
                         spike_total -= 1000000
+
                 agent_spikes.append(spike_total)
             fitnesses.append(agent_spikes)
 
