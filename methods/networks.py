@@ -542,7 +542,7 @@ class motif_population(object):
             node_count += 1
         return all_connections
 
-    def construct_io(self, agent_connections, seed, inputs, outputs):
+    def construct_io(self, agent_connections, inputs, outputs):
         indexed_ex = []
         indexed_in = []
         input_count = {}
@@ -1015,7 +1015,7 @@ class motif_population(object):
             agent_conn = self.read_motif(agent)
         if self.io_weight[2]:
             spinn_conn = \
-                self.construct_io(agent_conn, agent[1], inputs, outputs)
+                self.construct_io(agent_conn, inputs, outputs)
         else:
             spinn_conn = \
                 self.construct_connections(agent_conn, agent[1], inputs, outputs)

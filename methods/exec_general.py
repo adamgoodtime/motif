@@ -137,7 +137,7 @@ def thread_experiments(connections, test_data_set, split=4, runtime=2000, exposu
         if size_f:
             test_results = []
             for i in range(agent_pop_size):
-                test_results.append(connections[i][2] + connections[i][5])
+                test_results.append(connections[i][6] + connections[i][9])
             agent_fitness.append(test_results)
     return agent_fitness
 
@@ -216,7 +216,7 @@ def pop_test(connections, test_data, split=4, runtime=2000, exposure_time=200, n
                 # added to ensure that the arms and bandit are connected to and from something
                 null_pop = p.Population(1, p.IF_cond_exp(), label='null{}'.format(i))
                 p.Projection(input_pops[model_count], null_pop, p.AllToAllConnector())
-                output_pop.append(p.Population(outputs, p.IF_cond_exp(tau_m=0.5, # parameters for a fast membrane
+                output_pop.append(p.Population(outputs, p.IF_cond_exp(tau_m=0.5,  # parameters for a fast membrane
                                                                       tau_refrac=0,
                                                                       v_thresh=-64,
                                                                       tau_syn_E=0.5,
