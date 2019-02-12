@@ -44,6 +44,7 @@ averaging_weights = True
 reward = 1
 noise_rate = 0
 noise_weight = 0.01
+fast_membrane = False
 
 threading_tests = True
 split = 1

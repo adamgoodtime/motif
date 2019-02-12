@@ -12,6 +12,7 @@ import socket
 import numpy as np
 from spinn_bandit.python_models.bandit import Bandit
 from python_models.pendulum import Pendulum
+from rank_inverted_pendulum.python_models.rank_pendulum import Rank_Pendulum
 from spinn_arm.python_models.arm import Arm
 from spinn_breakout import Breakout
 import math
@@ -167,6 +168,7 @@ def pop_test(connections, test_data, split=4, runtime=2000, exposure_time=200, n
                 p.setup(timestep=1.0, min_delay=1, max_delay=127)
                 p.set_number_of_neurons_per_core(p.IF_cond_exp, 100)
                 print "\nfinished setup seed = ", seed, "\n"
+                print "test data = ", test_data
                 break
             except:
                 traceback.print_exc()
@@ -185,7 +187,6 @@ def pop_test(connections, test_data, split=4, runtime=2000, exposure_time=200, n
             else:
                 model_count += 1
                 if exec_thing == 'pen':
-                    # one of these variable can be replaced with test_data depending on what needs to be tested
                     input_model = Pendulum(encoding=encoding,
                                            time_increment=time_increment,
                                            pole_length=pole_length,
@@ -199,6 +200,20 @@ def pop_test(connections, test_data, split=4, runtime=2000, exposure_time=200, n
                                            tau_force=tau_force,
                                            rand_seed=[np.random.randint(0xffff) for j in range(4)],
                                            label='pendulum_pop_{}-{}'.format(model_count, i))
+                elif exec_thing == 'rank_pen':
+                    input_model = Rank_Pendulum(encoding=encoding,
+                                                time_increment=time_increment,
+                                                pole_length=pole_length,
+                                                pole_angle=test_data[0],
+                                                reward_based=reward_based,
+                                                force_increments=force_increments,
+                                                max_firing_rate=max_firing_rate,
+                                                number_of_bins=number_of_bins,
+                                                central=central,
+                                                bin_overlap=bin_overlap,
+                                                tau_force=tau_force,
+                                                rand_seed=[np.random.randint(0xffff) for j in range(4)],
+                                                label='rank_pendulum_pop_{}-{}'.format(model_count, i))
                 elif exec_thing == 'bout':
                     input_model = Breakout(x_factor=x_factor,
                                            y_factor=y_factor,
@@ -216,12 +231,16 @@ def pop_test(connections, test_data, split=4, runtime=2000, exposure_time=200, n
                 # added to ensure that the arms and bandit are connected to and from something
                 null_pop = p.Population(1, p.IF_cond_exp(), label='null{}'.format(i))
                 p.Projection(input_pops[model_count], null_pop, p.AllToAllConnector())
-                output_pop.append(p.Population(outputs, p.IF_cond_exp(tau_m=0.5,  # parameters for a fast membrane
-                                                                      tau_refrac=0,
-                                                                      v_thresh=-64,
-                                                                      tau_syn_E=0.5,
-                                                                      tau_syn_I=0.5),
-                                               label='output_pop_{}-{}'.format(model_count, i)))
+                if fast_membrane:
+                    output_pop.append(p.Population(outputs, p.IF_cond_exp(tau_m=0.5,  # parameters for a fast membrane
+                                                                          tau_refrac=0,
+                                                                          v_thresh=-64,
+                                                                          tau_syn_E=0.5,
+                                                                          tau_syn_I=0.5),
+                                                   label='output_pop_{}-{}'.format(model_count, i)))
+                else:
+                    output_pop.append(p.Population(outputs, p.IF_cond_exp(),
+                                                   label='output_pop_{}-{}'.format(model_count, i)))
                 if spike_f == 'out':
                     output_pop[model_count].record('spikes')
                 p.Projection(output_pop[model_count], input_pops[model_count], p.AllToAllConnector())
