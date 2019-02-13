@@ -21,6 +21,5 @@
     <orderEntry type="module" module-name="n_arm_bandit" />
     <orderEntry type="module" module-name="bandit_arm" />
     <orderEntry type="module" module-name="inverted-pendulum" />
-    <orderEntry type="module" module-name="rank-inverted-pendulum" />
   </component>
 </module>
