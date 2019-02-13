@@ -50,7 +50,7 @@ threading_tests = True
 split = 1
 new_split = agent_pop_size
 
-maximum_depth = [4, 30]
+maximum_depth = [4, 10]
 no_bins = [10, 75]
 reset_pop = 0
 size_f = False
@@ -67,20 +67,20 @@ keep_reading = 5
 constant_delays = 0
 base_mutate = 0
 multiple_mutates = True
-exec_thing = 'pen'
+exec_thing = 'rank pen'
 plasticity = False
 free_label = 0
 
 max_fail_score = 0
 
-encoding = 1
+encoding = 0
 time_increment = 20
 pole_length = 1
 pole_angle = [[0.1], [0.2], [-0.1], [-0.2]]
 reward_based = 1
-force_increments = 100
-max_firing_rate = 50
-number_of_bins = 3
+force_increments = 10
+max_firing_rate = 30
+number_of_bins = 6
 central = 1
 bin_overlap = 2
 tau_force = 0
@@ -123,6 +123,12 @@ def bandit(generations):
         config = 'pend-an{}-{}-F{}-R{}-B{} '.format(pole_angle[0], len(pole_angle), force_increments, max_firing_rate, number_of_bins)
         test_data_set = pole_angle
         number_of_tests = len(pole_angle)
+    elif exec_thing == 'rank pen':
+        inputs = 4 * number_of_bins
+        outputs = force_increments
+        config = 'rank-pend-an{}-{}-F{}-R{}-B{}-E{} '.format(pole_angle[0], len(pole_angle), force_increments, max_firing_rate, number_of_bins, encoding)
+        test_data_set = pole_angle
+        number_of_tests = len(pole_angle)
     else:
         test_data_set = arms
         inputs = 2
@@ -161,7 +167,7 @@ def bandit(generations):
 
 
     # check max motif count
-    motifs = motif_population(max_motif_size=3,
+    motifs = motif_population(max_motif_size=maximum_depth[0],
                               no_weight_bins=no_bins,
                               no_delay_bins=no_bins,
                               weight_range=(0.005, weight_max),

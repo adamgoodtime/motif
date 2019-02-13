@@ -200,7 +200,7 @@ def pop_test(connections, test_data, split=4, runtime=2000, exposure_time=200, n
                                            tau_force=tau_force,
                                            rand_seed=[np.random.randint(0xffff) for j in range(4)],
                                            label='pendulum_pop_{}-{}'.format(model_count, i))
-                elif exec_thing == 'rank_pen':
+                elif exec_thing == 'rank pen':
                     input_model = Rank_Pendulum(encoding=encoding,
                                                 time_increment=time_increment,
                                                 pole_length=pole_length,
