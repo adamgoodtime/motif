@@ -120,13 +120,13 @@ def bandit(generations):
         if encoding != 0:
             inputs *= number_of_bins
         outputs = 2
-        config = 'pend-an{}-{}-F{}-R{}-B{} '.format(pole_angle[0], len(pole_angle), force_increments, max_firing_rate, number_of_bins)
+        config = 'pend-an{}-{}-F{}-R{}-B{}-O{} '.format(pole_angle[0], len(pole_angle), force_increments, max_firing_rate, number_of_bins, bin_overlap)
         test_data_set = pole_angle
         number_of_tests = len(pole_angle)
     elif exec_thing == 'rank pen':
         inputs = 4 * number_of_bins
         outputs = force_increments
-        config = 'rank-pend-an{}-{}-F{}-R{}-B{}-E{} '.format(pole_angle[0], len(pole_angle), force_increments, max_firing_rate, number_of_bins, encoding)
+        config = 'rank-pend-an{}-{}-F{}-R{}-B{}-O{}-E{} '.format(pole_angle[0], len(pole_angle), force_increments, max_firing_rate, number_of_bins, bin_overlap, encoding)
         test_data_set = pole_angle
         number_of_tests = len(pole_angle)
     else:
