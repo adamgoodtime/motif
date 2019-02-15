@@ -313,15 +313,11 @@ print "done"
 
 #ToDo
 '''
-crossover
-create a motif for the input/output population that is connected to the reservoir network
-shifting of upper reference needs to be careful of layers larger than 10
-figure out mapping to inputs
-    have a fixed network but synaptic plasticity on IO
-    have a IO metric attached to each motif
-    connect in some fashion inputs/outputs to nodes with no inputs/outputs
-        how to select order IO is chosen
-        the more outgoing/incoming the better
-    force a motif which represents the io 'substrate'
+keep a log of seperate motif components to affect the chance of certain nodes and connects being chosen randomly through mutation
+    a separate population of weights and nodes
+variability in the plasticity rule
+crossover not just random   
+    select motifs based on IO ratio
+    select based on weight
 figure out the disparity between expected possible combinations and actual
 '''
