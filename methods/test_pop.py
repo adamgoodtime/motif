@@ -33,6 +33,7 @@ import subprocess
 import pathos.multiprocessing
 from spinn_front_end_common.utilities import globals_variables
 import argparse
+from ast import literal_eval
 
 
 def split_ex_in(connections):
@@ -83,7 +84,7 @@ def get_scores(game_pop, simulator):
     return scores.tolist()
 
 def pop_test(connections, test_data, split=4, runtime=2000, exposure_time=200, noise_rate=100, noise_weight=0.01,
-                reward=0, spike_f=False, seed=0):
+                reward=0, spike_f=False, exec_thing='bout', seed=0):
     np.random.seed(seed)
     sleep = 10 * np.random.random()
     # time.sleep(sleep)
@@ -478,36 +479,42 @@ def pop_test(connections, test_data, split=4, runtime=2000, exposure_time=200, n
     return agent_fitness
 
 def print_fitnesses(fitnesses):
-    with open('fitnesses {}.csv'.format(config), 'w') as file:
+    with open('fitnesses {} {}.csv'.format(config, test_id), 'w') as file:
         writer = csv.writer(file, delimiter=',', lineterminator='\n')
         for fitness in fitnesses:
             writer.writerow(fitness)
         file.close()
 
 def read_globals(config):
-    read config globals
-    create the variables
-    exec(foo + " = 'something else'")
+    file_name = 'globals {}.csv'.format(config)
+    with open(file_name) as from_file:
+        csvFile = csv.reader(from_file)
+        for row in csvFile:
+            try:
+                globals()[row[0]] = literal_eval(row[1])
+            except:
+                print ""
+                # try:
+                #     globals()[row[0]] = row[1]
+                # except:
+                #     print ""
+                # traceback.print_exc()
+                # break
 
-parser = argparse.ArgumentParser(
-    description='just trying to pass a single number into here',
-formatter_class=argparse.RawTextHelpFormatter)
-args = parser.parse_args()
-test_id = args.test_id
-config = args.config
-file_name = 'test configs {} {}.csv'.format(config, test_id)
-with open(file_name) as from_file:
-    csvFile = csv.reader(from_file)
-    for row in csvFile:
-        metric = []
-        for thing in row:
-            metric.append(literal_eval(thing))
-            # if thing == 'fail':
-            #     metric.append(worst_score)
-            # else:
-            #     metric.append(literal_eval(thing))
-        fitnesses.append(metric)
+print "thing"
+# parser = argparse.ArgumentParser(
+#     description='just trying to pass a single number into here',
+# formatter_class=argparse.RawTextHelpFormatter)
+# args = parser.parse_args()
+config = sys.argv[1] #literal_eval(args.config)
+test_id = sys.argv[2]#literal_eval(args.test_id)
+file_name = 'data {} {}.npy'.format(config, test_id)
+connections_and_config = np.load(file_name)
 
-read the configs
-run the pop
-write the results
+read_globals(config)
+
+# fitnesses = pop_test(connections, test_data_set, split, runtime, exposure_time, noise_rate, noise_weight,
+#                                reward, size_f, spike_f, True)
+fitnesses = pop_test(*connections_and_config)
+
+print_fitnesses(fitnesses)

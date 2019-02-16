@@ -250,7 +250,7 @@ def bandit(generations):
                 execfile("../methods/exec_xor.py", globals())
             else:
                 globals()['exec_thing'] = exec_thing
-                execfile("../methods/exec_general.py", globals())
+                execfile("../methods/exec_subprocess.py", globals())
 
         fitnesses = agents.read_fitnesses(config, max_fail_score)
 

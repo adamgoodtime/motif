@@ -51,11 +51,12 @@ def wait_timeout(processes, seconds):
     while True:
         finished = 0
         for process in processes:
-            result = processes.poll()
+            result = process.poll()
             if result is not None:
                 finished += 1
             elif time.time() >= end:
                 process.kill()
+                print "had to kill a process, it timed out"
                 finished += 1
             time.sleep(interval)
         if finished == len(processes):
@@ -63,7 +64,7 @@ def wait_timeout(processes, seconds):
         
 def read_results(test_length):
     for i in range(test_length):
-        file_name = 'results {} {}.csv'.format(config, i)
+        file_name = 'fitnesses {} {}.csv'.format(config, i)
         with open(file_name) as from_file:
             csvFile = csv.reader(from_file)
             for row in csvFile:
@@ -75,13 +76,16 @@ def read_results(test_length):
                     # else:
                     #     metric.append(literal_eval(thing))
                 fitnesses.append(metric)
+        os.remove('fitnesses {} {}.csv'.format(config, i))
+        os.remove('data {} {}.npy'.format(config, i))
     return fitnesses
 
-def write_globals():
-    with open('globals {}.csv'.format(config), 'w') as file:
+def write_globals(file_id):
+    with open('globals {}.csv'.format(file_id), 'w') as file:
         writer = csv.writer(file, delimiter=',', lineterminator='\n')
         for thing in globals():
-            writer.writerow([thing, globals()[thing]])
+            if thing != 'connections':
+                writer.writerow([thing, globals()[thing]])
         file.close()
 
 def subprocess_experiments(connections, test_data_set, split=4, runtime=2000, exposure_time=200, noise_rate=100, noise_weight=0.01,
@@ -93,30 +97,29 @@ def subprocess_experiments(connections, test_data_set, split=4, runtime=2000, ex
     if isinstance(test_data_set[0], list):
         connection_threads = []
         all_configs = [[[connections[x:x + step_size], test_data, split, runtime, exposure_time, noise_rate, noise_weight,
-                         reward, spike_f, np.random.randint(1000000000)] for x in xrange(0, len(connections), step_size)]
+                         reward, spike_f, exec_thing, np.random.randint(1000000000)] for x in xrange(0, len(connections), step_size)]
                        for test_data in test_data_set]
-        for arm in all_configs:
-            for config in arm:
-                connection_threads.append(config)
+        for test in all_configs:
+            for set_up in test:
+                connection_threads.append(set_up)
     else:
         connection_threads = [[connections[x:x + step_size], test_data_set, split, runtime, exposure_time, noise_rate,
-                               noise_weight, reward, spike_f, np.random.randint(1000000000)]
+                               noise_weight, reward, spike_f, exec_thing, np.random.randint(1000000000)]
                               for x in xrange(0, len(connections), step_size)]
 
+    write_globals(config)
     process_list = []
     test_id = 0
     for conn_thread in connection_threads:
         call = [sys.executable,
-                'test_pop.py',
-                '--process_id', str('{} {}'.format(config, test_id))
+                '../methods/test_pop.py',
+                config,
+                str(test_id)
                 ]
-        with open('test configs {} {}.csv'.format(config, test_id), 'w') as file:
-            writer = csv.writer(file, delimiter=',', lineterminator='\n')
-            for i in range(step_size):
-                for thing in conn_thread[i]:
-                    writer.writerow(thing)
-            file.close()
-        process_list.append(subprocess.Popen(call, stdout=subprocess.PIPE, stderr=None)) 
+        np.save('data {} {}.npy'.format(config, test_id), conn_thread)
+        p = subprocess.Popen(call, stdout=subprocess.PIPE, stderr=None)
+        process_list.append(p)
+
         test_id += 1
     
     wait_timeout(process_list, 600)
