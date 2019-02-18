@@ -46,7 +46,7 @@ def wait_timeout(processes, seconds):
     """Wait for a process to finish, or raise exception after timeout"""
     start = time.time()
     end = start + seconds
-    interval = min(seconds / 1000.0, .25)
+    interval = 1
 
     while True:
         finished = 0
@@ -58,27 +58,30 @@ def wait_timeout(processes, seconds):
                 process.kill()
                 print "had to kill a process, it timed out"
                 finished += 1
-            time.sleep(interval)
+        time.sleep(interval)
         if finished == len(processes):
             return True
         
 def read_results(test_length):
+    all_fitnesses = []
     for i in range(test_length):
-        file_name = 'fitnesses {} {}.csv'.format(config, i)
-        with open(file_name) as from_file:
-            csvFile = csv.reader(from_file)
-            for row in csvFile:
-                metric = []
-                for thing in row:
-                    metric.append(literal_eval(thing))
-                    # if thing == 'fail':
-                    #     metric.append(worst_score)
-                    # else:
-                    #     metric.append(literal_eval(thing))
-                fitnesses.append(metric)
-        os.remove('fitnesses {} {}.csv'.format(config, i))
+        pop_fitness = np.load('fitnesses {} {}.npy'.format(config, i))
+        all_fitnesses.append(pop_fitness)
+        # file_name = 'fitnesses {} {}.csv'.format(config, i)
+        # with open(file_name) as from_file:
+        #     csvFile = csv.reader(from_file)
+        #     for row in csvFile:
+        #         metric = []
+        #         for thing in row:
+        #             metric.append(literal_eval(thing))
+        #             # if thing == 'fail':
+        #             #     metric.append(worst_score)
+        #             # else:
+        #             #     metric.append(literal_eval(thing))
+        #         pop_fitnesses.append(metric)
+        os.remove('fitnesses {} {}.npy'.format(config, i))
         os.remove('data {} {}.npy'.format(config, i))
-    return fitnesses
+    return all_fitnesses
 
 def write_globals(file_id):
     with open('globals {}.csv'.format(file_id), 'w') as file:
@@ -117,7 +120,7 @@ def subprocess_experiments(connections, test_data_set, split=4, runtime=2000, ex
                 str(test_id)
                 ]
         np.save('data {} {}.npy'.format(config, test_id), conn_thread)
-        p = subprocess.Popen(call, stdout=subprocess.PIPE, stderr=None)
+        p = subprocess.Popen(call, stdout=None, stderr=None)
         process_list.append(p)
 
         test_id += 1
@@ -135,7 +138,7 @@ def subprocess_experiments(connections, test_data_set, split=4, runtime=2000, ex
 
     agent_fitness = []
     for thread in pool_result:
-        if isinstance(thread, list):
+        if isinstance(thread, np.ndarray):
             for result in thread:
                 agent_fitness.append(result)
         else:
@@ -157,15 +160,12 @@ def subprocess_experiments(connections, test_data_set, split=4, runtime=2000, ex
     return agent_fitness
 
 def print_fitnesses(fitnesses):
-    with open('fitnesses {}.csv'.format(config), 'w') as file:
-        writer = csv.writer(file, delimiter=',', lineterminator='\n')
-        for fitness in fitnesses:
-            writer.writerow(fitness)
-        file.close()
-    # with open('done {}.csv'.format(config), 'w') as file:
+    # with open('fitnesses {}.csv'.format(config), 'w') as file:
     #     writer = csv.writer(file, delimiter=',', lineterminator='\n')
-    #     writer.writerow('', '')
+    #     for fitness in fitnesses:
+    #         writer.writerow(fitness)
     #     file.close()
+    np.save('fitnesses {}.npy'.format(config), fitnesses)
 
 if threading_tests:
     fitnesses = subprocess_experiments(connections, test_data_set, split, runtime, exposure_time, noise_rate, noise_weight,

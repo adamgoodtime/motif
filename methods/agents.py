@@ -826,19 +826,20 @@ class agent_population(object):
 
     def read_fitnesses(self, config, worst_score):
         #todo check if this handles fails properly
-        fitnesses = []
-        file_name = 'fitnesses {}.csv'.format(config)
-        with open(file_name) as from_file:
-            csvFile = csv.reader(from_file)
-            for row in csvFile:
-                metric = []
-                for thing in row:
-                    if thing == 'fail':
-                        metric.append(worst_score)
-                    else:
-                        metric.append(literal_eval(thing))
-                fitnesses.append(metric)
-        return fitnesses
+        fitnesses = np.load('fitnesses {}.npy'.format(config))
+        os.remove('fitnesses {}.npy'.format(config))
+        # file_name = 'fitnesses {}.csv'.format(config)
+        # with open(file_name) as from_file:
+        #     csvFile = csv.reader(from_file)
+        #     for row in csvFile:
+        #         metric = []
+        #         for thing in row:
+        #             if thing == 'fail':
+        #                 metric.append(worst_score)
+        #             else:
+        #                 metric.append(literal_eval(thing))
+        #         fitnesses.append(metric)
+        return fitnesses.tolist()
 
 class agent_species(object):
     # todo species could work on a fitness metric in isolation with a shared motif pool

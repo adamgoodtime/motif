@@ -479,11 +479,12 @@ def pop_test(connections, test_data, split=4, runtime=2000, exposure_time=200, n
     return agent_fitness
 
 def print_fitnesses(fitnesses):
-    with open('fitnesses {} {}.csv'.format(config, test_id), 'w') as file:
-        writer = csv.writer(file, delimiter=',', lineterminator='\n')
-        for fitness in fitnesses:
-            writer.writerow(fitness)
-        file.close()
+    # with open('fitnesses {} {}.csv'.format(config, test_id), 'w') as file:
+    #     writer = csv.writer(file, delimiter=',', lineterminator='\n')
+    #     for fitness in fitnesses:
+    #         writer.writerow(fitness)
+    #     file.close()
+    np.save('fitnesses {} {}.npy'.format(config, test_id), fitnesses)
 
 def read_globals(config):
     file_name = 'globals {}.csv'.format(config)
@@ -493,7 +494,7 @@ def read_globals(config):
             try:
                 globals()[row[0]] = literal_eval(row[1])
             except:
-                print ""
+                print "",
                 # try:
                 #     globals()[row[0]] = row[1]
                 # except:
