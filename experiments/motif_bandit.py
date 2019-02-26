@@ -313,8 +313,9 @@ print "done"
 
 #ToDo
 '''
+add a model for logic (number of inputs in, truth table out)
 keep a log of seperate motif components to affect the chance of certain nodes and connects being chosen randomly through mutation
-    a separate population of weights and nodes
+    a separate population of weights and nodes (neurons and synapes)
 variability in the plasticity rule
 crossover not just random   
     select motifs based on IO ratio

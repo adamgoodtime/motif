@@ -56,7 +56,9 @@ def wait_timeout(processes, seconds):
                 finished += 1
             elif time.time() >= end:
                 process.kill()
-                print "had to kill a process, it timed out"
+                print "\nhad to kill a process, it timed out\n"
+                fail = 'fail'
+                np.save('fitnesses {} {}.npy'.format(config, processes.index(process)), fail)
                 finished += 1
         time.sleep(interval)
         if finished == len(processes):
@@ -66,7 +68,7 @@ def read_results(test_length):
     all_fitnesses = []
     for i in range(test_length):
         pop_fitness = np.load('fitnesses {} {}.npy'.format(config, i))
-        all_fitnesses.append(pop_fitness)
+        all_fitnesses.append(pop_fitness.tolist())
         # file_name = 'fitnesses {} {}.csv'.format(config, i)
         # with open(file_name) as from_file:
         #     csvFile = csv.reader(from_file)
@@ -79,9 +81,13 @@ def read_results(test_length):
         #             # else:
         #             #     metric.append(literal_eval(thing))
         #         pop_fitnesses.append(metric)
+    remove_results(test_length)
+    return all_fitnesses
+
+def remove_results(test_length):
+    for i in range(test_length):
         os.remove('fitnesses {} {}.npy'.format(config, i))
         os.remove('data {} {}.npy'.format(config, i))
-    return all_fitnesses
 
 def write_globals(file_id):
     with open('globals {}.csv'.format(file_id), 'w') as file:
@@ -138,7 +144,7 @@ def subprocess_experiments(connections, test_data_set, split=4, runtime=2000, ex
 
     agent_fitness = []
     for thread in pool_result:
-        if isinstance(thread, np.ndarray):
+        if isinstance(thread, list):
             for result in thread:
                 agent_fitness.append(result)
         else:
@@ -157,6 +163,7 @@ def subprocess_experiments(connections, test_data_set, split=4, runtime=2000, ex
             for i in range(agent_pop_size):
                 test_results.append(connections[i][6] + connections[i][9])
             agent_fitness.append(test_results)
+
     return agent_fitness
 
 def print_fitnesses(fitnesses):
