@@ -73,6 +73,7 @@ free_label = 0
 
 max_fail_score = 0
 
+no_v = False
 encoding = 0
 time_increment = 20
 pole_length = 1
@@ -96,7 +97,7 @@ config = ''
 
 def bandit(generations):
     print "starting"
-    global connections, arms, max_fail_score, pole_angle, inputs, outputs, config, test_data_set
+    global connections, arms, max_fail_score, pole_angle, inputs, outputs, config, test_data_set, encoding
 
     if exec_thing == 'br':
         inputs = (160 / x_factor) * (128 / y_factor)
@@ -116,15 +117,20 @@ def bandit(generations):
         test_data_set = arms
         number_of_tests = len(arms)
     elif exec_thing == 'pen':
+        encoding = 1
         inputs = 4
         if encoding != 0:
             inputs *= number_of_bins
+        if no_v:
+            inputs /= 2
         outputs = 2
         config = 'pend-an{}-{}-F{}-R{}-B{}-O{} '.format(pole_angle[0], len(pole_angle), force_increments, max_firing_rate, number_of_bins, bin_overlap)
         test_data_set = pole_angle
         number_of_tests = len(pole_angle)
     elif exec_thing == 'rank pen':
         inputs = 4 * number_of_bins
+        if no_v:
+            inputs /= 2
         outputs = force_increments
         config = 'rank-pend-an{}-{}-F{}-R{}-B{}-O{}-E{} '.format(pole_angle[0], len(pole_angle), force_increments, max_firing_rate, number_of_bins, bin_overlap, encoding)
         test_data_set = pole_angle
@@ -162,6 +168,8 @@ def bandit(generations):
         config += 'delay-{} '.format(constant_delays)
     if fast_membrane:
         config += 'fast_mem '
+    if no_v:
+        config += 'no_v'
     if free_label:
         config += '{} '.format(free_label)
 
@@ -313,7 +321,7 @@ print "done"
 
 #ToDo
 '''
-add a model for logic (number of inputs in, truth table out)
+add species to agents
 keep a log of seperate motif components to affect the chance of certain nodes and connects being chosen randomly through mutation
     a separate population of weights and nodes (neurons and synapes)
 variability in the plasticity rule
