@@ -205,13 +205,17 @@ def read_motif(motif_id, iteration, file_location, config):
 
     motif = motifs.motif_configs[motif_id]
     motif_struct = motifs.read_motif(motif_id)
+    [in2e, in2i, in2in, in2out, e2in, i2in, e_size, e2e, e2i, i_size,
+     i2e, i2i, e2out, i2out, out2e, out2i, out2in, out2out] = motifs.convert_individual(motif_id, inputs, outputs)
+    connections = [in2e, in2i, in2in, in2out, e2in, i2in, e_size, e2e, e2i, i_size,
+     i2e, i2i, e2out, i2out, out2e, out2i, out2in, out2out]
     # motif1 = motifs.motif_configs[motif_id-1]
     # motif_struct1 = motifs.read_motif(motif_id-1)
     # motif2 = motifs.motif_configs[motif_id-2]
     # motif_struct2 = motifs.read_motif(motif_id-2)
     print motif_struct
 
-def mutate_anal(file_location, config):
+def mutate_anal(file_location, config, until):
     print "attempting file - {}/mutate keys for {}: {}.csv".format(file_location, 0, config)
     mutate_track = {}
     mutate_track['motif'] = []
@@ -231,7 +235,7 @@ def mutate_anal(file_location, config):
     mutate_track['asex'] = []
     mutate_track['both'] = []
     mutate_track['fresh'] = []
-    for i in range(3000):
+    for i in range(until):
         try:
             with open('{}/mutate keys for {}: {}.csv'.format(file_location, i, config)) as mutate_file:
                 csvFile = csv.reader(mutate_file)
@@ -394,7 +398,7 @@ def mutate_anal(file_location, config):
             traceback.print_exc()
             print "no more files or bad config"
             if i > 10:
-                with open('{}/meta data/Mutate over time: {}.csv'.format(file_location, config), 'w') as mutate_file:
+                with open('{}/meta data/Mutate over time until {}: {}.csv'.format(file_location, until, config), 'w') as mutate_file:
                     writer = csv.writer(mutate_file, delimiter=',', lineterminator='\n')
                     row = []
                     for operator in mutate_track:
@@ -419,18 +423,44 @@ def mutate_anal(file_location, config):
                         i += 2
                     mutate_file.close()
             break
+    if i == until - 1:
+        with open('{}/meta data/Mutate over time until {}: {}.csv'.format(file_location, until, config),
+                  'w') as mutate_file:
+            writer = csv.writer(mutate_file, delimiter=',', lineterminator='\n')
+            row = []
+            for operator in mutate_track:
+                row.append('{} scr'.format(operator))
+                row.append('{} fit'.format(operator))
+            writer.writerow(row)
+            row = []
+            i = 0
+            while True:
+                row = []
+                all_done = True
+                for operator in mutate_track:
+                    if len(mutate_track[operator]) > i:
+                        all_done = False
+                        row.append(mutate_track[operator][i])
+                        row.append(mutate_track[operator][i + 1])
+                    else:
+                        row.append('')
+                writer.writerow(row)
+                if all_done:
+                    break
+                i += 2
+            mutate_file.close()
 
 
-file_location = 'runtime data/First of good runs and exploring down to 0.85'
+file_location = 'runtime data/high io, good pendulum'
 
 io_weight = 1
 
 weight_max = 0.1
 
-arm1 = 0.85
-arm2 = 0.15
+arm1 = 1
+arm2 = 0
 # arm3 = 0.1
-arm_len = 3
+arm_len = 1
 arms = []
 for i in range(arm_len):
     arms.append([arm1, arm2])
@@ -438,7 +468,7 @@ for i in range(arm_len):
     # for arm in list(itertools.permutations([arm1, arm2, arm3])):
     #     arms.append(list(arm))
 # arms = [[0.4, 0.6], [0.6, 0.4], [0.3, 0.7], [0.7, 0.3], [0.2, 0.8], [0.8, 0.2], [0.1, 0.9], [0.9, 0.1]]
-# arms = [[0.3, 0.7], [0.7, 0.3], [0.2, 0.8], [0.8, 0.2], [0.1, 0.9], [0.9, 0.1], [0, 1], [1, 0]
+arms = [[0.4, 0.6], [0.6, 0.4], [0.3, 0.7], [0.7, 0.3], [0.2, 0.8], [0.8, 0.2], [0.1, 0.9], [0.9, 0.1], [0, 1], [1, 0]]
 '''top_prob = 1
 0.1 = base prob 1
 0.2 equals base prob 2
@@ -454,57 +484,69 @@ if isinstance(arms[0], list):
 else:
     number_of_arms = len(arms)
 
-threading_tests = False
-split = 1
-
 agent_pop_size = 100
 reward_shape = False
 averaging_weights = True
-reward = 0
+reward = 1
 noise_rate = 0
 noise_weight = 0.01
+fast_membrane = False
 
-maximum_depth = [4, 30]
+threading_tests = True
+split = 1
+new_split = agent_pop_size
+
+maximum_depth = [4, 10]
 no_bins = [10, 75]
 reset_pop = 0
-size_fitness = False
-spikes_fitness = False
+size_f = False
+spike_f = False # 'out'
 shape_fitness = True
 random_arms = 0
 viable_parents = 0.2
 elitism = 0.2
 runtime = 41000
 exposure_time = 200
-io_weighting = 1
+io_weighting = 20
 read_pop = 0  # 'new_io_motif_easy_3.csv'
 keep_reading = 5
-constant_delays = 0
+constant_delays = 1
 base_mutate = 0
 multiple_mutates = True
-exec_thing = 3
+exec_thing = 'pen'
 plasticity = False
-free_label = 'base 2'
+free_label = 0
 
 max_fail_score = 0
 
-encoding = 0
+no_v = False
+encoding = 1
 time_increment = 20
 pole_length = 1
-pole_angle = 2.6
+pole_angle = [[0.1], [0.2], [-0.1], [-0.2]]
 reward_based = 1
-force_increments = 100
-max_firing_rate = 50
-number_of_bins = 30
+force_increments = 20
+max_firing_rate = 1000
+number_of_bins = 6
 central = 1
-'status for bandit-arms:0.85-6-0 ave shape_f multate base 2 ex:3, reward:0, max_d:[4, 30], w_max:0.1, rents:0.2, elite:0.2, psize:100, bins:[10, 75], io:1'
+bin_overlap = 2
+tau_force = 0
+
 x_factor = 8
 y_factor = 8
 bricking = 0
 
+inputs = 0
+outputs = 0
+test_data_set = []
+config = ''
+
 if exec_thing == 'br':
     inputs = (160 / x_factor) * (128 / y_factor)
     outputs = 2
-    config = 'bout {}-{}:{} '.format(x_factor, y_factor, bricking)
+    config = 'bout {}-{}-{} '.format(x_factor, y_factor, bricking)
+    test_data_set = 'something'
+    number_of_tests = 'something'
 elif exec_thing == 'xor':
     arms = [[0, 0], [0, 1], [1, 0], [1, 1]]
     config = 'xor '
@@ -514,49 +556,78 @@ elif exec_thing == 'xor':
     else:
         outputs = 1
     max_fail_score = -1
+    test_data_set = arms
+    number_of_tests = len(arms)
+elif exec_thing == 'pen':
+    encoding = 1
+    inputs = 4
+    if encoding != 0:
+        inputs *= number_of_bins
+    if no_v:
+        inputs /= 2
+    outputs = 2
+    config = 'pend-an{}-{}-F{}-R{}-B{}-O{} '.format(pole_angle[0], len(pole_angle), force_increments, max_firing_rate, number_of_bins, bin_overlap)
+    test_data_set = pole_angle
+    number_of_tests = len(pole_angle)
+elif exec_thing == 'rank pen':
+    inputs = 4 * number_of_bins
+    if no_v:
+        inputs /= 2
+    outputs = force_increments
+    config = 'rank-pend-an{}-{}-F{}-R{}-B{}-O{}-E{} '.format(pole_angle[0], len(pole_angle), force_increments, max_firing_rate, number_of_bins, bin_overlap, encoding)
+    test_data_set = pole_angle
+    number_of_tests = len(pole_angle)
 else:
+    test_data_set = arms
     inputs = 2
     outputs = number_of_arms
-    config = 'bandit-arms:{}-{}-{} '.format(arms[0][0], len(arms), random_arms)
+    config = 'bandit-{}-{}-{} '.format(arms[0][0], len(arms), random_arms)
+    number_of_tests = len(arms)
 if plasticity:
     config += 'pl '
 if averaging_weights:
     config += 'ave '
-if spikes_fitness:
-    config += 'spikes '
-if size_fitness:
+if spike_f:
+    if spike_f == 'out':
+        config += 'out-spikes '
+    else:
+        config += 'spikes '
+if size_f:
     config += 'size '
 if reward_shape:
     config += 'shape_r '
 if shape_fitness:
     config += 'shape_f '
 if reset_pop:
-    config += 'reset:{} '.format(reset_pop)
+    config += 'reset-{} '.format(reset_pop)
 if base_mutate:
-    config += 'mute:{} '.format(base_mutate)
+    config += 'mute-{} '.format(base_mutate)
 if multiple_mutates:
     config += 'multate '
 if noise_rate:
-    config += 'n r-w:{}-{} '.format(noise_rate, noise_weight)
+    config += 'n r-w-{}-{} '.format(noise_rate, noise_weight)
 if constant_delays:
-    config += 'delay:{}'.format(constant_delays)
+    config += 'delay-{} '.format(constant_delays)
+if fast_membrane:
+    config += 'fast_mem '
+if no_v:
+    config += 'no_v'
 if free_label:
     config += '{} '.format(free_label)
 
-config += "ex:{}, reward:{}, max_d:{}, w_max:{}, rents:{}, elite:{}, psize:{}, bins:{}".format(
-        exec_thing, reward, maximum_depth, weight_max, viable_parents, elitism, agent_pop_size,
-        no_bins)
+config += "ex-{}, reward-{}, max_d-{}, w_max-{}, rents-{}, elite-{}, psize-{}, bins-{}".format(
+    exec_thing, reward, maximum_depth, weight_max, viable_parents, elitism, agent_pop_size,
+    no_bins)
 
 if io_weighting:
-    config += ", io:{}".format(io_weighting)
+    config += ", io-{}".format(io_weighting)
 else:
-    config += " {}".format(motifs.global_io[1])
+    config += " {}".format(io_weight)
 if read_pop:
-    config += ' read:{}'.format(keep_reading)
-
+    config += ' read-{}'.format(keep_reading)
 # config = "bandit reward_shape:{}, reward:{}, noise r-w:{}-{}, arms:{}-{}-{}, max_d{}, size:{}, spikes:{}, w_max{}".format(
 #     reward_shape, reward, noise_rate, noise_weight, arms[0], len(arms), random_arms, maximum_depth, size_fitness, spikes_fitness, weight_max)
 
 # motif_tracking(file_location, config)
-# read_motif('193564', 200, file_location, config)
-mutate_anal(file_location, config)
+# read_motif('12202', 30, file_location, config)
+mutate_anal(file_location, config, 50)

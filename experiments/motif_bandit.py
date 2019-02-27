@@ -321,6 +321,7 @@ print "done"
 
 #ToDo
 '''
+anneal the amount of IO weight (unnecessary when added population of neurons)
 add species to agents
 keep a log of seperate motif components to affect the chance of certain nodes and connects being chosen randomly through mutation
     a separate population of weights and nodes (neurons and synapes)
