@@ -13,6 +13,7 @@ import numpy as np
 from spinn_bandit.python_models.bandit import Bandit
 from python_models.pendulum import Pendulum
 from rank_inverted_pendulum.python_models.rank_pendulum import Rank_Pendulum
+from double_inverted_pendulum.python_models.double_pendulum import DoublePendulum
 from spinn_arm.python_models.arm import Arm
 # from spinn_breakout import Breakout
 import math
@@ -156,6 +157,22 @@ def pop_test(connections, test_data, split=4, runtime=2000, exposure_time=200, n
                                                 tau_force=tau_force,
                                                 rand_seed=[np.random.randint(0xffff) for j in range(4)],
                                                 label='rank_pendulum_pop_{}-{}'.format(model_count, i))
+                elif exec_thing == 'double pen':
+                    input_model = DoublePendulum(encoding=encoding,
+                                                 time_increment=time_increment,
+                                                 pole_length=pole_length,
+                                                 pole_angle=test_data[0],
+                                                 pole2_length=pole2_length,
+                                                 pole2_angle=0,  # -test_data[0],
+                                                 reward_based=reward_based,
+                                                 force_increments=force_increments,
+                                                 max_firing_rate=max_firing_rate,
+                                                 number_of_bins=number_of_bins,
+                                                 central=central,
+                                                 bin_overlap=bin_overlap,
+                                                 tau_force=tau_force,
+                                                 rand_seed=[np.random.randint(0xffff) for j in range(4)],
+                                                 label='double_pendulum_pop_{}-{}'.format(model_count, i))
                 elif exec_thing == 'bout':
                     input_model = Breakout(x_factor=x_factor,
                                            y_factor=y_factor,
@@ -469,8 +486,11 @@ def pop_test(connections, test_data, split=4, runtime=2000, exposure_time=200, n
         e_string = "e: {}".format(excite_spike_count[i])
         i_string = "i: {}".format(inhib_spike_count[i])
         score_string = ""
-        for j in range(len(scores[i])):
-            score_string += "{:4},".format(scores[i][j][0])
+        if reward == 0:
+            for j in range(len(scores[i])):
+                score_string += "{:4},".format(scores[i][j][0])
+        else:
+            score_string += "{:4},".format(scores[i][len(scores[i])-1][0])
         print "{:3} | {:8} {:8} - ".format(i, e_string, i_string), score_string
     print "before end = ", seed
     p.end()

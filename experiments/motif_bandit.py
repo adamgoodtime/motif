@@ -67,7 +67,7 @@ keep_reading = 5
 constant_delays = 0
 base_mutate = 0
 multiple_mutates = True
-exec_thing = 'rank pen'
+exec_thing = 'double pen'
 plasticity = False
 free_label = 0
 
@@ -77,6 +77,7 @@ no_v = False
 encoding = 0
 time_increment = 20
 pole_length = 1
+pole2_length = 0.1
 pole_angle = [[0.1], [0.2], [-0.1], [-0.2]]
 reward_based = 1
 force_increments = 10
@@ -135,6 +136,14 @@ def bandit(generations):
         config = 'rank-pend-an{}-{}-F{}-R{}-B{}-O{}-E{} '.format(pole_angle[0], len(pole_angle), force_increments, max_firing_rate, number_of_bins, bin_overlap, encoding)
         test_data_set = pole_angle
         number_of_tests = len(pole_angle)
+    elif exec_thing == 'double pen':
+        inputs = 6 * number_of_bins
+        if no_v:
+            inputs /= 2
+        outputs = force_increments
+        config = 'double-pend-an{}-{}-F{}-R{}-B{}-O{} '.format(pole_angle[0], len(pole_angle), force_increments, max_firing_rate, number_of_bins, bin_overlap)
+        test_data_set = pole_angle
+        number_of_tests = len(pole_angle)
     else:
         test_data_set = arms
         inputs = 2
@@ -169,7 +178,7 @@ def bandit(generations):
     if fast_membrane:
         config += 'fast_mem '
     if no_v:
-        config += 'no_v'
+        config += 'no_v '
     if free_label:
         config += '{} '.format(free_label)
 
