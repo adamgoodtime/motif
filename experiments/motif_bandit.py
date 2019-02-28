@@ -1,5 +1,6 @@
 from methods.networks import motif_population
 from methods.agents import agent_population
+from methods.neurons import neuron_population
 import numpy as np
 import itertools
 import traceback
@@ -182,9 +183,10 @@ def bandit(generations):
     if free_label:
         config += '{} '.format(free_label)
 
+    neurons = neuron_population()
 
-    # check max motif count
-    motifs = motif_population(max_motif_size=maximum_depth[0],
+    motifs = motif_population(neurons,
+                              max_motif_size=maximum_depth[0],
                               no_weight_bins=no_bins,
                               no_delay_bins=no_bins,
                               weight_range=(0.005, weight_max),

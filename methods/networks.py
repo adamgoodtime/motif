@@ -25,6 +25,7 @@ import fnmatch
 
 class motif_population(object):
     def __init__(self,
+                 neurons,
                  max_motif_size=4,
                  min_motif_size=2,
                  population_size=200,
@@ -53,6 +54,8 @@ class motif_population(object):
                  io_config='fixed',  # fixed, dynamic/coded probabilistic, uniform
                  global_io=('highest', 'unseeded'), # highest, seeded, random, average
                  multi_synapse=False):
+
+        self.neurons = neurons
 
         self.max_motif_size = max_motif_size
         self.min_motif_size = min_motif_size
@@ -86,18 +89,18 @@ class motif_population(object):
         self.initial_hierarchy_depth = initial_hierarchy_depth
         self.max_hierarchy_depth = max_hierarchy_depth
         self.selection_metric = selection_metric
-        self.neuron_types = neuron_types
-        self.io_weight = io_weight
-        if self.io_weight[2]:
-            no_io = self.io_weight[0] + self.io_weight[1]
-            no_ex_in = int(np.ceil(no_io / self.io_weight[2]))
-            for i in range(no_ex_in):
-                self.neuron_types.append(self.neuron_types[0])
-                self.neuron_types.append(self.neuron_types[1])
-            for i in range(self.io_weight[0]):
-                self.neuron_types.append('input{}'.format(i))
-            for i in range(self.io_weight[1]):
-                self.neuron_types.append('output{}'.format(i))
+        # self.neuron_types = neuron_types
+        # self.io_weight = io_weight
+        # if self.io_weight[2]:
+        #     no_io = self.io_weight[0] + self.io_weight[1]
+        #     no_ex_in = int(np.ceil(no_io / self.io_weight[2]))
+        #     for i in range(no_ex_in):
+        #         self.neuron_types.append(self.neuron_types[0])
+        #         self.neuron_types.append(self.neuron_types[1])
+        #     for i in range(self.io_weight[0]):
+        #         self.neuron_types.append('input{}'.format(i))
+        #     for i in range(self.io_weight[1]):
+        #         self.neuron_types.append('output{}'.format(i))
         self.io_config = io_config
         self.global_io = global_io
         self.multi_synapse = multi_synapse
@@ -209,7 +212,7 @@ class motif_population(object):
         # selects motif size randomly
         number_of_neurons = np.random.randint(self.min_motif_size, self.max_motif_size + 1)
         for j in range(number_of_neurons):
-            node_types.append(np.random.choice(self.neuron_types))
+            node_types.append(self.neurons.choose_neuron())
             # sets the input/output dynamics of each neuron with 50% P() todo set this with a certain probability
             if self.io_config == 'fixed':
                 io_properties.append((np.random.choice(true_or_false), np.random.choice(true_or_false)))
@@ -361,7 +364,7 @@ class motif_population(object):
                 picked_bigger = False
                 for node in motif['node']:
                     # if it is a base node replace it with a motif
-                    if node in self.neuron_types:
+                    if node in self.neuron_types:srthstrhsthbst
                         # with a certain P() add a new motif
                         if np.random.random() < config:
                             selected_motif = self.select_motif()
@@ -598,10 +601,10 @@ class motif_population(object):
                 pre_ex = False
                 pre_in = False
                 try:
-                    out_pre = literal_eval(conn[0][0].replace('output', '')) + 1
+                    out_pre = literal_eval(conn[0][0].replace('output', ''))
                     pre_index = out_pre
                 except:
-                    in_pre = literal_eval(conn[0][0].replace('input', '')) + 1
+                    in_pre = literal_eval(conn[0][0].replace('input', ''))
                     pre_index = in_pre
             if conn[1][0] == 'excitatory':
                 post_ex = True
@@ -633,10 +636,10 @@ class motif_population(object):
                 post_ex = False
                 post_in = False
                 try:
-                    out_post = literal_eval(conn[1][0].replace('output', '')) + 1
+                    out_post = literal_eval(conn[1][0].replace('output', ''))
                     post_index = out_post
                 except:
-                    in_post = literal_eval(conn[1][0].replace('input', '')) + 1
+                    in_post = literal_eval(conn[1][0].replace('input', ''))
                     post_index = in_post
             if self.constant_delays:
                 conn[4] = self.constant_delays
@@ -649,29 +652,29 @@ class motif_population(object):
             elif pre_in and post_in:
                 i2i.append((pre_index, post_index, conn[2], conn[3], conn[4]))
             elif pre_ex and in_post:
-                e2in.append((pre_index, post_index-1, conn[2], conn[3], conn[4]))
+                e2in.append((pre_index, post_index, conn[2], conn[3], conn[4]))
             elif pre_ex and out_post:
-                e2out.append((pre_index, post_index-1, conn[2], conn[3], conn[4]))
+                e2out.append((pre_index, post_index, conn[2], conn[3], conn[4]))
             elif pre_in and in_post:
-                i2in.append((pre_index, post_index-1, conn[2], conn[3], conn[4]))
+                i2in.append((pre_index, post_index, conn[2], conn[3], conn[4]))
             elif pre_in and out_post:
-                i2out.append((pre_index, post_index-1, conn[2], conn[3], conn[4]))
+                i2out.append((pre_index, post_index, conn[2], conn[3], conn[4]))
             elif in_pre and post_ex:
-                in2e.append((pre_index-1, post_index, conn[2], conn[3], conn[4]))
+                in2e.append((pre_index, post_index, conn[2], conn[3], conn[4]))
             elif in_pre and post_in:
-                in2i.append((pre_index-1, post_index, conn[2], conn[3], conn[4]))
+                in2i.append((pre_index, post_index, conn[2], conn[3], conn[4]))
             elif in_pre and in_post:
-                in2in.append((pre_index-1, post_index-1, conn[2], conn[3], conn[4]))
+                in2in.append((pre_index, post_index, conn[2], conn[3], conn[4]))
             elif in_pre and out_post:
-                in2out.append((pre_index-1, post_index-1, conn[2], conn[3], conn[4]))
+                in2out.append((pre_index, post_index, conn[2], conn[3], conn[4]))
             elif out_pre and post_ex:
-                out2e.append((pre_index-1, post_index, conn[2], conn[3], conn[4]))
+                out2e.append((pre_index, post_index, conn[2], conn[3], conn[4]))
             elif out_pre and post_in:
-                out2i.append((pre_index-1, post_index, conn[2], conn[3], conn[4]))
+                out2i.append((pre_index, post_index, conn[2], conn[3], conn[4]))
             elif out_pre and in_post:
-                out2in.append((pre_index-1, post_index-1, conn[2], conn[3], conn[4]))
+                out2in.append((pre_index, post_index, conn[2], conn[3], conn[4]))
             elif out_pre and out_post:
-                out2out.append((pre_index-1, post_index-1, conn[2], conn[3], conn[4]))
+                out2out.append((pre_index, post_index, conn[2], conn[3], conn[4]))
             else:
                 print "somethin fucky"
 
