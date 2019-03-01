@@ -56,6 +56,7 @@ no_bins = [10, 75]
 reset_pop = 0
 size_f = False
 spike_f = 'out'
+make_action = True
 shape_fitness = True
 random_arms = 0
 viable_parents = 0.2
@@ -155,6 +156,8 @@ def bandit(generations):
         config += 'pl '
     if averaging_weights:
         config += 'ave '
+    if make_action:
+        config += 'action '
     if spike_f:
         if spike_f == 'out':
             config += 'out-spikes '
@@ -183,7 +186,8 @@ def bandit(generations):
     if free_label:
         config += '{} '.format(free_label)
 
-    neurons = neuron_population()
+    neurons = neuron_population(inputs=inputs,
+                                outputs=outputs)
 
     motifs = motif_population(neurons,
                               max_motif_size=maximum_depth[0],
@@ -271,7 +275,7 @@ def bandit(generations):
                 globals()['exec_thing'] = exec_thing
                 execfile("../methods/exec_subprocess.py", globals())
 
-        fitnesses = agents.read_fitnesses(config, max_fail_score)
+        fitnesses = agents.read_fitnesses(config, max_fail_score, make_action)
 
         print "1", motifs.total_weight
 
@@ -281,7 +285,7 @@ def bandit(generations):
                 spike_total = 0
                 for j in range(number_of_tests):
                     if isinstance(fitnesses[j][k], list):
-                        spike_total -= fitnesses[j][k][1]
+                        spike_total -= fitnesses[j][k][1] + fitnesses[j][k][2]
                         fitnesses[j][k] = fitnesses[j][k][0]
                     else:
                         spike_total -= 1000000
@@ -294,6 +298,11 @@ def bandit(generations):
         agents.status_update(fitnesses, i, config, number_of_tests)
 
         print "\nconfig: ", config, "\n"
+
+        if spike_f:
+            None
+        else:
+            None
 
         print "2", motifs.total_weight
 

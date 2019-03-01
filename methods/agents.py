@@ -84,18 +84,14 @@ class agent_population(object):
             self.io_mutate = base_mutate
         else:
             self.io_mutate = io_mutate
-        if self.motifs.io_weight[2] == 0:
-            self.input_shift = 0
-            self.output_shift = 0
+        if base_mutate:
+            self.input_shift = base_mutate
         else:
-            if base_mutate:
-                self.input_shift = base_mutate
-            else:
-                self.input_shift = input_shift
-            if base_mutate:
-                self.output_shift = base_mutate
-            else:
-                self.output_shift = output_shift
+            self.input_shift = input_shift
+        if base_mutate:
+            self.output_shift = base_mutate
+        else:
+            self.output_shift = output_shift
         if base_mutate:
             self.node_mutate = base_mutate
         else:
@@ -564,8 +560,8 @@ class agent_population(object):
         return child
     
     def valid_net(self, child):
-        [in2e, in2i, in2in, in2out, e2in, i2in, e_size, e2e, e2i, i_size,
-         i2e, i2i, e2out, i2out, out2e, out2i, out2in, out2out] = self.convert_agent(child, self.inputs, self.outputs)
+        [in2e, in2i, in2in, in2out, e2in, i2in, e_size, e2e, e2i, i_size, i2e, i2i, e2out, i2out, out2e, out2i, out2in,
+         out2out, excite_params, inhib_params] = self.convert_agent(child, self.inputs, self.outputs)
         if len(in2e) == 0 and len(in2i) == 0 and len(in2out) == 0:
             print "in bad agent"
             return False
@@ -824,22 +820,19 @@ class agent_population(object):
             self.save_status(config, iteration)
             self.save_mutate_keys(iteration, config)
 
-    def read_fitnesses(self, config, worst_score):
+    def read_fitnesses(self, config, worst_score, make_action):
         #todo check if this handles fails properly
         fitnesses = np.load('fitnesses {}.npy'.format(config))
         os.remove('fitnesses {}.npy'.format(config))
-        # file_name = 'fitnesses {}.csv'.format(config)
-        # with open(file_name) as from_file:
-        #     csvFile = csv.reader(from_file)
-        #     for row in csvFile:
-        #         metric = []
-        #         for thing in row:
-        #             if thing == 'fail':
-        #                 metric.append(worst_score)
-        #             else:
-        #                 metric.append(literal_eval(thing))
-        #         fitnesses.append(metric)
-        return fitnesses.tolist()
+        fitnesses = fitnesses.tolist()
+        if make_action:
+            processed_fitness = []
+            for fitness in fitnesses:
+                if fitness[2] == 0:
+                    processed_fitness.append([0, fitness[1], fitness[2]])
+            return processed_fitness
+        else:
+            return fitnesses
 
 class agent_species(object):
     # todo species could work on a fitness metric in isolation with a shared motif pool

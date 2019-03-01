@@ -98,7 +98,7 @@ def write_globals(file_id):
         file.close()
 
 def subprocess_experiments(connections, test_data_set, split=4, runtime=2000, exposure_time=200, noise_rate=100, noise_weight=0.01,
-                  reward=0, size_f=False, spike_f=False, top=True):
+                  reward=0, size_f=False, spike_f=False, make_action=True, top=True):
 
     step_size = len(connections) / split
     if step_size == 0:
@@ -106,14 +106,14 @@ def subprocess_experiments(connections, test_data_set, split=4, runtime=2000, ex
     if isinstance(test_data_set[0], list):
         connection_threads = []
         all_configs = [[[connections[x:x + step_size], test_data, split, runtime, exposure_time, noise_rate, noise_weight,
-                         reward, spike_f, exec_thing, np.random.randint(1000000000)] for x in xrange(0, len(connections), step_size)]
+                         reward, spike_f, make_action, exec_thing, np.random.randint(1000000000)] for x in xrange(0, len(connections), step_size)]
                        for test_data in test_data_set]
         for test in all_configs:
             for set_up in test:
                 connection_threads.append(set_up)
     else:
         connection_threads = [[connections[x:x + step_size], test_data_set, split, runtime, exposure_time, noise_rate,
-                               noise_weight, reward, spike_f, exec_thing, np.random.randint(1000000000)]
+                               noise_weight, reward, spike_f, make_action, exec_thing, np.random.randint(1000000000)]
                               for x in xrange(0, len(connections), step_size)]
 
     write_globals(config)
@@ -176,9 +176,10 @@ def print_fitnesses(fitnesses):
 
 if threading_tests:
     fitnesses = subprocess_experiments(connections, test_data_set, split, runtime, exposure_time, noise_rate, noise_weight,
-                                   reward, size_f, spike_f, True)
+                                   reward, size_f, spike_f, make_action, True)
 else:
     fitnesses = pop_test(connections, test_data=arms[0], split=split, runtime=runtime, exposure_time=exposure_time,
-                         noise_rate=noise_rate, noise_weight=noise_weight, reward=reward, spike_f=spike_f, seed=0)
+                         noise_rate=noise_rate, noise_weight=noise_weight, reward=reward, spike_f=spike_f,
+                         make_action=make_action, seed=0)
 
 print_fitnesses(fitnesses)

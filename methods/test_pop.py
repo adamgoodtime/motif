@@ -85,7 +85,7 @@ def get_scores(game_pop, simulator):
     return scores.tolist()
 
 def pop_test(connections, test_data, split=4, runtime=2000, exposure_time=200, noise_rate=100, noise_weight=0.01,
-                reward=0, spike_f=False, exec_thing='bout', seed=0):
+                reward=0, spike_f=False, make_action=True, exec_thing='bout', seed=0):
     np.random.seed(seed)
     sleep = 10 * np.random.random()
     # time.sleep(sleep)
@@ -123,7 +123,7 @@ def pop_test(connections, test_data, split=4, runtime=2000, exposure_time=200, n
         print config
         for i in range(len(connections)):
             [in2e, in2i, in2in, in2out, e2in, i2in, e_size, e2e, e2i, i_size,
-             i2e, i2i, e2out, i2out, out2e, out2i, out2in, out2out] = connections[i]
+             i2e, i2i, e2out, i2out, out2e, out2i, out2in, out2out, excite_params, inhib_params] = connections[i]
             if len(in2e) == 0 and len(in2i) == 0 and len(in2out) == 0:
                 failures.append(i)
                 print "agent {} was not properly connected to the game".format(i)
@@ -200,13 +200,37 @@ def pop_test(connections, test_data, split=4, runtime=2000, exposure_time=200, n
                 else:
                     output_pop.append(p.Population(outputs, p.IF_cond_exp(),
                                                    label='output_pop_{}-{}'.format(model_count, i)))
-                if spike_f == 'out':
+                if spike_f == 'out' or make_action:
                     output_pop[model_count].record('spikes')
                 p.Projection(output_pop[model_count], input_pops[model_count], p.AllToAllConnector())
                 if e_size > 0:
                     excite_count += 1
+                    v_rest = excite_params['v_rest']  # Resting membrane potential in mV.
+                    cm = excite_params['cm']   # Capacity of the membrane in nF
+                    tau_m = excite_params['tau_m']   # Membrane time constant in ms.
+                    tau_refrac = excite_params['tau_refrac']   # Duration of refractory period in ms.
+                    tau_syn_E = excite_params['tau_syn_E']  # Rise time of the excitatory synaptic alpha function in ms.
+                    tau_syn_I = excite_params['tau_syn_I']  # Rise time of the inhibitory synaptic alpha function in ms.
+                    e_rev_E = excite_params['e_rev_E']  # Reversal potential for excitatory input in mV
+                    e_rev_I = excite_params['e_rev_I']   # Reversal potential for inhibitory input in mV
+                    v_thresh = excite_params['v_thresh']  # Spike threshold in mV.
+                    v_reset = excite_params['v_reset']   # Reset potential after a spike in mV.
+                    i_offset = excite_params['i_offset']   # Offset current in nA
                     excite.append(
-                        p.Population(e_size, p.IF_cond_exp(), label='excite_pop_{}-{}'.format(excite_count, i)))
+                        p.Population(e_size, p.IF_cond_exp(**excite_params
+                                                            # v_rest=v_rest,
+                                                            #                            cm=cm,
+                                                            #                            tau_m=tau_m,
+                                                            #                            tau_refrac=tau_refrac,
+                                                            #                            tau_syn_E=tau_syn_E,
+                                                            #                            tau_syn_I=tau_syn_I,
+                                                            #                            e_rev_E=e_rev_E,
+                                                            #                            e_rev_I=e_rev_I,
+                                                            #                            v_thresh=v_thresh,
+                                                            #                            v_reset=v_reset,
+                                                            #                            i_offset=i_offset
+                                                           ),
+                                     label='excite_pop_{}-{}'.format(excite_count, i)))
                     if noise_rate:
                         excite_noise = p.Population(e_size, p.SpikeSourcePoisson(rate=noise_rate))
                         p.Projection(excite_noise, excite[excite_count], p.OneToOneConnector(),
@@ -216,7 +240,8 @@ def pop_test(connections, test_data, split=4, runtime=2000, exposure_time=200, n
                     excite_marker.append(i)
                 if i_size > 0:
                     inhib_count += 1
-                    inhib.append(p.Population(i_size, p.IF_cond_exp(), label='inhib_pop_{}-{}'.format(inhib_count, i)))
+                    inhib.append(p.Population(i_size, p.IF_cond_exp(**inhib_params),
+                                              label='inhib_pop_{}-{}'.format(inhib_count, i)))
                     if noise_rate:
                         inhib_noise = p.Population(i_size, p.SpikeSourcePoisson(rate=noise_rate))
                         p.Projection(inhib_noise, inhib[inhib_count], p.OneToOneConnector(),
@@ -448,13 +473,13 @@ def pop_test(connections, test_data, split=4, runtime=2000, exposure_time=200, n
             excite_spike_count[i] -= max_fail_score
             inhib_spike_count[i] -= max_fail_score
         else:
-            if spike_f:
-                if spike_f == 'out':
+            if spike_f or make_action:
+                if spike_f == 'out' or make_action:
                     spikes = output_pop[i - fails].get_data('spikes').segments[0].spiketrains
                     for neuron in spikes:
                         for spike in neuron:
                             output_spike_count[i] += 1
-                if i in excite_marker:
+                if i in excite_marker and spike_f:
                     print "counting excite spikes"
                     spikes = excite[i - excite_fail - fails].get_data('spikes').segments[0].spiketrains
                     for neuron in spikes:
@@ -463,7 +488,7 @@ def pop_test(connections, test_data, split=4, runtime=2000, exposure_time=200, n
                 else:
                     excite_fail += 1
                     print "had an excite failure"
-                if i in inhib_marker:
+                if i in inhib_marker and spike_f:
                     print "counting inhib spikes"
                     spikes = inhib[i - inhib_fail - fails].get_data('spikes').segments[0].spiketrains
                     for neuron in spikes:
@@ -475,8 +500,8 @@ def pop_test(connections, test_data, split=4, runtime=2000, exposure_time=200, n
             scores.append(get_scores(game_pop=input_pops[i - fails], simulator=simulator))
             # pop[i].stats = {'fitness': scores[i][len(scores[i]) - 1][0]}  # , 'steps': 0}
         print "\nfinished spikes", seed
-        if spike_f:
-            agent_fitness.append([scores[i][len(scores[i]) - 1][0], excite_spike_count[i] + inhib_spike_count[i] + output_spike_count[i]])
+        if spike_f or make_action:
+            agent_fitness.append([scores[i][len(scores[i]) - 1][0], excite_spike_count[i] + inhib_spike_count[i], output_spike_count[i]])
         else:
             agent_fitness.append(scores[i][len(scores[i]) - 1][0])
         # print i, "| e:", excite_spike_count[i], "-i:", inhib_spike_count[i], "|\t", scores[i]
