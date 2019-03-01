@@ -565,13 +565,83 @@ class agent_population(object):
         if len(in2e) == 0 and len(in2i) == 0 and len(in2out) == 0:
             print "in bad agent"
             return False
-        else:
-            if self.strict_io:
-                if len(e2out) == 0 and len(i2out) == 0 and len(in2out) == 0:
-                    print "out bad agent"
+        if len(e2out) == 0 and len(i2out) == 0 and len(in2out) == 0:
+            print "out bad agent"
+            return False
+        if self.strict_io:
+            if len(in2out) == 0:
+                node_list = {}
+                node_list['excitatory'] = []
+                node_list['inhibitory'] = []
+                check = self.check_in_2_out('input', node_list, [in2e, in2i, in2in, in2out, e2in, i2in, e_size, e2e, e2i,
+                                                         i_size, i2e, i2i, e2out, i2out, out2e, out2i, out2in, out2out,
+                                                         excite_params, inhib_params])
+                if not check:
+                    print "no i2o"
                     return False
-            return child
+        return child
         
+    def check_in_2_out(self, pre, node_list, connections, specific=None):
+        [in2e, in2i, in2in, in2out, e2in, i2in, e_size, e2e, e2i, i_size, i2e, i2i, e2out, i2out, out2e, out2i, out2in,
+         out2out, excite_params, inhib_params] = connections
+        pre_inputs = [in2e, in2i, in2out]
+        pre_excitatory = [e2e, e2i, e2out]
+        pre_inhibitory = [i2e, i2i, i2out]
+        pre_outputs = [out2e, out2i, out2out]
+        if pre == 'input':
+            for conn in in2e:
+                new_node_list = deepcopy(node_list)
+                new_node_list['excitatory'].append(conn[1])
+                check = self.check_in_2_out('excitatory', new_node_list, connections, conn[1])
+                if check:
+                    return True
+            for conn in in2i:
+                new_node_list = deepcopy(node_list)
+                new_node_list['inhibitory'].append(conn[1])
+                check = self.check_in_2_out('inhibitory', new_node_list, connections, conn[1])
+                if check:
+                    return True
+        elif pre == 'excitatory':
+            for conn in e2out:
+                if conn[0] == specific:
+                    return True
+            for conn in e2e:
+                if conn[0] == specific:
+                    if conn[1] not in node_list['excitatory']:
+                        new_node_list = deepcopy(node_list)
+                        new_node_list['excitatory'].append(conn[1])
+                        check = self.check_in_2_out('excitatory', new_node_list, connections, conn[1])
+                        if check:
+                            return True
+            for conn in e2i:
+                if conn[0] == specific:
+                    if conn[1] not in node_list['inhibitory']:
+                        new_node_list = deepcopy(node_list)
+                        new_node_list['inhibitory'].append(conn[1])
+                        check = self.check_in_2_out('inhibitory', new_node_list, connections, conn[1])
+                        if check:
+                            return True
+        elif pre == 'inhibitory':
+            for conn in i2out:
+                if conn[0] == specific:
+                    return True
+            for conn in i2e:
+                if conn[0] == specific:
+                    if conn[1] not in node_list['excitatory']:
+                        new_node_list = deepcopy(node_list)
+                        new_node_list['excitatory'].append(conn[1])
+                        check = self.check_in_2_out('excitatory', new_node_list, connections, conn[1])
+                        if check:
+                            return True
+            for conn in i2i:
+                if conn[0] == specific:
+                    if conn[1] not in node_list['inhibitory']:
+                        new_node_list = deepcopy(node_list)
+                        new_node_list['inhibitory'].append(conn[1])
+                        check = self.check_in_2_out('inhibitory', new_node_list, connections, conn[1])
+                        if check:
+                            return True
+        return False
 
     '''here is where the children (the next generation of the population) are created for both a species and for the 
     entire population if required'''
@@ -825,14 +895,20 @@ class agent_population(object):
         fitnesses = np.load('fitnesses {}.npy'.format(config))
         os.remove('fitnesses {}.npy'.format(config))
         fitnesses = fitnesses.tolist()
-        if make_action:
-            processed_fitness = []
-            for fitness in fitnesses:
-                if fitness[2] == 0:
-                    processed_fitness.append([0, fitness[1], fitness[2]])
-            return processed_fitness
-        else:
-            return fitnesses
+        processed_fitness = []
+        for fitness in fitnesses:
+            processed_score = []
+            for score in fitness:
+                if score == 'fail':
+                    processed_score.append([max_fail_score, -10000000, -10000000])
+                else:
+                    if make_action:
+                        if score[2] == 0:
+                            processed_score.append([0, score[1], score[2]])
+                        else:
+                            processed_score.append(score)
+            processed_fitness.append(processed_score)
+        return processed_fitness
 
 class agent_species(object):
     # todo species could work on a fitness metric in isolation with a shared motif pool
