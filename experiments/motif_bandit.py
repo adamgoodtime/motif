@@ -63,7 +63,7 @@ viable_parents = 0.2
 elitism = 0.2
 runtime = 181000
 exposure_time = 200
-io_weighting = 1
+io_prob = 0.95
 read_pop = 0  # 'new_io_motif_easy_3.csv'
 keep_reading = 5
 constant_delays = 0
@@ -187,7 +187,8 @@ def bandit(generations):
         config += '{} '.format(free_label)
 
     neurons = neuron_population(inputs=inputs,
-                                outputs=outputs)
+                                outputs=outputs,
+                                io_prob=io_prob)
 
     motifs = motif_population(neurons,
                               max_motif_size=maximum_depth[0],
@@ -197,7 +198,6 @@ def bandit(generations):
                               constant_delays=constant_delays,
                               # delay_range=(10., 10.0000001),
                               neuron_types=(['excitatory', 'inhibitory']),
-                              io_weight=[inputs, outputs, io_weighting],
                               global_io=('highest', 'seeded', 'in'),
                               read_entire_population=read_pop,
                               keep_reading=keep_reading,
@@ -226,8 +226,8 @@ def bandit(generations):
         exec_thing, reward, maximum_depth, weight_max, viable_parents, elitism, agent_pop_size,
         no_bins)
 
-    if io_weighting:
-        config += ", io-{}".format(io_weighting)
+    if io_prob:
+        config += ", io-{}".format(io_prob)
     else:
         config += " {}".format(motifs.global_io[1])
     if read_pop:

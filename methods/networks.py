@@ -50,7 +50,6 @@ class motif_population(object):
                  selection_metric='fitness',  # fixed, population based, fitness based
                  # starting_weight='uniform',
                  neuron_types=['excitatory', 'inhibitory'],
-                 io_weight=0.3,
                  io_config='fixed',  # fixed, dynamic/coded probabilistic, uniform
                  global_io=('highest', 'unseeded'), # highest, seeded, random, average
                  multi_synapse=False):
