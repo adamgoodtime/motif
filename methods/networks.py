@@ -89,18 +89,8 @@ class motif_population(object):
         self.initial_hierarchy_depth = initial_hierarchy_depth
         self.max_hierarchy_depth = max_hierarchy_depth
         self.selection_metric = selection_metric
-        # self.neuron_types = neuron_types
-        # self.io_weight = io_weight
-        # if self.io_weight[2]:
-        #     no_io = self.io_weight[0] + self.io_weight[1]
-        #     no_ex_in = int(np.ceil(no_io / self.io_weight[2]))
-        #     for i in range(no_ex_in):
-        #         self.neuron_types.append(self.neuron_types[0])
-        #         self.neuron_types.append(self.neuron_types[1])
-        #     for i in range(self.io_weight[0]):
-        #         self.neuron_types.append('input{}'.format(i))
-        #     for i in range(self.io_weight[1]):
-        #         self.neuron_types.append('output{}'.format(i))
+        self.inputs = self.neurons.inputs
+        self.outputs = self.neurons.outputs
         self.io_config = io_config
         self.global_io = global_io
         self.multi_synapse = multi_synapse
@@ -410,47 +400,18 @@ class motif_population(object):
         if direction == 'random':
             if shift == 'linear':
                 if in_or_out == 'in':
-                    direction = np.random.choice(range(self.io_weight[0] - 1)) + 1
+                    direction = np.random.choice(range(self.inputs - 1)) + 1
                 else:
-                    direction = np.random.choice(range(self.io_weight[1] - 1)) + 1
-        if motif_id in self.neuron:
-            if in_or_out == 'in':
-                if 'input' in motif_id:
-                    input_index = literal_eval(motif_id.replace('input', ''))
-                    input_index += direction
-                    input_index %= self.io_weight[0]
-                    return 'input{}'.format(input_index)
-                else:
-                    return motif_id
-            else:
-                if 'output' in motif_id:
-                    output_index = literal_eval(motif_id.replace('output', ''))
-                    output_index += direction
-                    output_index %= self.io_weight[1]
-                    return 'output{}'.format(output_index)
-                else:
-                    return motif_id
+                    direction = np.random.choice(range(self.outputs - 1)) + 1
+        if motif_id in self.neurons.neuron_configs:
+            return self.neurons.shift_io(motif_id, in_or_out, direction)
         motif = self.motif_configs[motif_id]
         motif_copy = deepcopy(motif)
         for i in range(len(motif['node'])):
-            if in_or_out == 'in':
-                if 'input' in motif_copy['node'][i]:
-                    input_index = literal_eval(motif_copy['node'][i].replace('input', ''))
-                    input_index += direction
-                    input_index %= self.io_weight[0]
-                    motif_copy['node'][i] = 'input{}'.format(input_index)
-                else:
-                    if motif_copy['node'][i] not in self.neurons.neuron_configs:
-                        motif_copy['node'][i] = self.shift_io(in_or_out, motif_copy['node'][i], direction, shift)
+            if motif_copy['node'][i] not in self.neurons.neuron_configs:
+                motif_copy['node'][i] = self.shift_io(in_or_out, motif_copy['node'][i], direction, shift)
             else:
-                if 'output' in motif_copy['node'][i]:
-                    output_index = literal_eval(motif_copy['node'][i].replace('output', ''))
-                    output_index += direction
-                    output_index %= self.io_weight[1]
-                    motif_copy['node'][i] = 'output{}'.format(output_index)
-                else:
-                    if motif_copy['node'][i] not in self.neurons.neuron_configs:
-                        motif_copy['node'][i] = self.shift_io(in_or_out, motif_copy['node'][i], direction, shift)
+                motif_copy['node'][i] = self.neurons.shift_io(motif_copy['node'][i], in_or_out, direction)
         if motif_copy != motif:
             new_id = self.insert_motif(motif_copy)
         else:
@@ -588,15 +549,15 @@ class motif_population(object):
             else:
                 pre_ex = False
                 pre_in = False
-                try:
-                    out_pre = literal_eval(self.neurons.neuron_configs[conn[0][0]]['type'].replace('output', ''))
+                if self.neurons.neuron_configs[conn[0][0]]['type'] == 'output':
+                    out_pre = self.neurons.neuron_configs[conn[0][0]]['io']
                     pre_index = out_pre
-                except:
-                    in_pre = literal_eval(self.neurons.neuron_configs[conn[0][0]]['type'].replace('input', ''))
+                else:
+                    in_pre = self.neurons.neuron_configs[conn[0][0]]['io']
                     pre_index = in_pre
             if self.neurons.neuron_configs[conn[1][0]]['type'] == 'excitatory':
                 post_ex = True
-                post_in = True
+                post_in = False
                 try:
                     post_index = indexed_ex.index(conn[1])
                 except:
@@ -613,11 +574,11 @@ class motif_population(object):
             else:
                 post_ex = False
                 post_in = False
-                try:
-                    out_post = literal_eval(self.neurons.neuron_configs[conn[1][0]]['type'].replace('output', ''))
+                if self.neurons.neuron_configs[conn[1][0]]['type'] == 'output':
+                    out_post = self.neurons.neuron_configs[conn[1][0]]['io']
                     post_index = out_post
-                except:
-                    in_post = literal_eval(self.neurons.neuron_configs[conn[1][0]]['type'].replace('input', ''))
+                else:
+                    in_post = self.neurons.neuron_configs[conn[1][0]]['io']
                     post_index = in_post
             if self.constant_delays:
                 conn[4] = self.constant_delays
@@ -710,9 +671,9 @@ class motif_population(object):
         for node in motif['node']:
             if node not in self.neurons.neuron_configs:
                 if node in list:
-                    check = False
-                self.recurse_check(node, list)
-                # del list[list.index(node)]
+                    return False
+                if not self.recurse_check(node, list):
+                    return False
         del list[list.index(motif_id)]
         return check
 

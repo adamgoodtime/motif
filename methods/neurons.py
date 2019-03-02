@@ -82,6 +82,7 @@ class neuron_population(object):
         self.inputs = inputs
         self.ex_prob = ex_prob
         self.pop_size = pop_size
+        self.default = default
 
         self.neuron_params = {}
         self.neuron_params['v_rest'] = self.v_rest
@@ -119,8 +120,8 @@ class neuron_population(object):
         for param in self.neuron_param_stdevs:
             default_check += self.neuron_param_stdevs[param]
         if not default_check:
-            default = True
-        if default:
+            self.default = True
+        if self.default:
             for param in self.neuron_param_stdevs:
                 self.neuron_param_stdevs[param] = 0
             self.pop_size = self.inputs + self.outputs + 2
@@ -138,35 +139,34 @@ class neuron_population(object):
                 neuron['id'] = '{}'.format(self.neurons_generated)
                 io_choice += 1
                 if io_choice - self.inputs < 0:
-                    neuron['type'] = 'input{}'.format(io_choice)
+                    neuron['type'] = 'input'
+                    neuron['io'] = io_choice
                 else:
-                    neuron['type'] = 'output{}'.format(io_choice - self.inputs)
-                if default:
+                    neuron['type'] = 'output'
+                    neuron['io'] = io_choice - self.inputs
+                if self.default:
                     neuron['weight'] = 1
                 else:
                     neuron['weight'] = (self.inputs + self.outputs) / (self.pop_size - self.inputs - self.outputs)
                     neuron['weight'] /= (1 - self.io_prob)
                 neuron['params'] = {}
-                for param in self.neuron_params:
-                    neuron['params'][param] = np.random.normal(self.neuron_params[param], self.neuron_param_stdevs[param])
+                # for param in self.neuron_params:
+                #     neuron['params'][param] = np.random.normal(self.neuron_params[param], self.neuron_param_stdevs[param])
                 self.insert_neuron(neuron, check=False)
             for i in range(self.inputs + self.outputs, self.pop_size):
                 not_new = True
                 while not_new:
                     neuron = {}
                     neuron['id'] = '{}'.format(self.neurons_generated)
-                    if np.random.random() < io_prob:
-                        io_choice = np.random.randint(self.inputs + self.outputs)
-                        if io_choice - self.inputs < 0:
-                            neuron['type'] = 'input{}'.format(io_choice)
-                        else:
-                            neuron['type'] = 'output{}'.format(io_choice - self.inputs)
+                    neuron['io'] = False
+                    if np.random.random() < self.ex_prob:
+                        neuron['type'] = 'excitatory'
                     else:
-                        if np.random.random() < self.ex_prob:
-                            neuron['type'] = 'excitatory'
-                        else:
-                            neuron['type'] = 'inhibitory'
-                    if default:
+                        neuron['type'] = 'inhibitory'
+                    neuron['params'] = {}
+                    for param in self.neuron_params:
+                        neuron['params'][param] = np.random.normal(self.neuron_params[param], self.neuron_param_stdevs[param])
+                    if self.default:
                         if -self.neurons_generated - 1 == self.inputs + self.outputs:
                             neuron['type'] = 'excitatory'
                             base_weight = (float(self.inputs + self.outputs) / self.io_prob) - float(self.inputs + self.outputs)
@@ -177,31 +177,34 @@ class neuron_population(object):
                             neuron['weight'] = base_weight * (1 - self.ex_prob)
                     else:
                         neuron['weight'] = 1
-                    neuron['params'] = {}
-                    for param in self.neuron_params:
-                        neuron['params'][param] = np.random.normal(self.neuron_params[param], self.neuron_param_stdevs[param])
                     not_new = self.check_neuron(neuron)
                 self.insert_neuron(neuron, check=False)
 
     def generate_neuron(self):
+        if self.default:
+            return self.choose_neuron()
         found_new = False
         while not found_new:
             neuron = {}
             if np.random.random() < self.io_prob:
+                neuron['params'] = {}
                 io_choice = np.random.randint(self.inputs + self.outputs)
                 if io_choice - self.inputs < 0:
-                    neuron['type'] = 'input{}'.format(io_choice)
+                    neuron['type'] = 'input'
+                    neuron['io'] = io_choice
                 else:
-                    neuron['type'] = 'output{}'.format(io_choice - self.inputs)
+                    neuron['type'] = 'output'
+                    neuron['io'] = io_choice - self.inputs
             else:
+                neuron['io'] = False
                 if np.random.random() < self.ex_prob:
                     neuron['type'] = 'excitatory'
                 else:
                     neuron['type'] = 'inhibitory'
+                neuron['params'] = {}
+                for param in self.neuron_params:
+                    neuron['params'][param] = np.random.normal(self.neuron_params[param], self.neuron_param_stdevs[param])
             neuron['weight'] = 1
-            neuron['params'] = {}
-            for param in self.neuron_params:
-                neuron['params'][param] = np.random.normal(self.neuron_params[param], self.neuron_param_stdevs[param])
             neuron['id'] = '{}'.format(self.neurons_generated)
             if not self.check_neuron(neuron):
                 neuron_id = self.insert_neuron(neuron, check=False)
@@ -225,7 +228,7 @@ class neuron_population(object):
 
     def check_neuron(self, new_neuron):
         for neuron in self.neuron_configs:
-            the_same = False
+            the_same = True
             for param in self.neuron_configs[neuron]:
                 if self.neuron_configs[neuron][param] == new_neuron[param] or param == 'id' or param == 'weight':
                     the_same = True
@@ -244,8 +247,24 @@ class neuron_population(object):
         for neuron in self.neuron_configs:
             choice -= self.neuron_configs[neuron]['weight']
             if choice < 0:
-                break
-        return neuron
+                return neuron
+
+    def shift_io(self, neuron_id, in_or_out, direction):
+        neuron = deepcopy(self.neuron_configs[neuron_id])
+        if in_or_out == 'in':
+            if neuron['type'] == 'input':
+                neuron['io'] += direction
+                neuron['io'] %= self.inputs
+                return self.check_neuron(neuron)
+            else:
+                return neuron_id
+        else:
+            if neuron['type'] == 'output':
+                neuron['io'] += direction
+                neuron['io'] %= self.outputs
+                return self.check_neuron(neuron)
+            else:
+                return neuron_id
 
     def return_neuron(self, neuron_id):
         return self.neuron_configs[neuron_id]

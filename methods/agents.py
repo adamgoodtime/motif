@@ -47,6 +47,7 @@ class agent_population(object):
                  input_shift=0.015,
                  output_shift=0.015,
                  node_mutate=0.015,
+                 node_switch=0.015,
                  motif_add=0.015,
                  motif_gone=0.015,
                  motif_switch=0.015,
@@ -96,6 +97,10 @@ class agent_population(object):
             self.node_mutate = base_mutate
         else:
             self.node_mutate = node_mutate
+        if base_mutate:
+            self.node_switch = base_mutate
+        else:
+            self.node_switch = node_switch
         if base_mutate:
             self.motif_add = base_mutate
         else:
@@ -331,7 +336,8 @@ class agent_population(object):
         if mutate_key == {}:
             mutate_key['motif'] = 0
             mutate_key['new'] = 0
-            mutate_key['node'] = 0
+            mutate_key['node_s'] = 0
+            mutate_key['node_g'] = 0
             mutate_key['io'] = 0
             mutate_key['in_shift'] = 0
             mutate_key['out_shift'] = 0
@@ -364,7 +370,7 @@ class agent_population(object):
                 selected = False
                 while not selected:
                     selected_motif = self.motifs.select_motif()
-                    selected = self.motifs.recurse_check(selected_motif)
+                    selected = self.motifs.recurse_check(selected_motif, [])
                 config_copy['node'][i] = selected_motif
                 new_depth = self.motifs.motif_configs[config_copy['node'][i]]['depth']
                 if new_depth >= config_copy['depth']:
@@ -395,16 +401,30 @@ class agent_population(object):
                     continue
             elif not self.multiple_mutates:
                 prob_resize_factor *= 1 - self.io_mutate
-            # switch the base node if it's a base node
-            if np.random.random() * prob_resize_factor < self.node_mutate and config_copy['node'][i] in self.motifs.neuron_types:
-                mutate_key['node'] += 1
+            # mutate the base node if it's a base node
+            if np.random.random() * prob_resize_factor < self.node_mutate and \
+                    config_copy['node'][i] in self.motifs.neurons.neuron_configs and \
+                    not self.motifs.neurons.default:
+                mutate_key['node_g'] += 1
                 new_node = config_copy['node'][i]
                 while config_copy['node'][i] == new_node:
-                    new_node = np.random.choice(self.motifs.neuron_types)
+                    new_node = self.motifs.neurons.generate_neuron
                 config_copy['node'][i] = new_node
                 if not self.multiple_mutates:
                     continue
-            elif config_copy['node'][i] in self.motifs.neuron_types and not self.multiple_mutates:
+            elif config_copy['node'][i] in self.motifs.neurons.neuron_configs and not self.multiple_mutates:
+                prob_resize_factor *= 1 - self.node_mutate
+            # switch the base node if it's a base node
+            if np.random.random() * prob_resize_factor < self.node_switch and \
+                    config_copy['node'][i] in self.motifs.neurons.neuron_configs:
+                mutate_key['node_s'] += 1
+                new_node = config_copy['node'][i]
+                while config_copy['node'][i] == new_node:
+                    new_node = self.motifs.neurons.choose_neuron()
+                config_copy['node'][i] = new_node
+                if not self.multiple_mutates:
+                    continue
+            elif config_copy['node'][i] in self.motifs.neurons.neuron_configs and not self.multiple_mutates:
                 prob_resize_factor *= 1 - self.node_mutate
             # shift all input nodes of the motif by the same amount
             if np.random.random() * prob_resize_factor < self.input_shift:
@@ -480,7 +500,7 @@ class agent_population(object):
                 mutate_key['plasticity'] += 1
         # insert the new motif and then go through the nodes and mutate them
         motif_id = self.motifs.insert_motif(config_copy)
-        if self.motifs.recurse_check(motif_id):
+        if self.motifs.recurse_check(motif_id, []):
             copy_copy = deepcopy(config_copy)
         else:
             self.motifs.delete_motif(motif_id)
@@ -488,7 +508,7 @@ class agent_population(object):
             copy_copy = deepcopy(motif_config)
         node_count = 0
         for node in config_copy['node']:
-            if node not in self.motifs.neuron_types:
+            if node not in self.motifs.neurons.neuron_configs:
                 try:
                     copy_copy['node'][node_count] = self.mutate([node], mutate_key)
                 except:
@@ -508,7 +528,8 @@ class agent_population(object):
         if mutate_key == {}:
             mutate_key['motif'] = 0
             mutate_key['new'] = 0
-            mutate_key['node'] = 0
+            mutate_key['node_s'] = 0
+            mutate_key['node_g'] = 0
             mutate_key['io'] = 0
             mutate_key['in_shift'] = 0
             mutate_key['out_shift'] = 0
@@ -529,7 +550,7 @@ class agent_population(object):
         for i in range(len(mum_motif['node'])):
             if np.random.random() < self.crossover:
                 mum_motif['node'][i] = np.random.choice(dad_list)
-            elif mum_motif['node'][i] not in self.motifs.neuron_types:
+            elif mum_motif['node'][i] not in self.motifs.neurons.neuron_configs:
                 mum_motif['node'][i] = self.mate([mum_motif['node'][i]], dad, mutate_key)
         if self.motifs.motif_configs[mum[0]] != mum_motif:
             child_id = self.motifs.insert_motif(mum_motif)
@@ -539,7 +560,8 @@ class agent_population(object):
     def fresh_child(self, mutate_key):
         mutate_key['motif'] = 0
         mutate_key['new'] = 0
-        mutate_key['node'] = 0
+        mutate_key['node_s'] = 0
+        mutate_key['node_g'] = 0
         mutate_key['io'] = 0
         mutate_key['in_shift'] = 0
         mutate_key['out_shift'] = 0
@@ -893,7 +915,7 @@ class agent_population(object):
     def read_fitnesses(self, config, worst_score, make_action):
         #todo check if this handles fails properly
         fitnesses = np.load('fitnesses {}.npy'.format(config))
-        os.remove('fitnesses {}.npy'.format(config))
+        # os.remove('fitnesses {}.npy'.format(config))
         fitnesses = fitnesses.tolist()
         processed_fitness = []
         for fitness in fitnesses:

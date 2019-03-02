@@ -55,7 +55,7 @@ maximum_depth = [4, 10]
 no_bins = [10, 75]
 reset_pop = 0
 size_f = False
-spike_f = False#'out'
+spike_f = True#'out'
 make_action = True
 shape_fitness = True
 random_arms = 0
@@ -202,7 +202,7 @@ def bandit(generations):
                               read_entire_population=read_pop,
                               keep_reading=keep_reading,
                               plasticity=plasticity,
-                              population_size=agent_pop_size+200)
+                              population_size=agent_pop_size*3)
 
     # todo :add number of different motifs to the fitness function to promote regularity
     # config = "bandit reward_shape:{}, reward:{}, noise r-w:{}-{}, arms:{}-{}-{}, max_d{}, size:{}, spikes:{}, w_max{}".format(
@@ -279,18 +279,18 @@ def bandit(generations):
 
         print "1", motifs.total_weight
 
-        if spike_f:
-            agent_spikes = []
-            for k in range(agent_pop_size):
-                spike_total = 0
-                for j in range(number_of_tests):
-                    if isinstance(fitnesses[j][k], list):
-                        spike_total -= fitnesses[j][k][1] + fitnesses[j][k][2]
-                        fitnesses[j][k] = fitnesses[j][k][0]
-                    else:
-                        spike_total -= 1000000
+        agent_spikes = []
+        for k in range(agent_pop_size):
+            spike_total = 0
+            for j in range(number_of_tests):
+                if isinstance(fitnesses[j][k], list):
+                    spike_total -= fitnesses[j][k][1] + fitnesses[j][k][2]
+                    fitnesses[j][k] = fitnesses[j][k][0]
+                else:
+                    spike_total -= 1000000
 
-                agent_spikes.append(spike_total)
+            agent_spikes.append(spike_total)
+        if spike_f:
             fitnesses.append(agent_spikes)
 
         agents.pass_fitnesses(fitnesses, fitness_shaping=shape_fitness)
