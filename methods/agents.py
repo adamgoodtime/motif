@@ -846,13 +846,13 @@ class agent_population(object):
     def status_update(self, combined_fitnesses, iteration, config, len_arms):
         total_scores = [0 for i in range(len(combined_fitnesses))]
         average_fitness = 0
-        worst_score = 1000000
+        worst_score = 100000000
         worst_agent = 'need to higher worst score'
-        best_score = -1000000
+        best_score = -100000000
         best_agent = 'need to lower best score'
-        worst_fitness = 1000000
+        worst_fitness = 100000000
         worst_agent_s = 'need to higher worst score'
-        best_fitness = -1000000
+        best_fitness = -100000000
         best_agent_s = 'need to lower best score'
         for j in range(len(self.agent_pop)):
             scores = '|'
@@ -922,11 +922,11 @@ class agent_population(object):
             processed_score = []
             for score in fitness:
                 if score == 'fail':
-                    processed_score.append([max_fail_score, -10000000, -10000000])
+                    processed_score.append([worst_score, -10000001, -10000001])
                 else:
                     if make_action:
                         if score[2] == 0:
-                            processed_score.append([0, score[1], score[2]])
+                            processed_score.append([worst_score, score[1], score[2]])
                         else:
                             processed_score.append(score)
             processed_fitness.append(processed_score)
