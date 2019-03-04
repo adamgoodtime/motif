@@ -63,7 +63,7 @@ def wait_timeout(processes, seconds):
         time.sleep(interval)
         if finished == len(processes):
             return True
-        
+
 def read_results(test_length):
     all_fitnesses = []
     for i in range(test_length):
@@ -130,9 +130,9 @@ def subprocess_experiments(connections, test_data_set, split=4, runtime=2000, ex
         process_list.append(p)
 
         test_id += 1
-    
-    wait_timeout(process_list, ((runtime / 1000) * 4) + 60)
-        
+
+    wait_timeout(process_list, ((runtime / 1000) * 15) + 60)
+
     pool_result = read_results(test_id)
 
     for i in range(len(pool_result)):
