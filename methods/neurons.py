@@ -266,6 +266,30 @@ class neuron_population(object):
             else:
                 return neuron_id
 
+    def reset_weights(self):
+        for neuron in self.neuron_configs:
+            self.neuron_configs[neuron]['weight'] = 0
+
+    def update_weights(self, neuron_ids, weight):
+        for neuron in neuron_ids:
+            self.neuron_configs[neuron]['weight'] += weight
+
+    def average_weights(self, neuron_counts):
+        for neuron in self.neuron_configs:
+            self.neuron_configs[neuron]['weight'] /= neuron_counts[neuron]
+
+    def clean_population(self):
+        if not self.default:
+            to_be_deleted = []
+            for neuron_id in self.neuron_configs:
+                if self.neuron_configs[neuron_id]['weight'] == 0:
+                    to_be_deleted.append(neuron_id)
+            for id in to_be_deleted:
+                self.delete_neuron(id)
+
+    def delete_neuron(self, neuron_id):
+        del self.neuron_configs[neuron_id]
+
     def return_neuron(self, neuron_id):
         return self.neuron_configs[neuron_id]
 

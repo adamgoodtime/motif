@@ -52,10 +52,10 @@ split = 1
 new_split = agent_pop_size
 
 maximum_depth = [4, 10]
-no_bins = [10, 75]
+no_bins = [10, 375]
 reset_pop = 0
 size_f = False
-spike_f = True#'out'
+spike_f = False#'out'
 make_action = True
 shape_fitness = True
 random_arms = 0
@@ -66,15 +66,14 @@ exposure_time = 200
 io_prob = 0.95
 read_pop = 0  # 'new_io_motif_easy_3.csv'
 keep_reading = 5
-constant_delays = 0
+constant_delays = 1
 base_mutate = 0
 multiple_mutates = True
-exec_thing = 'double pen'
+exec_thing = 'pen'
 plasticity = False
 free_label = 0
 
 max_fail_score = 0
-
 no_v = False
 encoding = 0
 time_increment = 20
@@ -82,8 +81,8 @@ pole_length = 1
 pole2_length = 0.1
 pole_angle = [[0.1], [0.2], [-0.1], [-0.2]]
 reward_based = 1
-force_increments = 10
-max_firing_rate = 30
+force_increments = 20
+max_firing_rate = 1000
 number_of_bins = 6
 central = 1
 bin_overlap = 2
@@ -260,7 +259,7 @@ def bandit(generations):
         # reward=reward, noise_rate=noise_rate, noise_weight=noise_weight, size_f=size_fitness, spike_f=spikes_fitness)
 
         # config = 'test'
-        if config != 'test':
+        if config == 'test':
             # arms = [0.1, 0.9, 0.2]
             # agents.bandit_test(connections, arms)
             if exec_thing == 1:
@@ -293,7 +292,7 @@ def bandit(generations):
         if spike_f:
             fitnesses.append(agent_spikes)
 
-        agents.pass_fitnesses(fitnesses, fitness_shaping=shape_fitness)
+        agents.pass_fitnesses(fitnesses, max_fail_score, fitness_shaping=shape_fitness)
 
         agents.status_update(fitnesses, i, config, number_of_tests)
 
