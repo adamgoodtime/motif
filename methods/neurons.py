@@ -276,7 +276,7 @@ class neuron_population(object):
             self.neuron_configs[neuron]['weight'] += weight
 
     def average_weights(self, neuron_counts):
-        for neuron in self.neuron_configs:
+        for neuron in neuron_counts:
             self.neuron_configs[neuron]['weight'] /= neuron_counts[neuron]
 
     def clean_population(self):

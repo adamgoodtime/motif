@@ -262,13 +262,7 @@ def bandit(generations):
         if config == 'test':
             # arms = [0.1, 0.9, 0.2]
             # agents.bandit_test(connections, arms)
-            if exec_thing == 1:
-                execfile("../methods/exec_bandit.py", globals())
-            elif exec_thing == 2:
-                execfile("../methods/exec_bandit2.py", globals())
-            elif exec_thing == 3:
-                execfile("../methods/exec_bandit3.py", globals())
-            elif exec_thing == 'xor':
+            if exec_thing == 'xor':
                 execfile("../methods/exec_xor.py", globals())
             else:
                 globals()['exec_thing'] = exec_thing
