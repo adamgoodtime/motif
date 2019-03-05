@@ -204,8 +204,6 @@ def bandit(generations):
                               population_size=agent_pop_size*3)
 
     # todo :add number of different motifs to the fitness function to promote regularity
-    # config = "bandit reward_shape:{}, reward:{}, noise r-w:{}-{}, arms:{}-{}-{}, max_d{}, size:{}, spikes:{}, w_max{}".format(
-    #     reward_shape, reward, noise_rate, noise_weight, arms[0], len(arms), random_arms, maximum_depth, size_fitness, spikes_fitness, weight_max)
 
     agents = agent_population(motifs,
                               pop_size=agent_pop_size,
@@ -255,11 +253,8 @@ def bandit(generations):
         else:
             connections = agents.generate_spinn_nets(input=inputs, output=outputs, max_depth=3, create=False)
 
-        # fitnesses = agents.thread_bandit(connections, arms, split=16, runtime=21000, exposure_time=200,
-        # reward=reward, noise_rate=noise_rate, noise_weight=noise_weight, size_f=size_fitness, spike_f=spikes_fitness)
-
         # config = 'test'
-        if config == 'test':
+        if config != 'test':
             # arms = [0.1, 0.9, 0.2]
             # agents.bandit_test(connections, arms)
             if exec_thing == 'xor':
