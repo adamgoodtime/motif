@@ -133,6 +133,8 @@ def subprocess_experiments(connections, test_data_set, split=4, runtime=2000, ex
 
     wait_timeout(process_list, ((runtime / 1000) * 15) + 300)
 
+    print "all finished"
+
     pool_result = read_results(test_id)
 
     for i in range(len(pool_result)):

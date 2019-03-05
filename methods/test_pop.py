@@ -14,6 +14,7 @@ from spinn_bandit.python_models.bandit import Bandit
 from python_models.pendulum import Pendulum
 from rank_inverted_pendulum.python_models.rank_pendulum import Rank_Pendulum
 from double_inverted_pendulum.python_models.double_pendulum import DoublePendulum
+import spinn_gym as gym
 from spinn_arm.python_models.arm import Arm
 # from spinn_breakout import Breakout
 import math
@@ -130,19 +131,19 @@ def pop_test(connections, test_data, split=4, runtime=2000, exposure_time=200, n
             else:
                 model_count += 1
                 if exec_thing == 'pen':
-                    input_model = Pendulum(encoding=encoding,
-                                           time_increment=time_increment,
-                                           pole_length=pole_length,
-                                           pole_angle=test_data[0],
-                                           reward_based=reward_based,
-                                           force_increments=force_increments,
-                                           max_firing_rate=max_firing_rate,
-                                           number_of_bins=number_of_bins,
-                                           central=central,
-                                           bin_overlap=bin_overlap,
-                                           tau_force=tau_force,
-                                           rand_seed=[np.random.randint(0xffff) for j in range(4)],
-                                           label='pendulum_pop_{}-{}'.format(model_count, i))
+                    input_model = gym.Pendulum(encoding=encoding,
+                                               time_increment=time_increment,
+                                               pole_length=pole_length,
+                                               pole_angle=test_data[0],
+                                               reward_based=reward_based,
+                                               force_increments=force_increments,
+                                               max_firing_rate=max_firing_rate,
+                                               number_of_bins=number_of_bins,
+                                               central=central,
+                                               bin_overlap=bin_overlap,
+                                               tau_force=tau_force,
+                                               rand_seed=[np.random.randint(0xffff) for j in range(4)],
+                                               label='pendulum_pop_{}-{}'.format(model_count, i))
                 elif exec_thing == 'rank pen':
                     input_model = Rank_Pendulum(encoding=encoding,
                                                 time_increment=time_increment,
@@ -174,17 +175,17 @@ def pop_test(connections, test_data, split=4, runtime=2000, exposure_time=200, n
                                                  rand_seed=[np.random.randint(0xffff) for j in range(4)],
                                                  label='double_pendulum_pop_{}-{}'.format(model_count, i))
                 elif exec_thing == 'bout':
-                    input_model = Breakout(x_factor=x_factor,
-                                           y_factor=y_factor,
-                                           bricking=bricking,
-                                           random_seed=[np.random.randint(0xffff) for j in range(4)],
-                                           label='breakout_pop_{}-{}'.format(model_count, i))
+                    input_model = gym.Breakout(x_factor=x_factor,
+                                               y_factor=y_factor,
+                                               bricking=bricking,
+                                               random_seed=[np.random.randint(0xffff) for j in range(4)],
+                                               label='breakout_pop_{}-{}'.format(model_count, i))
                 else:
-                    input_model = Bandit(arms=test_data,
-                                         reward_delay=exposure_time,
-                                         reward_based=reward,
-                                         rand_seed=[np.random.randint(0xffff) for j in range(4)],
-                                         label='bandit_pop_{}-{}'.format(model_count, i))
+                    input_model = gym.Bandit(arms=test_data,
+                                             reward_delay=exposure_time,
+                                             reward_based=reward,
+                                             rand_seed=[np.random.randint(0xffff) for j in range(4)],
+                                             label='bandit_pop_{}-{}'.format(model_count, i))
                 input_pop_size = input_model.neurons()
                 input_pops.append(p.Population(input_pop_size, input_model))
                 # added to ensure that the arms and bandit are connected to and from something

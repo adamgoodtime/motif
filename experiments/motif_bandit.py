@@ -263,6 +263,8 @@ def bandit(generations):
                 globals()['exec_thing'] = exec_thing
                 execfile("../methods/exec_subprocess.py", globals())
 
+        print "returned"
+
         fitnesses = agents.read_fitnesses(config, max_fail_score, make_action)
 
         print "1", motifs.total_weight
