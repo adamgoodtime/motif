@@ -267,6 +267,7 @@ class neuron_population(object):
                 return neuron_id
 
     def reset_weights(self):
+        self.total_weight = 0
         for neuron in self.neuron_configs:
             self.neuron_configs[neuron]['weight'] = 0
 

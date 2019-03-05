@@ -213,6 +213,8 @@ class agent_population(object):
                             if metric[i][0] != metric[i-1][0]:
                                 current_shape = i
                         shaped_fitnesses[metric[i][1]] += current_shape  # maybe add some weighting here but I dunno
+                    if i > len(metric) - (len(metric) * self.viable_parents):
+                        shaped_fitnesses[metric[i][1]] += 0.00001  # just to ensure elite aren't erased accidentally
         else:
             # the same as above but with only one fitness metric
             shaped_fitnesses = [0 for i in range(len(fitnesses))]
@@ -407,7 +409,7 @@ class agent_population(object):
                 mutate_key['node_g'] += 1
                 new_node = config_copy['node'][i]
                 while config_copy['node'][i] == new_node:
-                    new_node = self.motifs.neurons.generate_neuron
+                    new_node = self.motifs.neurons.generate_neuron()
                 config_copy['node'][i] = new_node
                 if not self.multiple_mutates:
                     continue

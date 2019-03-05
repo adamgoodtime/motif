@@ -694,6 +694,7 @@ class motif_population(object):
             self.total_weight = 0
             for motif_id in self.motif_configs:
                 self.motif_configs['{}'.format(motif_id)]['weight'] = 0
+            self.neurons.reset_weights()
 
     def update_weight(self, motif_ids, weight):
         for motif_id in motif_ids:
@@ -792,7 +793,7 @@ class motif_population(object):
                 component_motifs = []
                 component_motifs = self.list_motifs(agent[0], component_motifs)
                 component_neurons = []
-                component_neurons = self.list_neurons([], agent[0])
+                component_neurons = self.list_neurons(component_neurons, agent[0])
                 self.update_weight(component_motifs, agent[2])
                 self.neurons.update_weights(component_neurons, agent[2])
                 if average:
