@@ -23,5 +23,6 @@
     <orderEntry type="module" module-name="inverted-pendulum" />
     <orderEntry type="module" module-name="rank-inverted-pendulum" />
     <orderEntry type="module" module-name="double-inverted-pendulum" />
+    <orderEntry type="module" module-name="SpiNNGym" />
   </component>
 </module>

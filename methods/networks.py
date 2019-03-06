@@ -689,12 +689,13 @@ class motif_population(object):
     def return_motif(self, motif_id):
         return self.motif_configs[motif_id]
 
-    def reset_weights(self, full_reset=True):
+    def reset_weights(self, develop_neurons=True, full_reset=True):
         if full_reset == True:
             self.total_weight = 0
             for motif_id in self.motif_configs:
                 self.motif_configs['{}'.format(motif_id)]['weight'] = 0
-            self.neurons.reset_weights()
+            if develop_neurons:
+                self.neurons.reset_weights()
 
     def update_weight(self, motif_ids, weight):
         for motif_id in motif_ids:
@@ -782,7 +783,8 @@ class motif_population(object):
             # self.motif_configs['{}'.format(motif_id)]['weight'] += weight
             self.motif_configs[motif_id]['weight'] /= motif_counts[motif_id]
 
-    def adjust_weights(self, agents, clean=True, fitness_shaping=True, reward_shape=True, average=True, iteration=0):
+    def adjust_weights(self, agents, develop_neurons=True, clean=True, fitness_shaping=True, reward_shape=True,
+                       average=True, iteration=0):
         self.reset_weights()
         motif_count = {}
         neuron_count = {}
@@ -792,28 +794,32 @@ class motif_population(object):
             for agent in agents:
                 component_motifs = []
                 component_motifs = self.list_motifs(agent[0], component_motifs)
-                component_neurons = []
-                component_neurons = self.list_neurons(component_neurons, agent[0])
                 self.update_weight(component_motifs, agent[2])
-                self.neurons.update_weights(component_neurons, agent[2])
+                if develop_neurons:
+                    component_neurons = []
+                    component_neurons = self.list_neurons(component_neurons, agent[0])
+                    self.neurons.update_weights(component_neurons, agent[2])
                 if average:
                     for component in component_motifs:
                         if component in motif_count:
                             motif_count[component] += 1
                         else:
                             motif_count[component] = 1
-                    for component in component_neurons:
-                        if component in neuron_count:
-                            neuron_count[component] += 1
-                        else:
-                            neuron_count[component] = 1
+                    if develop_neurons:
+                        for component in component_neurons:
+                            if component in neuron_count:
+                                neuron_count[component] += 1
+                            else:
+                                neuron_count[component] = 1
                 i += 1
         if average:
             self.average_weights(motif_count)
-            self.neurons.average_weights(neuron_count)
+            if develop_neurons:
+                self.neurons.average_weights(neuron_count)
         if clean:
             self.clean_population(reward_shape)
-            self.neurons.clean_population()
+            if develop_neurons:
+                self.neurons.clean_population()
         if iteration < self.keep_reading and self.read_entire_population:
             self.read_population()
         self.total_weight = 0

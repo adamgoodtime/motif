@@ -180,12 +180,21 @@ def pop_test(connections, test_data, split=4, runtime=2000, exposure_time=200, n
                                                bricking=bricking,
                                                random_seed=[np.random.randint(0xffff) for j in range(4)],
                                                label='breakout_pop_{}-{}'.format(model_count, i))
-                else:
+                elif exec_thing == 'logic':
+                    input_model = gym.Logic(truth_table=truth_table,
+                                            input_sequence=test_data,
+                                            stochastic=stochastic,
+                                            rand_seed=[np.random.randint(0xffff) for j in range(4)],
+                                            label='logic_pop_{}-{}'.format(model_count, i))
+                elif exec_thing == 'arms':
                     input_model = gym.Bandit(arms=test_data,
                                              reward_delay=exposure_time,
                                              reward_based=reward,
                                              rand_seed=[np.random.randint(0xffff) for j in range(4)],
                                              label='bandit_pop_{}-{}'.format(model_count, i))
+                else:
+                    print "Incorrect input model selected"
+                    raise Exception
                 input_pop_size = input_model.neurons()
                 input_pops.append(p.Population(input_pop_size, input_model))
                 # added to ensure that the arms and bandit are connected to and from something
@@ -206,31 +215,8 @@ def pop_test(connections, test_data, split=4, runtime=2000, exposure_time=200, n
                 p.Projection(output_pop[model_count], input_pops[model_count], p.AllToAllConnector())
                 if e_size > 0:
                     excite_count += 1
-                    v_rest = excite_params['v_rest']  # Resting membrane potential in mV.
-                    cm = excite_params['cm']   # Capacity of the membrane in nF
-                    tau_m = excite_params['tau_m']   # Membrane time constant in ms.
-                    tau_refrac = excite_params['tau_refrac']   # Duration of refractory period in ms.
-                    tau_syn_E = excite_params['tau_syn_E']  # Rise time of the excitatory synaptic alpha function in ms.
-                    tau_syn_I = excite_params['tau_syn_I']  # Rise time of the inhibitory synaptic alpha function in ms.
-                    e_rev_E = excite_params['e_rev_E']  # Reversal potential for excitatory input in mV
-                    e_rev_I = excite_params['e_rev_I']   # Reversal potential for inhibitory input in mV
-                    v_thresh = excite_params['v_thresh']  # Spike threshold in mV.
-                    v_reset = excite_params['v_reset']   # Reset potential after a spike in mV.
-                    i_offset = excite_params['i_offset']   # Offset current in nA
                     excite.append(
-                        p.Population(e_size, p.IF_cond_exp(**excite_params
-                                                            # v_rest=v_rest,
-                                                            #                            cm=cm,
-                                                            #                            tau_m=tau_m,
-                                                            #                            tau_refrac=tau_refrac,
-                                                            #                            tau_syn_E=tau_syn_E,
-                                                            #                            tau_syn_I=tau_syn_I,
-                                                            #                            e_rev_E=e_rev_E,
-                                                            #                            e_rev_I=e_rev_I,
-                                                            #                            v_thresh=v_thresh,
-                                                            #                            v_reset=v_reset,
-                                                            #                            i_offset=i_offset
-                                                           ),
+                        p.Population(e_size, p.IF_cond_exp(**excite_params),
                                      label='excite_pop_{}-{}'.format(excite_count, i)))
                     if noise_rate:
                         excite_noise = p.Population(e_size, p.SpikeSourcePoisson(rate=noise_rate))

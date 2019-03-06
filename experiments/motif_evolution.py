@@ -12,33 +12,6 @@ import pathos.multiprocessing
 connections = []
 weight_max = 0.1
 
-arm1 = 1
-arm2 = 0
-# arm3 = 0.1
-arm_len = 1
-arms = []
-for i in range(arm_len):
-    arms.append([arm1, arm2])
-    arms.append([arm2, arm1])
-    # for arm in list(itertools.permutations([arm1, arm2, arm3])):
-    #     arms.append(list(arm))
-# arms = [[0.4, 0.6], [0.6, 0.4], [0.3, 0.7], [0.7, 0.3], [0.2, 0.8], [0.8, 0.2], [0.1, 0.9], [0.9, 0.1]]
-arms = [[0.4, 0.6], [0.6, 0.4], [0.3, 0.7], [0.7, 0.3], [0.2, 0.8], [0.8, 0.2], [0.1, 0.9], [0.9, 0.1], [0, 1], [1, 0]]
-'''top_prob = 1
-0.1 = base prob 1
-0.2 equals base prob 2
-etc
-split node and share inputs but half outputs
-arms = [[0.1, 0.2, top_prob, 0.3, 0.2, 0.1, 0.2, 0.1], [top_prob, 0.1, 0.1, 0.2, 0.3, 0.2, 0.1, 0.2],
-        [0.3, top_prob, 0.2, 0.1, 0.1, 0.2, 0.2, 0.1], [0.2, 0.1, 0.1, top_prob, 0.2, 0.3, 0.1, 0.2],
-        [0.1, 0.1, 0.1, 0.2, top_prob, 0.2, 0.3, 0.2], [0.1, 0.2, 0.1, 0.2, 0.2, top_prob, 0.1, 0.3],
-        [0.2, 0.1, 0.3, 0.1, 0.2, 0.1, top_prob, 0.2], [0.1, 0.3, 0.2, 0.2, 0.1, 0.2, 0.1, top_prob]]
-# '''
-if isinstance(arms[0], list):
-    number_of_arms = len(arms[0])
-else:
-    number_of_arms = len(arms)
-
 agent_pop_size = 100
 reward_shape = False
 averaging_weights = True
@@ -51,6 +24,7 @@ threading_tests = True
 split = 1
 new_split = agent_pop_size
 
+#motif params
 maximum_depth = [4, 10]
 no_bins = [10, 375]
 reset_pop = 0
@@ -61,18 +35,44 @@ shape_fitness = True
 random_arms = 0
 viable_parents = 0.2
 elitism = 0.2
-runtime = 181000
 exposure_time = 200
 io_prob = 0.95
 read_pop = 0  # 'new_io_motif_easy_3.csv'
 keep_reading = 5
-constant_delays = 1
+constant_delays = 0
 base_mutate = 0
 multiple_mutates = True
-exec_thing = 'pen'
+exec_thing = 'logic'
 plasticity = False
+develop_neurons = True
 free_label = 0
 
+#arms params
+arms_runtime = 41000
+arm1 = 0.8
+arm2 = 0.1
+arm3 = 0.1
+arm_len = 1
+arms = []
+for i in range(arm_len):
+    # arms.append([arm1, arm2])
+    # arms.append([arm2, arm1])
+    for arm in list(itertools.permutations([arm1, arm2, arm3])):
+        arms.append(list(arm))
+# arms = [[0.4, 0.6], [0.6, 0.4], [0.3, 0.7], [0.7, 0.3], [0.2, 0.8], [0.8, 0.2], [0.1, 0.9], [0.9, 0.1]]
+# arms = [[0.4, 0.6], [0.6, 0.4], [0.3, 0.7], [0.7, 0.3], [0.2, 0.8], [0.8, 0.2], [0.1, 0.9], [0.9, 0.1], [0, 1], [1, 0]]
+'''top_prob = 1
+low_prob = 0
+med_prob = 0.1
+hii_prob = 0.2
+arms = [[low_prob, med_prob, top_prob, hii_prob, med_prob, low_prob, med_prob, low_prob], [top_prob, low_prob, low_prob, med_prob, hii_prob, med_prob, low_prob, med_prob],
+        [hii_prob, top_prob, med_prob, low_prob, low_prob, med_prob, med_prob, low_prob], [med_prob, low_prob, low_prob, top_prob, med_prob, hii_prob, low_prob, med_prob],
+        [low_prob, low_prob, low_prob, med_prob, top_prob, med_prob, hii_prob, med_prob], [low_prob, med_prob, low_prob, med_prob, med_prob, top_prob, low_prob, hii_prob],
+        [med_prob, low_prob, hii_prob, low_prob, med_prob, low_prob, top_prob, med_prob], [low_prob, hii_prob, med_prob, med_prob, low_prob, med_prob, low_prob, top_prob]]
+# '''
+
+#pendulum params
+pendulum_runtime = 181000
 max_fail_score = 0
 no_v = False
 encoding = 0
@@ -88,6 +88,24 @@ central = 1
 bin_overlap = 2
 tau_force = 0
 
+#logic params
+logic_runtime = 5000
+stochastic = 1
+truth_table = [0, 1, 1, 0]
+input_sequence = []
+segment = [0 for j in range(int(np.log2(len(truth_table))))]
+input_sequence.append(segment)
+for i in range(1, len(truth_table)):
+    current_value = i
+    segment = [0 for j in range(int(np.log2(len(truth_table))))]
+    while current_value != 0:
+        highest_power = int(np.log2(current_value))
+        segment[highest_power] = 1
+        current_value -= 2**highest_power
+    input_sequence.append(segment)
+
+#breakout params
+breakout_runtime = 181000
 x_factor = 8
 y_factor = 8
 bricking = 0
@@ -96,12 +114,14 @@ inputs = 0
 outputs = 0
 test_data_set = []
 config = ''
+runtime = 0
 
 def bandit(generations):
     print "starting"
-    global connections, arms, max_fail_score, pole_angle, inputs, outputs, config, test_data_set, encoding
+    global connections, arms, max_fail_score, pole_angle, inputs, outputs, config, test_data_set, encoding, runtime
 
     if exec_thing == 'br':
+        runtime = arms_runtime
         inputs = (160 / x_factor) * (128 / y_factor)
         outputs = 2
         config = 'bout {}-{}-{} '.format(x_factor, y_factor, bricking)
@@ -119,6 +139,7 @@ def bandit(generations):
         test_data_set = arms
         number_of_tests = len(arms)
     elif exec_thing == 'pen':
+        runtime = pendulum_runtime
         encoding = 1
         inputs = 4
         if encoding != 0:
@@ -130,6 +151,7 @@ def bandit(generations):
         test_data_set = pole_angle
         number_of_tests = len(pole_angle)
     elif exec_thing == 'rank pen':
+        runtime = pendulum_runtime
         inputs = 4 * number_of_bins
         if no_v:
             inputs /= 2
@@ -138,6 +160,7 @@ def bandit(generations):
         test_data_set = pole_angle
         number_of_tests = len(pole_angle)
     elif exec_thing == 'double pen':
+        runtime = pendulum_runtime
         inputs = 6 * number_of_bins
         if no_v:
             inputs /= 2
@@ -145,12 +168,29 @@ def bandit(generations):
         config = 'double-pend-an{}-{}-F{}-R{}-B{}-O{} '.format(pole_angle[0], len(pole_angle), force_increments, max_firing_rate, number_of_bins, bin_overlap)
         test_data_set = pole_angle
         number_of_tests = len(pole_angle)
-    else:
+    elif exec_thing == 'arms':
+        if isinstance(arms[0], list):
+            number_of_arms = len(arms[0])
+        else:
+            number_of_arms = len(arms)
+        runtime = arms_runtime
         test_data_set = arms
         inputs = 2
         outputs = number_of_arms
         config = 'bandit-{}-{}-{} '.format(arms[0][0], len(arms), random_arms)
         number_of_tests = len(arms)
+    elif exec_thing == 'logic':
+        runtime = logic_runtime
+        test_data_set = input_sequence
+        inputs = len(input_sequence[0])
+        outputs = 2
+        if stochastic:
+            config = 'logic-stoc-{} '.format(stochastic, truth_table)
+        else:
+            config = 'logic-{} '.format(stochastic, truth_table)
+    else:
+        print "\nNot a correct test setting\n"
+        raise Exception
     if plasticity:
         config += 'pl '
     if averaging_weights:
@@ -182,6 +222,8 @@ def bandit(generations):
         config += 'fast_mem '
     if no_v:
         config += 'no_v '
+    if develop_neurons:
+        config += 'dev_n '
     if free_label:
         config += '{} '.format(free_label)
 
@@ -288,11 +330,6 @@ def bandit(generations):
         agents.status_update(fitnesses, i, config, number_of_tests)
 
         print "\nconfig: ", config, "\n"
-
-        if spike_f:
-            None
-        else:
-            None
 
         print "2", motifs.total_weight
 
