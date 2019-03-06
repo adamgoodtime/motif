@@ -184,6 +184,7 @@ def pop_test(connections, test_data, split=4, runtime=2000, exposure_time=200, n
                     input_model = gym.Logic(truth_table=truth_table,
                                             input_sequence=test_data,
                                             stochastic=stochastic,
+                                            score_delay=score_delay,
                                             rand_seed=[np.random.randint(0xffff) for j in range(4)],
                                             label='logic_pop_{}-{}'.format(model_count, i))
                 elif exec_thing == 'arms':

@@ -37,7 +37,9 @@ viable_parents = 0.2
 elitism = 0.2
 exposure_time = 200
 io_prob = 0.95
-read_pop = 0  # 'new_io_motif_easy_3.csv'
+read_pop = 0
+# read_pop = 'Dirty place/good pendulum with plastic and high bins.csv'
+# read_pop = '/Dirty place/good bandit with plastic.csv'
 keep_reading = 5
 constant_delays = 0
 base_mutate = 0
@@ -90,6 +92,7 @@ tau_force = 0
 
 #logic params
 logic_runtime = 5000
+score_delay = 5000
 stochastic = 1
 truth_table = [0, 1, 1, 0]
 input_sequence = []
@@ -262,8 +265,8 @@ def bandit(generations):
                               maximum_depth=maximum_depth,
                               viable_parents=viable_parents)
 
-    config += "ex-{}, reward-{}, max_d-{}, w_max-{}, rents-{}, elite-{}, psize-{}, bins-{}".format(
-        exec_thing, reward, maximum_depth, weight_max, viable_parents, elitism, agent_pop_size,
+    config += "reward-{}, max_d-{}, w_max-{}, rents-{}, elite-{}, psize-{}, bins-{}".format(
+        reward, maximum_depth, weight_max, viable_parents, elitism, agent_pop_size,
         no_bins)
 
     if io_prob:
