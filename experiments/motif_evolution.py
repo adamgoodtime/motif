@@ -182,6 +182,7 @@ def bandit(generations):
     elif exec_thing == 'logic':
         runtime = logic_runtime
         test_data_set = input_sequence
+        number_of_tests = len(input_sequence)
         inputs = len(input_sequence[0])
         outputs = 2
         if stochastic:
@@ -320,7 +321,6 @@ def bandit(generations):
                     fitnesses[j][k] = fitnesses[j][k][0]
                 else:
                     spike_total -= 1000000
-
             agent_spikes.append(spike_total)
         if spike_f:
             fitnesses.append(agent_spikes)

@@ -199,7 +199,7 @@ def pop_test(connections, test_data, split=4, runtime=2000, exposure_time=200, n
                 input_pops.append(p.Population(input_pop_size, input_model))
                 # added to ensure that the arms and bandit are connected to and from something
                 null_pop = p.Population(1, p.IF_cond_exp(), label='null{}'.format(i))
-                p.Projection(input_pops[model_count], null_pop, p.AllToAllConnector())
+                p.Projection(input_pops[model_count], null_pop, p.AllToAllConnector(), p.StaticSynapse(delay=1))
                 if fast_membrane:
                     output_pop.append(p.Population(outputs, p.IF_cond_exp(tau_m=0.5,  # parameters for a fast membrane
                                                                           tau_refrac=0,
@@ -451,7 +451,7 @@ def pop_test(connections, test_data, split=4, runtime=2000, exposure_time=200, n
     output_spike_count = [0 for i in range(len(connections))]
     print "reading the spikes of ", config, '\n', seed
     for i in range(len(connections)):
-        print "started processing fitness of: ", i, '/', len(connections)
+        print "started processing fitness of: ", i, '/', len(connections), "seed", seed
         if i in failures:
             print "worst score for the failure"
             fails += 1
@@ -467,26 +467,26 @@ def pop_test(connections, test_data, split=4, runtime=2000, exposure_time=200, n
                         for spike in neuron:
                             output_spike_count[i] += 1
                 if i in excite_marker and spike_f:
-                    print "counting excite spikes"
+                    # print "counting excite spikes"
                     spikes = excite[i - excite_fail - fails].get_data('spikes').segments[0].spiketrains
                     for neuron in spikes:
                         for spike in neuron:
                             excite_spike_count[i] += 1
                 else:
                     excite_fail += 1
-                    print "had an excite failure"
+                    # print "had an excite failure"
                 if i in inhib_marker and spike_f:
-                    print "counting inhib spikes"
+                    # print "counting inhib spikes"
                     spikes = inhib[i - inhib_fail - fails].get_data('spikes').segments[0].spiketrains
                     for neuron in spikes:
                         for spike in neuron:
                             inhib_spike_count[i] += 1
                 else:
                     inhib_fail += 1
-                    print "had an inhib failure"
+                    # print "had an inhib failure"
             scores.append(get_scores(game_pop=input_pops[i - fails], simulator=simulator))
             # pop[i].stats = {'fitness': scores[i][len(scores[i]) - 1][0]}  # , 'steps': 0}
-        print "\nfinished spikes", seed
+        # print "\nfinished spikes", seed
         if spike_f or make_action:
             agent_fitness.append([scores[i][len(scores[i]) - 1][0], excite_spike_count[i] + inhib_spike_count[i], output_spike_count[i]])
         else:
