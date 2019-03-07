@@ -39,12 +39,12 @@ exposure_time = 200
 io_prob = 0.95
 read_pop = 0
 # read_pop = 'Dirty place/good pendulum with plastic and high bins.csv'
-# read_pop = '/Dirty place/good bandit with plastic.csv'
+# read_pop = 'Dirty place/good bandit with plastic.csv'
 keep_reading = 5
 constant_delays = 0
 base_mutate = 0
 multiple_mutates = True
-exec_thing = 'logic'
+exec_thing = 'erbp'
 plasticity = False
 develop_neurons = True
 free_label = 0
@@ -107,6 +107,10 @@ for i in range(1, len(truth_table)):
         current_value -= 2**highest_power
     input_sequence.append(segment)
 
+#erbp params
+erbp_runtime = 20
+erbp_max_depth = [5, 100]
+
 #breakout params
 breakout_runtime = 181000
 x_factor = 8
@@ -121,7 +125,7 @@ runtime = 0
 
 def bandit(generations):
     print "starting"
-    global connections, arms, max_fail_score, pole_angle, inputs, outputs, config, test_data_set, encoding, runtime
+    global connections, arms, max_fail_score, pole_angle, inputs, outputs, config, test_data_set, encoding, runtime, maximum_depth
 
     if exec_thing == 'br':
         runtime = arms_runtime
@@ -189,9 +193,17 @@ def bandit(generations):
         inputs = len(input_sequence[0])
         outputs = 2
         if stochastic:
-            config = 'logic-stoc-{} '.format(stochastic, truth_table)
+            config = 'logic-stoc-{}-run{}-sample{} '.format(truth_table, runtime, score_delay)
         else:
-            config = 'logic-{} '.format(stochastic, truth_table)
+            config = 'logic-{}-{}/{} '.format(truth_table, runtime, score_delay)
+    elif exec_thing == 'erbp':
+        maximum_depth = erbp_max_depth
+        runtime = erbp_runtime
+        inputs = 0
+        outputs = 0
+        test_data_set = [[0], [1]]
+        number_of_tests = len(test_data_set)
+        config = 'erbp {} {} '.format(runtime, maximum_depth)
     else:
         print "\nNot a correct test setting\n"
         raise Exception

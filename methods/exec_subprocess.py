@@ -120,18 +120,27 @@ def subprocess_experiments(connections, test_data_set, split=4, runtime=2000, ex
     process_list = []
     test_id = 0
     for conn_thread in connection_threads:
-        call = [sys.executable,
-                '../methods/test_pop.py',
-                config,
-                str(test_id)
-                ]
+        if exec_thing == 'erbp':
+            call = [sys.executable,
+                    '../methods/learn_a_sinusoid.py',
+                    config,
+                    str(test_id)
+                    ]
+        else:
+            call = [sys.executable,
+                    '../methods/test_pop.py',
+                    config,
+                    str(test_id)
+                    ]
         np.save('data {} {}.npy'.format(config, test_id), conn_thread)
         p = subprocess.Popen(call, stdout=None, stderr=None)
         process_list.append(p)
 
         test_id += 1
-
-    wait_timeout(process_list, ((runtime / 1000) * 15) + 300)
+    if exec_thing == 'erbp':
+        wait_timeout(process_list, (runtime * 15) + 300)
+    else:
+        wait_timeout(process_list, ((runtime / 1000) * 15) + 300)
 
     print "all finished"
 

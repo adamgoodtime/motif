@@ -222,11 +222,16 @@ class agent_population(object):
             for i in range(len(fitnesses)):
                 new_indexes.append([fitnesses[i], i])
             new_indexes.sort()
+            current_shape = 0
             for i in range(len(fitnesses)):
                 if new_indexes[i][0] == max_fail_score or new_indexes[i][0] == 'fail':
                     shaped_fitnesses[new_indexes[i][1]] += 0
                 else:
-                    shaped_fitnesses[new_indexes[i][1]] += i
+                    if new_indexes[i][0] != new_indexes[i-1][0]:
+                        current_shape = i
+                    shaped_fitnesses[new_indexes[i][1]] += current_shape
+                    if i > len(new_indexes) - (len(new_indexes) * self.viable_parents):
+                        shaped_fitnesses[new_indexes[i][1]] += 0.00001  # just to ensure elite aren't erased accidentally
         return shaped_fitnesses
 
     '''either shape the fitnesses or not, then pass then pass the score to the agents for later processing'''
@@ -585,6 +590,12 @@ class agent_population(object):
     def valid_net(self, child):
         [in2e, in2i, in2in, in2out, e2in, i2in, e_size, e2e, e2i, i_size, i2e, i2i, e2out, i2out, out2e, out2i, out2in,
          out2out, excite_params, inhib_params] = self.convert_agent(child, self.inputs, self.outputs)
+        if self.motifs.neurons.inputs + self.motifs.neurons.outputs == 0:
+            if len(e2e) == 0 and len(e2i) == 0 and len(i2e) == 0 and len(i2i) == 0:
+                print "bad agent"
+                return False
+            else:
+                return child
         if len(in2e) == 0 and len(in2i) == 0 and len(in2out) == 0:
             print "in bad agent"
             return False

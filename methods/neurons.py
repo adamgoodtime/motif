@@ -167,13 +167,15 @@ class neuron_population(object):
                     for param in self.neuron_params:
                         neuron['params'][param] = np.random.normal(self.neuron_params[param], self.neuron_param_stdevs[param])
                     if self.default:
+                        if self.inputs + self.outputs > 0:
+                            base_weight = (float(self.inputs + self.outputs) / self.io_prob) - float(self.inputs + self.outputs)
+                        else:
+                            base_weight = 1
                         if -self.neurons_generated - 1 == self.inputs + self.outputs:
                             neuron['type'] = 'excitatory'
-                            base_weight = (float(self.inputs + self.outputs) / self.io_prob) - float(self.inputs + self.outputs)
                             neuron['weight'] = base_weight * self.ex_prob
                         else:
                             neuron['type'] = 'inhibitory'
-                            base_weight = (float(self.inputs + self.outputs) / self.io_prob) - float(self.inputs + self.outputs)
                             neuron['weight'] = base_weight * (1 - self.ex_prob)
                     else:
                         neuron['weight'] = 1
@@ -243,7 +245,7 @@ class neuron_population(object):
         if not self.total_weight:
             for neuron in self.neuron_configs:
                 self.total_weight += self.neuron_configs[neuron]['weight']
-        choice = np.random.random() * self.total_weight
+        choice = np.random.random() * float(self.total_weight)
         for neuron in self.neuron_configs:
             choice -= self.neuron_configs[neuron]['weight']
             if choice < 0:
