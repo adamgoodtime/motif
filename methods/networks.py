@@ -396,6 +396,8 @@ class motif_population(object):
         return [motif, np.random.randint(200)]
 
     def shift_io(self, in_or_out, motif_id, direction='random', shift='linear'):
+        if self.neurons.outputs + self.neurons.inputs == 0:
+            return motif_id
         if direction == 'random':
             if shift == 'linear':
                 if in_or_out == 'in':

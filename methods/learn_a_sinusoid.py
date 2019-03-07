@@ -49,6 +49,7 @@ num_repeats = 2
 cycle_time = 1023
 timestep = 1
 p.setup(timestep) # simulation timestep (ms)
+p.set_number_of_neurons_per_core(p.IF_cond_exp, 100)
 runtime = runtime * cycle_time
 
 # # Post-synapse population
@@ -438,7 +439,7 @@ for i in range(len(connections)):
     score = 0
     membrane_mv = pop_out_data.segments[0].filter(name='v')[0]
     for j in range(cycle_time):
-        score += abs(float(membrane_mv[runtime-j-1][2]))
+        score -= abs(float(membrane_mv[runtime-j-1][2]))
     fitnesses.append(score)
 plt.show()
 p.end()

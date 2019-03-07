@@ -40,11 +40,14 @@ io_prob = 0.95
 read_pop = 0
 # read_pop = 'Dirty place/good pendulum with plastic and high bins.csv'
 # read_pop = 'Dirty place/good bandit with plastic.csv'
+# read_pop = 'Dirty place/xor plastic stochastic 200ms.csv'
+# read_pop = 'Dirty place/xor stochastic 200ms.csv'
+# read_pop = 'Dirty place/xor 5000ms.csv'
 keep_reading = 5
 constant_delays = 0
 base_mutate = 0
 multiple_mutates = True
-exec_thing = 'erbp'
+exec_thing = 'logic'
 plasticity = False
 develop_neurons = True
 free_label = 0
@@ -94,7 +97,8 @@ tau_force = 0
 logic_runtime = 5000
 score_delay = 5000
 stochastic = 1
-truth_table = [0, 1, 1, 0]
+# truth_table = [0, 1, 1, 0]
+truth_table = [0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0]
 input_sequence = []
 segment = [0 for j in range(int(np.log2(len(truth_table))))]
 input_sequence.append(segment)
@@ -125,7 +129,7 @@ runtime = 0
 
 def bandit(generations):
     print "starting"
-    global connections, arms, max_fail_score, pole_angle, inputs, outputs, config, test_data_set, encoding, runtime, maximum_depth
+    global connections, arms, max_fail_score, pole_angle, inputs, outputs, config, test_data_set, encoding, runtime, maximum_depth, make_action
 
     if exec_thing == 'br':
         runtime = arms_runtime
@@ -195,9 +199,10 @@ def bandit(generations):
         if stochastic:
             config = 'logic-stoc-{}-run{}-sample{} '.format(truth_table, runtime, score_delay)
         else:
-            config = 'logic-{}-{}/{} '.format(truth_table, runtime, score_delay)
+            config = 'logic-{}-run{}-sample{} '.format(truth_table, runtime, score_delay)
     elif exec_thing == 'erbp':
         maximum_depth = erbp_max_depth
+        make_action = False
         runtime = erbp_runtime
         inputs = 0
         outputs = 0

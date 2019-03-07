@@ -934,13 +934,18 @@ class agent_population(object):
             processed_score = []
             for score in fitness:
                 if score == 'fail':
-                    processed_score.append([worst_score, -10000001, -10000001])
+                    if make_action:
+                        processed_score.append([worst_score, -10000001, -10000001])
+                    else:
+                        processed_score.append(worst_score)
                 else:
                     if make_action:
                         if score[2] == 0:
                             processed_score.append([worst_score, score[1], score[2]])
                         else:
                             processed_score.append(score)
+                    else:
+                        processed_score.append(score)
             processed_fitness.append(processed_score)
         return processed_fitness
 
