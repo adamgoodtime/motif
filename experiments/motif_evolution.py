@@ -48,7 +48,7 @@ constant_delays = 0
 base_mutate = 0
 multiple_mutates = True
 exec_thing = 'logic'
-plasticity = False
+plasticity = True
 develop_neurons = True
 free_label = 0
 
@@ -97,8 +97,8 @@ tau_force = 0
 logic_runtime = 5000
 score_delay = 5000
 stochastic = 1
-# truth_table = [0, 1, 1, 0]
-truth_table = [0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0]
+truth_table = [0, 1, 1, 0]
+# truth_table = [0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0]
 input_sequence = []
 segment = [0 for j in range(int(np.log2(len(truth_table))))]
 input_sequence.append(segment)
@@ -353,7 +353,7 @@ def bandit(generations):
 
         print "2", motifs.total_weight
 
-        motifs.adjust_weights(agents.agent_pop, reward_shape=reward_shape, iteration=i, average=averaging_weights)
+        motifs.adjust_weights(agents.agent_pop, reward_shape=reward_shape, iteration=i, average=averaging_weights, develop_neurons=develop_neurons)
 
         print "3", motifs.total_weight
 

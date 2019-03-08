@@ -18,9 +18,9 @@ class neuron_population(object):
                  tau_m_stdev=0,
                  tau_refrac=0.1,  # Duration of refractory period in ms.
                  tau_refrac_stdev=0,
-                 tau_syn_E=0.3,  # Rise time of the excitatory synaptic alpha function in ms.
+                 tau_syn_E=5,  # Rise time of the excitatory synaptic alpha function in ms.
                  tau_syn_E_stdev=0,
-                 tau_syn_I=0.5,  # Rise time of the inhibitory synaptic alpha function in ms.
+                 tau_syn_I=5,  # Rise time of the inhibitory synaptic alpha function in ms.
                  tau_syn_I_stdev=0,
                  e_rev_E=0.0,  # Reversal potential for excitatory input in mV
                  e_rev_E_stdev=0,
