@@ -36,7 +36,7 @@ random_arms = 0
 viable_parents = 0.2
 elitism = 0.2
 exposure_time = 200
-io_prob = 0.95
+io_prob = 0.75
 read_pop = 0
 # read_pop = 'Dirty place/good pendulum with plastic and high bins.csv'
 # read_pop = 'Dirty place/good bandit with plastic.csv'
@@ -50,6 +50,7 @@ multiple_mutates = True
 exec_thing = 'logic'
 plasticity = True
 develop_neurons = True
+stdev_neurons = True
 free_label = 0
 
 #arms params
@@ -245,12 +246,43 @@ def bandit(generations):
         config += 'no_v '
     if develop_neurons:
         config += 'dev_n '
+    if stdev_neurons:
+        config += 'stdev_n '
     if free_label:
         config += '{} '.format(free_label)
 
-    neurons = neuron_population(inputs=inputs,
-                                outputs=outputs,
-                                io_prob=io_prob)
+    if stdev_neurons:
+        neurons = neuron_population(inputs=inputs,
+                                    outputs=outputs,
+                                    io_prob=io_prob,
+                                    v_rest=-65.0,  # Resting membrane potential in mV.
+                                    v_rest_stdev=5,
+                                    cm=1.0,  # Capacity of the membrane in nF
+                                    cm_stdev=0.3,
+                                    tau_m=20.0,  # Membrane time constant in ms.
+                                    tau_m_stdev=5,
+                                    tau_refrac=0.1,  # Duration of refractory period in ms.
+                                    tau_refrac_stdev=0.03,
+                                    tau_syn_E=5,  # Rise time of the excitatory synaptic alpha function in ms.
+                                    tau_syn_E_stdev=1.6,
+                                    tau_syn_I=5,  # Rise time of the inhibitory synaptic alpha function in ms.
+                                    tau_syn_I_stdev=1.6,
+                                    e_rev_E=0.0,  # Reversal potential for excitatory input in mV
+                                    e_rev_E_stdev=0,
+                                    e_rev_I=-70.0,  # Reversal potential for inhibitory input in mV
+                                    e_rev_I_stdev=3,
+                                    v_thresh=-50.0,  # Spike threshold in mV.
+                                    v_thresh_stdev=5,
+                                    v_reset=-65.0,  # Reset potential after a spike in mV.
+                                    v_reset_stdev=5,
+                                    i_offset=3.0,  # Offset current in nA
+                                    i_offset_stdev=1,
+                                    v=-65.0,  # 'v_starting'
+                                    v_stdev=5)
+    else:
+        neurons = neuron_population(inputs=inputs,
+                                    outputs=outputs,
+                                    io_prob=io_prob)
 
     motifs = motif_population(neurons,
                               max_motif_size=maximum_depth[0],
@@ -360,6 +392,8 @@ def bandit(generations):
         if config != 'test':
             motifs.save_motifs(i, config)
             agents.save_agents(i, config)
+            if stdev_neurons:
+                neurons.save_neurons(i, config)
 
         print "4", motifs.total_weight
 

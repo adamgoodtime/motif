@@ -32,7 +32,7 @@ class neuron_population(object):
                  v_reset_stdev=0,
                  i_offset=0.0,  # Offset current in nA
                  i_offset_stdev=0,
-                 v=-65.0,  # 'v_rest'
+                 v=-65.0,  # 'v_starting'
                  v_stdev=0,
                  gsyn_exc=0.0,
                  gsyn_exc_stdev=0,
@@ -145,10 +145,10 @@ class neuron_population(object):
                     neuron['type'] = 'output'
                     neuron['io'] = io_choice - self.inputs
                 if self.default:
-                    neuron['weight'] = 1
+                    neuron['weight'] = (1. / float(self.inputs + self.outputs)) * self.io_prob
                 else:
-                    neuron['weight'] = (self.inputs + self.outputs) / (self.pop_size - self.inputs - self.outputs)
-                    neuron['weight'] /= (1 - self.io_prob)
+                    neuron['weight'] = float(self.pop_size) / float(self.inputs + self.outputs)
+                    neuron['weight'] *= self.io_prob
                 neuron['params'] = {}
                 # for param in self.neuron_params:
                 #     neuron['params'][param] = np.random.normal(self.neuron_params[param], self.neuron_param_stdevs[param])
@@ -166,19 +166,25 @@ class neuron_population(object):
                     neuron['params'] = {}
                     for param in self.neuron_params:
                         neuron['params'][param] = np.random.normal(self.neuron_params[param], self.neuron_param_stdevs[param])
+                    if self.inputs + self.outputs > 0:
+                        base_weight = float(self.pop_size) / float(self.pop_size - self.inputs - self.outputs)
+                        base_weight *= (1. - self.io_prob)
+                    else:
+                        base_weight = 1
                     if self.default:
-                        if self.inputs + self.outputs > 0:
-                            base_weight = (float(self.inputs + self.outputs) / self.io_prob) - float(self.inputs + self.outputs)
-                        else:
-                            base_weight = 1
                         if -self.neurons_generated - 1 == self.inputs + self.outputs:
                             neuron['type'] = 'excitatory'
-                            neuron['weight'] = base_weight * self.ex_prob
+                            neuron['weight'] = 1. * self.ex_prob * (1. - self.io_prob)
                         else:
                             neuron['type'] = 'inhibitory'
-                            neuron['weight'] = base_weight * (1 - self.ex_prob)
+                            neuron['weight'] = 1. * (1. - self.ex_prob) * (1. - self.io_prob)
                     else:
-                        neuron['weight'] = 1
+                        neuron['weight'] = base_weight
+                        if np.random.random() < self.ex_prob:
+                            neuron['type'] = 'excitatory'
+                        else:
+                            neuron['type'] = 'inhibitory'
+
                     not_new = self.check_neuron(neuron)
                 self.insert_neuron(neuron, check=False)
 
@@ -267,6 +273,12 @@ class neuron_population(object):
                 return self.check_neuron(neuron)
             else:
                 return neuron_id
+
+    def save_neurons(self, iteration, config):
+        np.save('Neuron pop {} {}.npy'.format(iteration, config), self.neuron_configs)
+
+    def load_neurons(self, file_name):
+        self.neuron_configs = np.load(file_name)
 
     def reset_weights(self):
         self.total_weight = 0

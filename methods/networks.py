@@ -104,7 +104,7 @@ class motif_population(object):
         with a population of motifs and generating further motifs to fill the population or creating the entire 
         population from scratch
         '''
-        if not read_entire_population:
+        if not self.read_entire_population:
             print "generating the population"
             if self.population_seed is not None:
                 for seed in self.population_seed:
@@ -142,33 +142,9 @@ class motif_population(object):
 
         print "done generating motif pop"
 
-    '''Reads a motif population from a csv file and inputs each motif into the set'''
+    '''Reads a motif population from a npy file and inputs each motif into the set'''
     def read_population(self):
-        with open(self.read_entire_population) as from_file:
-            csvFile = csv.reader(from_file)
-            motif = False
-            for row in csvFile:
-                temp = row
-                if temp[0] == 'node':
-                    if motif:
-                        self.insert_motif(deepcopy(motif), weight=motif['weight'], read=True)
-                    motif = {}
-                atribute = temp[0]
-                del temp[0]
-                if atribute == 'depth':
-                    temp = int(temp[0])
-                elif atribute == 'weight':
-                    temp = literal_eval(temp[0])
-                elif atribute == 'conn' or atribute == 'io':
-                    for i in range(len(temp)):
-                        temp[i] = literal_eval(temp[i])
-                elif atribute == 'id':
-                    temp = temp[0]
-                motif['{}'.format(atribute)] = temp
-
-            self.insert_motif(deepcopy(motif), weight=motif['weight'], read=True)
-
-        # print "done generating motif pop"
+        self.motif_configs = np.load(self.read_entire_population)
 
     def set_delay_bins(self, bins, iteration, max_iterations):
         if isinstance(bins, list):
@@ -765,20 +741,7 @@ class motif_population(object):
         self.depth_fix()
 
     def save_motifs(self, iteration, config):
-        with open('Motif population {}: {}.csv'.format(iteration, config), 'w') as file:
-            writer = csv.writer(file, delimiter=',', lineterminator='\n')
-            for motif_id in self.motif_configs:
-                motif = self.motif_configs[motif_id]
-                for atribute in motif:
-                    line = []
-                    line.append(atribute)
-                    if isinstance(motif[atribute], list):
-                        for var in motif[atribute]:
-                            line.append(var)
-                    else:
-                        line.append(motif[atribute])
-                    writer.writerow(line)
-            file.close()
+        np.save('Motif pop {} {}.npy'.format(iteration, config), self.motif_configs)
 
     def average_weights(self, motif_counts):
         for motif_id in motif_counts:
