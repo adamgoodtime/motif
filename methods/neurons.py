@@ -225,11 +225,11 @@ class neuron_population(object):
             if repeat_check:
                 return repeat_check
             else:
-                self.total_weight += neuron['weight']
+                # self.total_weight += neuron['weight']
                 self.neuron_configs['{}'.format(self.neurons_generated)] = neuron
                 self.neurons_generated -= 1
         else:
-            self.total_weight += neuron['weight']
+            # self.total_weight += neuron['weight']
             self.neuron_configs['{}'.format(self.neurons_generated)] = neuron
             self.neurons_generated -= 1
         return '{}'.format(self.neurons_generated + 1)
