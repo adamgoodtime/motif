@@ -220,6 +220,7 @@ class neuron_population(object):
         return neuron_id
 
     def insert_neuron(self, neuron, check=True):
+        self.total_weight = 0
         if check:
             repeat_check = self.check_neuron(neuron)
             if repeat_check:

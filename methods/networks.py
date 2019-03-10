@@ -283,7 +283,7 @@ class motif_population(object):
             check = self.id_check(motif)
         # if it does not exist the insert the motif into the population
         if not check:
-            # self.total_weight += weight
+            self.total_weight = 0
             if read:
                 motif_id = motif['id']
             else:
