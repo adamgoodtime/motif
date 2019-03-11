@@ -634,7 +634,7 @@ class motif_population(object):
         spinn_conn = self.construct_io(agent_conn, inputs, outputs)
         return spinn_conn
 
-
+    '''Returns a list of the lower level motifs which comprise a higher level one'''
     def list_motifs(self, motif_id, list=[]):
         list.append(motif_id)
         if isinstance(motif_id, int):
@@ -649,6 +649,8 @@ class motif_population(object):
                 self.list_motifs(node, list)
         return list
 
+    '''Follows are roots down a motif tree to see if at any point a motif produces itself and therefore can recurse to 
+    infinity. Returns true if it is all clear.'''
     def recurse_check(self, motif_id, list=[]):
         check = True
         list.append(motif_id)

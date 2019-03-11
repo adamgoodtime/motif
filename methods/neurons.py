@@ -188,6 +188,7 @@ class neuron_population(object):
                     not_new = self.check_neuron(neuron)
                 self.insert_neuron(neuron, check=False)
 
+    '''Keeps looping through possible neuron configurations until a neuron not currently in the population is created'''
     def generate_neuron(self):
         if self.default:
             return self.choose_neuron()
@@ -219,6 +220,8 @@ class neuron_population(object):
                 found_new = True
         return neuron_id
 
+    '''Checks if there are similar neurons before inserting and either returns the id of the similar one or the new id 
+    of the inserted one'''
     def insert_neuron(self, neuron, check=True):
         self.total_weight = 0
         if check:
@@ -235,6 +238,7 @@ class neuron_population(object):
             self.neurons_generated -= 1
         return '{}'.format(self.neurons_generated + 1)
 
+    '''Returns false if no neurons are the same and the id if there is one similar'''
     def check_neuron(self, new_neuron):
         for neuron in self.neuron_configs:
             the_same = True
@@ -264,14 +268,14 @@ class neuron_population(object):
             if neuron['type'] == 'input':
                 neuron['io'] += direction
                 neuron['io'] %= self.inputs
-                return self.check_neuron(neuron)
+                return self.insert_neuron(neuron)
             else:
                 return neuron_id
         else:
             if neuron['type'] == 'output':
                 neuron['io'] += direction
                 neuron['io'] %= self.outputs
-                return self.check_neuron(neuron)
+                return self.insert_neuron(neuron)
             else:
                 return neuron_id
 
@@ -298,7 +302,9 @@ class neuron_population(object):
         if not self.default:
             to_be_deleted = []
             for neuron_id in self.neuron_configs:
-                if self.neuron_configs[neuron_id]['weight'] == 0:
+                if self.neuron_configs[neuron_id]['weight'] == 0 \
+                        and self.neuron_configs[neuron_id]['type'] != 'input'\
+                        and self.neuron_configs[neuron_id]['type'] != 'output':
                     to_be_deleted.append(neuron_id)
             for id in to_be_deleted:
                 self.delete_neuron(id)

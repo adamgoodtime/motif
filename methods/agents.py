@@ -517,10 +517,17 @@ class agent_population(object):
             if node not in self.motifs.neurons.neuron_configs:
                 try:
                     copy_copy['node'][node_count] = self.mutate([node], mutate_key)
+                except RuntimeError as e:
+                    traceback.print_exc()
+                    if e.args[0] != 'maximum recursion depth exceeded':
+                        raise
+                    else:
+                        print "\nTried to mutate too many times\n"
+                        return node
                 except:
                     traceback.print_exc()
-                    print "\nTried to mutate too many times\n"
-                    return node
+                    print "\nNot an RTE\n"
+                    raise
             node_count += 1
         if copy_copy != config_copy:
             motif_id = self.motifs.insert_motif(copy_copy)
