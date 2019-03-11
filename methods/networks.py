@@ -371,6 +371,43 @@ class motif_population(object):
             motif = self.insert_motif(motif)
         return [motif, np.random.randint(200)]
 
+    def remove_motif(self, motif):
+        new_motif = deepcopy(motif)
+        selection = np.random.randint(len(new_motif['node']))
+        del new_motif['node'][selection]
+        del new_motif['io'][selection]
+        to_be_deleted = []
+        for conn in new_motif['conn']:
+            if conn[0] == selection or conn[1] == selection:
+                to_be_deleted.append(new_motif['conn'].index(conn))
+        to_be_deleted.sort(reverse=True)
+        for delete in to_be_deleted:
+            del new_motif['conn'][delete]
+        for conn in new_motif['conn']:
+            if conn[0] > selection:
+                conn[0] -= 1
+            if conn[1] > selection:
+                conn[1] -= 1
+        return new_motif
+
+    def add_motif(self, motif):
+        new_motif = deepcopy(motif)
+        motif_size = len(new_motif['node'])
+        selection = np.random.randint(motif_size)
+        new_motif['node'].append(new_motif['node'][selection])
+        new_motif['io'].append(new_motif['io'][selection])
+        conns_to_add = []
+        for conn in new_motif['conn']:
+            new_conn = deepcopy(conn)
+            if new_conn[0] == selection:
+                new_conn[0] = motif_size
+            if new_conn[1] == selection:
+                new_conn[1] = motif_size
+            conns_to_add.append(new_conn)
+        for new_conn in conns_to_add:
+            new_motif['conn'].append(new_conn)
+        return new_motif
+
     def shift_io(self, in_or_out, motif_id, direction='random', shift='linear'):
         if self.neurons.outputs + self.neurons.inputs == 0:
             return motif_id

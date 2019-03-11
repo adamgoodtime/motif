@@ -368,6 +368,15 @@ class agent_population(object):
         else:
             motif_config = self.motifs.return_motif(parent)
         config_copy = deepcopy(motif_config)
+        # add a node to the motif
+        if np.random.random() < self.motif_add and len(config_copy['node']) <= self.motifs.max_motif_size:
+            config_copy = self.motifs.add_motif(config_copy)
+            mutate_key['m_add'] += 1
+        # remove a node from the motif
+        if np.random.random() < self.motif_gone \
+                and len(config_copy['node']) >= self.motifs.min_motif_size and len(config_copy['node']) > 1:
+            config_copy = self.motifs.remove_motif(config_copy)
+            mutate_key['m_gone'] += 1
         motif_size = len(config_copy['node'])
         # loop through each node and randomly mutate
         for i in range(motif_size):
@@ -452,7 +461,7 @@ class agent_population(object):
         if np.random.random() < self.conn_gone and len(config_copy['conn']) > 0:
             del config_copy['conn'][np.random.randint(len(config_copy['conn']))]
             mutate_key['c_gone'] += 1
-        # ad a connection
+        # add a connection
         if np.random.random() < self.conn_add:
             new_conn = False
             while not new_conn:
