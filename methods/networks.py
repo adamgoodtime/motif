@@ -789,7 +789,7 @@ class motif_population(object):
 
     def adjust_weights(self, agents, develop_neurons=True, clean=True, fitness_shaping=True, reward_shape=True,
                        average=True, iteration=0):
-        self.reset_weights()
+        self.reset_weights(develop_neurons=develop_neurons)
         motif_count = {}
         neuron_count = {}
         if fitness_shaping:
