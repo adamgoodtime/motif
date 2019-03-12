@@ -379,10 +379,9 @@ class motif_population(object):
         to_be_deleted = []
         for conn in new_motif['conn']:
             if conn[0] == selection or conn[1] == selection:
-                to_be_deleted.append(new_motif['conn'].index(conn))
-        to_be_deleted.sort(reverse=True)
+                to_be_deleted.append(conn)
         for delete in to_be_deleted:
-            del new_motif['conn'][delete]
+            del new_motif['conn'][new_motif['conn'].index(delete)]
         for conn in new_motif['conn']:
             if conn[0] > selection:
                 conn[0] -= 1
@@ -672,10 +671,10 @@ class motif_population(object):
         return spinn_conn
 
     '''Returns a list of the lower level motifs which comprise a higher level one'''
-    def list_motifs(self, motif_id, list=[]):
-        list.append(motif_id)
+    def list_motifs(self, motif_id, list):
         if isinstance(motif_id, int):
             motif_id = '{}'.format(motif_id)
+        list.append(motif_id)
         motif = self.motif_configs[motif_id]
         for node in motif['node']:
             if node not in self.neurons.neuron_configs:
@@ -724,7 +723,6 @@ class motif_population(object):
     def depth_read(self, motif_id, best_depth=0, current_depth=1):
         if current_depth > best_depth:
             best_depth = current_depth
-        motif = self.motif_configs[motif_id]['node']
         for node in self.motif_configs[motif_id]['node']:
             if node not in self.neurons.neuron_configs:
                 best_depth = self.depth_read(node, best_depth, current_depth+1)

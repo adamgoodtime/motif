@@ -528,6 +528,7 @@ class agent_population(object):
                     copy_copy['node'][node_count] = self.mutate([node], mutate_key)
                 except RuntimeError as e:
                     traceback.print_exc()
+                    print mutate_key
                     if e.args[0] != 'maximum recursion depth exceeded':
                         raise
                     else:
@@ -535,6 +536,7 @@ class agent_population(object):
                         return node
                 except:
                     traceback.print_exc()
+                    print mutate_key
                     print "\nNot an RTE\n"
                     raise
             node_count += 1
@@ -941,29 +943,37 @@ class agent_population(object):
             self.save_mutate_keys(iteration, config)
 
     def read_fitnesses(self, config, worst_score, make_action):
-        #todo check if this handles fails properly
-        fitnesses = np.load('fitnesses {}.npy'.format(config))
-        # os.remove('fitnesses {}.npy'.format(config))
-        fitnesses = fitnesses.tolist()
-        processed_fitness = []
-        for fitness in fitnesses:
-            processed_score = []
-            for score in fitness:
-                if score == 'fail':
-                    if make_action:
-                        processed_score.append([worst_score, -10000001, -10000001])
+        if config != 'test':
+            fitnesses = np.load('fitnesses {}.npy'.format(config))
+            # os.remove('fitnesses {}.npy'.format(config))
+            fitnesses = fitnesses.tolist()
+            processed_fitness = []
+            for fitness in fitnesses:
+                processed_score = []
+                for score in fitness:
+                    if score == 'fail':
+                        if make_action:
+                            processed_score.append([worst_score, -10000001, -10000001])
+                        else:
+                            processed_score.append(worst_score)
                     else:
-                        processed_score.append(worst_score)
-                else:
-                    if make_action:
-                        if score[2] == 0:
-                            processed_score.append([worst_score, score[1], score[2]])
+                        if make_action:
+                            if score[2] == 0:
+                                processed_score.append([worst_score, score[1], score[2]])
+                            else:
+                                processed_score.append(score)
                         else:
                             processed_score.append(score)
-                    else:
-                        processed_score.append(score)
-            processed_fitness.append(processed_score)
-        return processed_fitness
+                processed_fitness.append(processed_score)
+            return processed_fitness
+        else:
+            processed_fitness = []
+            for i in range(4):
+                processed_score = []
+                for j in range(self.pop_size):
+                    processed_score.append(np.random.random() * 10000)
+                processed_fitness.append(processed_score)
+            return processed_fitness
 
 class agent_species(object):
     # todo species could work on a fitness metric in isolation with a shared motif pool

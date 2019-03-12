@@ -99,7 +99,7 @@ def write_globals(file_id):
 
 def subprocess_experiments(connections, test_data_set, split=4, runtime=2000, exposure_time=200, noise_rate=100, noise_weight=0.01,
                   reward=0, size_f=False, spike_f=False, make_action=True, top=True):
-
+    global new_split
     step_size = len(connections) / split
     if step_size == 0:
         step_size = 1
@@ -148,6 +148,8 @@ def subprocess_experiments(connections, test_data_set, split=4, runtime=2000, ex
 
     for i in range(len(pool_result)):
         if pool_result[i] == 'fail' and len(connection_threads[i][0]) > 1:
+            if new_split == split:
+                new_split = agent_pop_size
             print "splitting ", len(connection_threads[i][0]), " into ", new_split, " pieces"
             problem_arms = connection_threads[i][1]
             pool_result[i] = subprocess_experiments(connection_threads[i][0], problem_arms, new_split, runtime,

@@ -462,11 +462,16 @@ def pop_test(connections, test_data, split=4, runtime=2000, exposure_time=200, n
             inhib_spike_count[i] -= max_fail_score
         else:
             if spike_f or make_action:
+                made_action = False
                 if spike_f == 'out' or make_action:
                     spikes = output_pop[i - fails].get_data('spikes').segments[0].spiketrains
                     for neuron in spikes:
                         for spike in neuron:
                             output_spike_count[i] += 1
+                            make_action = True
+                            break
+                        if make_action:
+                            break
                 if i in excite_marker and spike_f:
                     # print "counting excite spikes"
                     spikes = excite[i - excite_fail - fails].get_data('spikes').segments[0].spiketrains

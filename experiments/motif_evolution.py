@@ -22,7 +22,7 @@ fast_membrane = False
 
 threading_tests = True
 split = 1
-new_split = agent_pop_size
+new_split = 4  # agent_pop_size
 
 #motif params
 maximum_depth = [4, 10]
