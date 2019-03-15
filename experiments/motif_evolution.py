@@ -79,6 +79,7 @@ arms = [[low_prob, med_prob, top_prob, hii_prob, med_prob, low_prob, med_prob, l
 
 #pendulum params
 pendulum_runtime = 181000
+double_pen_runtime = 60000
 max_fail_score = 0
 no_v = False
 encoding = 0
@@ -172,12 +173,12 @@ def bandit(generations):
         test_data_set = pole_angle
         number_of_tests = len(pole_angle)
     elif exec_thing == 'double pen':
-        runtime = pendulum_runtime
+        runtime = double_pen_runtime
         inputs = 6 * number_of_bins
         if no_v:
             inputs /= 2
         outputs = force_increments
-        config = 'double-pend-an{}-{}-F{}-R{}-B{}-O{} '.format(pole_angle[0], len(pole_angle), force_increments, max_firing_rate, number_of_bins, bin_overlap)
+        config = 'double-pend-an{}-{}-pl{}-{}-F{}-R{}-B{}-O{} '.format(pole_angle[0], len(pole_angle), pole_length, pole2_length, force_increments, max_firing_rate, number_of_bins, bin_overlap)
         test_data_set = pole_angle
         number_of_tests = len(pole_angle)
     elif exec_thing == 'arms':
