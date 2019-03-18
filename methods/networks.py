@@ -35,6 +35,7 @@ class motif_population(object):
                  keep_reading=0,
                  discrete_params=True,
                  plasticity=True,
+                 structural=True,
                  weights=True,
                  weight_range=(0, 0.1),
                  no_weight_bins=7,
@@ -65,6 +66,7 @@ class motif_population(object):
         self.keep_reading = keep_reading
         self.discrete_params = discrete_params
         self.plasticity = plasticity
+        self.structural = structural
         self.weights = weights
         self.weight_range = weight_range
         if isinstance(no_weight_bins, list):
@@ -201,6 +203,10 @@ class motif_population(object):
                             conn.append('plastic')
                         else:
                             conn.append('non-plastic')
+                        if np.random.choice(true_or_false) and self.structural:
+                            conn.append('structural')
+                        else:
+                            conn.append('non-structural')
                         if conn[2] != 0:
                             synapses.append(conn)
         # moves the generated motifs properties into a dict representing the motif
@@ -491,7 +497,7 @@ class motif_population(object):
             node_count += 1
         return node_array
 
-    def connect_nodes(self, pre_node, pre_count, post_node, post_count, layer, upper, weight, delay, plasticity):
+    def connect_nodes(self, pre_node, pre_count, post_node, post_count, layer, upper, weight, delay, plasticity, structural):
         pre_ids = []
         post_ids = []
         connections = []
@@ -507,7 +513,7 @@ class motif_population(object):
             self.collect_IO(post_node, 'post', new_post_count, layer + 1, post_ids)
         for pre in pre_ids:
             for post in post_ids:
-                connections.append([pre, post, weight, delay, plasticity])
+                connections.append([pre, post, weight, delay, plasticity, structural])
         return connections
 
     def read_motif(self, motif_id, layer=0, upper=[]):
@@ -519,10 +525,11 @@ class motif_population(object):
             weight = conn[2]
             delay = conn[3]
             plasticity = conn[4]
+            structural = conn[5]
             pre_node = motif['node'][pre]
             post_node = motif['node'][post]
             all_connections += self.connect_nodes(pre_node, pre, post_node, post, layer,
-                                                  upper, weight, delay, plasticity)
+                                                  upper, weight, delay, plasticity, structural)
         node_count = 0
         for node in motif['node']:
             if node not in self.neurons.neuron_configs:
