@@ -70,10 +70,11 @@ def read_results(test_length):
     for i in range(test_length):
         try:
             pop_fitness = np.load('fitnesses {} {}.npy'.format(config, i))
+            all_fitnesses.append(pop_fitness.tolist())
         except:
-            pop_fitness = 'fail'
+            pop_fitness = ['fail']
             not_a_file.append(i)
-        all_fitnesses.append(pop_fitness.tolist())
+            all_fitnesses.append(pop_fitness)
         # file_name = 'fitnesses {} {}.csv'.format(config, i)
         # with open(file_name) as from_file:
         #     csvFile = csv.reader(from_file)

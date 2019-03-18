@@ -144,7 +144,9 @@ class motif_population(object):
 
     '''Reads a motif population from a npy file and inputs each motif into the set'''
     def read_population(self):
-        self.motif_configs = np.load(self.read_entire_population)
+        read_motifs = np.load(self.read_entire_population)
+        for motif_id in read_motifs:
+            self.insert_motif(read_motifs[motif_id], read=True)
 
     def set_delay_bins(self, bins, iteration, max_iterations):
         if isinstance(bins, list):
@@ -286,6 +288,7 @@ class motif_population(object):
             self.total_weight = 0
             if read:
                 motif_id = motif['id']
+                weight = motif['weight']
             else:
                 does_it_exist = True
                 while does_it_exist:
@@ -824,6 +827,7 @@ class motif_population(object):
                 self.neurons.clean_population()
         if iteration < self.keep_reading and self.read_entire_population:
             self.read_population()
+            self.neurons.load_neurons()
         self.total_weight = 0
 
 

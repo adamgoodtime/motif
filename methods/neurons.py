@@ -44,6 +44,7 @@ class neuron_population(object):
                  outputs=0,
                  ex_prob=0.5,
                  read_population=False,
+                 keep_reading=0,
                  pop_size=200
                  ):
 
@@ -131,6 +132,8 @@ class neuron_population(object):
         self.total_weight = 0
 
         if read_population:
+            self.read_population = read_population
+            self.load_neurons()
             print "reading the population"
         else:
             io_choice = -1
@@ -152,7 +155,7 @@ class neuron_population(object):
                 neuron['params'] = {}
                 # for param in self.neuron_params:
                 #     neuron['params'][param] = np.random.normal(self.neuron_params[param], self.neuron_param_stdevs[param])
-                self.insert_neuron(neuron, check=False)
+                self.insert_neuron(neuron, check=False, weight=neuron['weight'])
             for i in range(self.inputs + self.outputs, self.pop_size):
                 not_new = True
                 while not_new:
@@ -186,10 +189,10 @@ class neuron_population(object):
                             neuron['type'] = 'inhibitory'
 
                     not_new = self.check_neuron(neuron)
-                self.insert_neuron(neuron, check=False)
+                self.insert_neuron(neuron, check=False, weight=neuron['weight'])
 
     '''Keeps looping through possible neuron configurations until a neuron not currently in the population is created'''
-    def generate_neuron(self):
+    def generate_neuron(self, weight=0):
         if self.default:
             return self.choose_neuron()
         found_new = False
@@ -213,28 +216,45 @@ class neuron_population(object):
                 neuron['params'] = {}
                 for param in self.neuron_params:
                     neuron['params'][param] = np.random.normal(self.neuron_params[param], self.neuron_param_stdevs[param])
-            neuron['weight'] = 1
+            neuron['weight'] = weight
             neuron['id'] = '{}'.format(self.neurons_generated)
             if not self.check_neuron(neuron):
-                neuron_id = self.insert_neuron(neuron, check=False)
+                neuron_id = self.insert_neuron(neuron, check=False, weight=weight)
                 found_new = True
         return neuron_id
 
     '''Checks if there are similar neurons before inserting and either returns the id of the similar one or the new id 
     of the inserted one'''
-    def insert_neuron(self, neuron, check=True):
+    def insert_neuron(self, neuron, weight=0, check=True, read=False):
         self.total_weight = 0
+        if read:
+            weight = neuron['weight']
+            neuron_id = neuron['id']
+        else:
+            neuron_id = '{}'.format(self.neurons_generated)
+            does_it_exist = True
+            while does_it_exist:
+                try:
+                    does_it_exist = self.neuron_configs['{}'.format(self.neurons_generated)]
+                    print self.neurons_generated, "existed"
+                    self.neurons_generated -= 1
+                except:
+                    # traceback.print_exc()
+                    neuron_id = '{}'.format(self.neurons_generated)
+                    does_it_exist = False
         if check:
             repeat_check = self.check_neuron(neuron)
             if repeat_check:
                 return repeat_check
             else:
                 # self.total_weight += neuron['weight']
-                self.neuron_configs['{}'.format(self.neurons_generated)] = neuron
+                neuron['weight'] = weight
+                self.neuron_configs[neuron_id] = neuron
                 self.neurons_generated -= 1
         else:
             # self.total_weight += neuron['weight']
-            self.neuron_configs['{}'.format(self.neurons_generated)] = neuron
+            neuron['weight'] = weight
+            self.neuron_configs[neuron_id] = neuron
             self.neurons_generated -= 1
         return '{}'.format(self.neurons_generated + 1)
 
@@ -282,8 +302,11 @@ class neuron_population(object):
     def save_neurons(self, iteration, config):
         np.save('Neuron pop {} {}.npy'.format(iteration, config), self.neuron_configs)
 
-    def load_neurons(self, file_name):
-        self.neuron_configs = np.load(file_name)
+    def load_neurons(self):
+        file_name = self.read_population
+        read_neurons = np.load(file_name)
+        for neuron_id in read_neurons:
+            self.insert_neuron(read_neurons[neuron_id], read=True)
 
     def reset_weights(self):
         self.total_weight = 0
