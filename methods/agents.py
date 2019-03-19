@@ -507,11 +507,33 @@ class agent_population(object):
                     config_copy['conn'][i][3] = new_delay
                 mutate_key['param_d'] += 1
             # plasticity
-            if np.random.random() < self.switch_plasticity and self.motifs.plasticity:
-                if config_copy['conn'][i][4] == 'plastic':
-                    config_copy['conn'][i][4] = 'non-plastic'
-                else:
-                    config_copy['conn'][i][4] = 'plastic'
+            if np.random.random() < self.switch_plasticity:
+                if self.motifs.plasticity and not self.motifs.structural:
+                    if config_copy['conn'][i][4] == 'stdp':
+                        config_copy['conn'][i][4] = 'non-plastic'
+                    else:
+                        config_copy['conn'][i][4] = 'stdp'
+                elif not self.motifs.plasticity and self.motifs.structural:
+                    if config_copy['conn'][i][4] == 'structural':
+                        config_copy['conn'][i][4] = 'non-plastic'
+                    else:
+                        config_copy['conn'][i][4] = 'structural'
+                elif self.motifs.plasticity and self.motifs.structural:
+                    if config_copy['conn'][i][4] == 'structural':
+                        if np.random.random() < 0.5:
+                            config_copy['conn'][i][4] = 'non-plastic'
+                        else:
+                            config_copy['conn'][i][4] = 'stdp'
+                    elif config_copy['conn'][i][4] == 'stdp':
+                        if np.random.random() < 0.5:
+                            config_copy['conn'][i][4] = 'non-plastic'
+                        else:
+                            config_copy['conn'][i][4] = 'structural'
+                    else:
+                        if np.random.random() < 0.5:
+                            config_copy['conn'][i][4] = 'stdp'
+                        else:
+                            config_copy['conn'][i][4] = 'structural'
                 mutate_key['plasticity'] += 1
         # insert the new motif and then go through the nodes and mutate them
         motif_id = self.motifs.insert_motif(config_copy)

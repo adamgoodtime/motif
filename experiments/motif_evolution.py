@@ -43,8 +43,9 @@ keep_reading = 5
 constant_delays = 0
 base_mutate = 0
 multiple_mutates = True
-exec_thing = 'pen'
+exec_thing = 'logic'
 plasticity = True
+structural = True
 develop_neurons = True
 stdev_neurons = True
 free_label = 0
@@ -93,7 +94,7 @@ tau_force = 0
 
 #logic params
 logic_runtime = 5000
-score_delay = 5000
+score_delay = 200
 stochastic = 1
 truth_table = [0, 1, 1, 0]
 # truth_table = [0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0]
@@ -293,6 +294,7 @@ def bandit(generations):
                               read_entire_population=read_pop,
                               keep_reading=keep_reading,
                               plasticity=plasticity,
+                              structural=structural,
                               population_size=agent_pop_size*3)
 
     # todo :add number of different motifs to the fitness function to promote regularity
