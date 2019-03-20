@@ -658,19 +658,19 @@ class agent_population(object):
     def check_in_2_out(self, pre, node_list, connections, specific=None):
         [in2e, in2i, in2in, in2out, e2in, i2in, e_size, e2e, e2i, i_size, i2e, i2i, e2out, i2out, out2e, out2i, out2in,
          out2out, excite_params, inhib_params] = connections
-        pre_inputs = [in2e, in2i, in2out]
-        pre_excitatory = [e2e, e2i, e2out]
-        pre_inhibitory = [i2e, i2i, i2out]
-        pre_outputs = [out2e, out2i, out2out]
+        # pre_inputs = [in2e, in2i, in2out]
+        # pre_excitatory = [e2e, e2i, e2out]
+        # pre_inhibitory = [i2e, i2i, i2out]
+        # pre_outputs = [out2e, out2i, out2out]
         if pre == 'input':
             for conn in in2e:
-                new_node_list = deepcopy(node_list)
+                new_node_list = node_list
                 new_node_list['excitatory'].append(conn[1])
                 check = self.check_in_2_out('excitatory', new_node_list, connections, conn[1])
                 if check:
                     return True
             for conn in in2i:
-                new_node_list = deepcopy(node_list)
+                new_node_list = node_list
                 new_node_list['inhibitory'].append(conn[1])
                 check = self.check_in_2_out('inhibitory', new_node_list, connections, conn[1])
                 if check:
@@ -682,7 +682,7 @@ class agent_population(object):
             for conn in e2e:
                 if conn[0] == specific:
                     if conn[1] not in node_list['excitatory']:
-                        new_node_list = deepcopy(node_list)
+                        new_node_list = node_list
                         new_node_list['excitatory'].append(conn[1])
                         check = self.check_in_2_out('excitatory', new_node_list, connections, conn[1])
                         if check:
@@ -690,7 +690,7 @@ class agent_population(object):
             for conn in e2i:
                 if conn[0] == specific:
                     if conn[1] not in node_list['inhibitory']:
-                        new_node_list = deepcopy(node_list)
+                        new_node_list = node_list
                         new_node_list['inhibitory'].append(conn[1])
                         check = self.check_in_2_out('inhibitory', new_node_list, connections, conn[1])
                         if check:
@@ -702,7 +702,7 @@ class agent_population(object):
             for conn in i2e:
                 if conn[0] == specific:
                     if conn[1] not in node_list['excitatory']:
-                        new_node_list = deepcopy(node_list)
+                        new_node_list = node_list
                         new_node_list['excitatory'].append(conn[1])
                         check = self.check_in_2_out('excitatory', new_node_list, connections, conn[1])
                         if check:
@@ -710,7 +710,7 @@ class agent_population(object):
             for conn in i2i:
                 if conn[0] == specific:
                     if conn[1] not in node_list['inhibitory']:
-                        new_node_list = deepcopy(node_list)
+                        new_node_list = node_list
                         new_node_list['inhibitory'].append(conn[1])
                         check = self.check_in_2_out('inhibitory', new_node_list, connections, conn[1])
                         if check:

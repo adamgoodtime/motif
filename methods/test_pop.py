@@ -76,13 +76,13 @@ def split_plastic(connections):
 def return_struct_model(size, stdp_model=None):
     default_parameters = {
         'stdp_model': stdp_model, 'f_rew': 10 ** 4, 'weight': 0.03, 'delay': [1, 16],
-        's_max': 32, 'sigma_form_forward': 2.5, 'sigma_form_lateral': 1,
+        's_max': 32, 'sigma_form_forward': 1000, 'sigma_form_lateral': 1000,
         'p_form_forward': 1., 'p_form_lateral': 1.,
         'p_elim_pot': 1.36 * 10 ** -4, 'p_elim_dep': 0.0245,
-        'grid': np.array([size, size]), 'lateral_inhibition': 0,
+        'grid': np.array([1, size]), 'lateral_inhibition': 0,
         'random_partner': False, 'is_distance_dependent': False}
 
-    structure_model = p.StructuralMechanismstdp(**default_parameters)
+    structure_model = p.StructuralMechanismSTDP(**default_parameters)
     #     #todo inhibitory or excitatory, is it jsut creating an edge?, limit to number of cons created
     #     stdp_model=stdp_model, #todo none=normal?
     #     weight=0,  # Use this weights when creating a new synapse todo, initial weight 0? can be an array?
@@ -285,7 +285,7 @@ def pop_test(connections, test_data, split=4, runtime=2000, exposure_time=200, n
                     if spike_f:
                         inhib[inhib_count].record('spikes')
                     inhib_marker.append(i)
-                stdp_model = p.stdpMechanism(
+                stdp_model = p.STDPMechanism(
                     timing_dependence=p.SpikePairRule(
                         tau_plus=20., tau_minus=20.0, A_plus=0.02, A_minus=0.02),
                     weight_dependence=p.AdditiveWeightDependence(w_min=0, w_max=0.1))
@@ -302,7 +302,7 @@ def pop_test(connections, test_data, split=4, runtime=2000, exposure_time=200, n
                             p.Projection(input_pops[model_count], excite[excite_count],
                                          p.FromListConnector(structural),
                                          receptor_type='excitatory',
-                                         synapse_type=return_struct_model(input_pop_size, stdp_model))
+                                         synapse_type=return_struct_model(e_size, stdp_model))
                         if len(non_plastic) != 0:
                             p.Projection(input_pops[model_count], excite[excite_count], 
                                          p.FromListConnector(non_plastic),
@@ -318,7 +318,7 @@ def pop_test(connections, test_data, split=4, runtime=2000, exposure_time=200, n
                             p.Projection(input_pops[model_count], excite[excite_count],
                                          p.FromListConnector(structural),
                                          receptor_type='inhibitory',
-                                         synapse_type=return_struct_model(input_pop_size, stdp_model))
+                                         synapse_type=return_struct_model(e_size, stdp_model))
                         if len(non_plastic) != 0:
                             p.Projection(input_pops[model_count], excite[excite_count], 
                                          p.FromListConnector(non_plastic),
@@ -336,7 +336,7 @@ def pop_test(connections, test_data, split=4, runtime=2000, exposure_time=200, n
                             p.Projection(input_pops[model_count], inhib[inhib_count],
                                          p.FromListConnector(structural),
                                          receptor_type='excitatory',
-                                         synapse_type=return_struct_model(input_pop_size, stdp_model))
+                                         synapse_type=return_struct_model(i_size, stdp_model))
                         if len(non_plastic) != 0:
                             p.Projection(input_pops[model_count], inhib[inhib_count], 
                                          p.FromListConnector(non_plastic),
@@ -352,7 +352,7 @@ def pop_test(connections, test_data, split=4, runtime=2000, exposure_time=200, n
                             p.Projection(input_pops[model_count], inhib[inhib_count],
                                          p.FromListConnector(structural),
                                          receptor_type='inhibitory',
-                                         synapse_type=return_struct_model(input_pop_size, stdp_model))
+                                         synapse_type=return_struct_model(i_size, stdp_model))
                         if len(non_plastic) != 0:
                             p.Projection(input_pops[model_count], inhib[inhib_count], 
                                          p.FromListConnector(non_plastic),
@@ -370,7 +370,7 @@ def pop_test(connections, test_data, split=4, runtime=2000, exposure_time=200, n
                             p.Projection(input_pops[model_count], output_pop[model_count],
                                          p.FromListConnector(structural),
                                          receptor_type='excitatory',
-                                         synapse_type=return_struct_model(input_pop_size, stdp_model))
+                                         synapse_type=return_struct_model(outputs, stdp_model))
                         if len(non_plastic) != 0:
                             p.Projection(input_pops[model_count], output_pop[model_count], 
                                          p.FromListConnector(non_plastic),
@@ -386,7 +386,7 @@ def pop_test(connections, test_data, split=4, runtime=2000, exposure_time=200, n
                             p.Projection(input_pops[model_count], output_pop[model_count],
                                          p.FromListConnector(structural),
                                          receptor_type='inhibitory',
-                                         synapse_type=return_struct_model(input_pop_size, stdp_model))
+                                         synapse_type=return_struct_model(outputs, stdp_model))
                         if len(non_plastic) != 0:
                             p.Projection(input_pops[model_count], output_pop[model_count], 
                                          p.FromListConnector(non_plastic),
@@ -402,7 +402,7 @@ def pop_test(connections, test_data, split=4, runtime=2000, exposure_time=200, n
                         p.Projection(excite[excite_count], excite[excite_count],
                                      p.FromListConnector(structural),
                                      receptor_type='excitatory',
-                                     synapse_type=return_struct_model(input_pop_size, stdp_model))
+                                     synapse_type=return_struct_model(e_size, stdp_model))
                     if len(non_plastic) != 0:
                         p.Projection(excite[excite_count], excite[excite_count], 
                                      p.FromListConnector(non_plastic),
@@ -418,7 +418,7 @@ def pop_test(connections, test_data, split=4, runtime=2000, exposure_time=200, n
                         p.Projection(excite[excite_count], inhib[inhib_count],
                                      p.FromListConnector(structural),
                                      receptor_type='excitatory',
-                                     synapse_type=return_struct_model(input_pop_size, stdp_model))
+                                     synapse_type=return_struct_model(i_size, stdp_model))
                     if len(non_plastic) != 0:
                         p.Projection(excite[excite_count], inhib[inhib_count], 
                                      p.FromListConnector(non_plastic),
@@ -434,7 +434,7 @@ def pop_test(connections, test_data, split=4, runtime=2000, exposure_time=200, n
                         p.Projection(inhib[inhib_count], excite[excite_count],
                                      p.FromListConnector(structural),
                                      receptor_type='inhibitory',
-                                     synapse_type=return_struct_model(input_pop_size, stdp_model))
+                                     synapse_type=return_struct_model(e_size, stdp_model))
                     if len(non_plastic) != 0:
                         p.Projection(inhib[inhib_count], excite[excite_count], 
                                      p.FromListConnector(non_plastic),
@@ -450,7 +450,7 @@ def pop_test(connections, test_data, split=4, runtime=2000, exposure_time=200, n
                         p.Projection(inhib[inhib_count], inhib[inhib_count],
                                      p.FromListConnector(structural),
                                      receptor_type='inhibitory',
-                                     synapse_type=return_struct_model(input_pop_size, stdp_model))
+                                     synapse_type=return_struct_model(i_size, stdp_model))
                     if len(non_plastic) != 0:
                         p.Projection(inhib[inhib_count], inhib[inhib_count], 
                                      p.FromListConnector(non_plastic),
@@ -466,7 +466,7 @@ def pop_test(connections, test_data, split=4, runtime=2000, exposure_time=200, n
                         p.Projection(excite[excite_count], output_pop[model_count],
                                      p.FromListConnector(structural),
                                      receptor_type='excitatory',
-                                     synapse_type=return_struct_model(input_pop_size, stdp_model))
+                                     synapse_type=return_struct_model(outputs, stdp_model))
                     if len(non_plastic) != 0:
                         p.Projection(excite[excite_count], output_pop[model_count], 
                                      p.FromListConnector(non_plastic),
@@ -482,7 +482,7 @@ def pop_test(connections, test_data, split=4, runtime=2000, exposure_time=200, n
                         p.Projection(inhib[inhib_count], output_pop[model_count],
                                      p.FromListConnector(structural),
                                      receptor_type='inhibitory',
-                                     synapse_type=return_struct_model(input_pop_size, stdp_model))
+                                     synapse_type=return_struct_model(outputs, stdp_model))
                     if len(non_plastic) != 0:
                         p.Projection(inhib[inhib_count], output_pop[model_count], 
                                      p.FromListConnector(non_plastic),
@@ -500,7 +500,7 @@ def pop_test(connections, test_data, split=4, runtime=2000, exposure_time=200, n
                             p.Projection(output_pop[model_count], excite[excite_count],
                                          p.FromListConnector(structural),
                                          receptor_type='excitatory',
-                                         synapse_type=return_struct_model(input_pop_size, stdp_model))
+                                         synapse_type=return_struct_model(e_size, stdp_model))
                         if len(non_plastic) != 0:
                             p.Projection(output_pop[model_count], excite[excite_count],
                                          p.FromListConnector(non_plastic),
@@ -516,7 +516,7 @@ def pop_test(connections, test_data, split=4, runtime=2000, exposure_time=200, n
                             p.Projection(output_pop[model_count], excite[excite_count],
                                          p.FromListConnector(structural),
                                          receptor_type='inhibitory',
-                                         synapse_type=return_struct_model(input_pop_size, stdp_model))
+                                         synapse_type=return_struct_model(e_size, stdp_model))
                         if len(non_plastic) != 0:
                             p.Projection(output_pop[model_count], excite[excite_count], 
                                          p.FromListConnector(non_plastic),
@@ -534,7 +534,7 @@ def pop_test(connections, test_data, split=4, runtime=2000, exposure_time=200, n
                             p.Projection(output_pop[model_count], inhib[inhib_count],
                                          p.FromListConnector(structural),
                                          receptor_type='excitatory',
-                                         synapse_type=return_struct_model(input_pop_size, stdp_model))
+                                         synapse_type=return_struct_model(i_size, stdp_model))
                         if len(non_plastic) != 0:
                             p.Projection(output_pop[model_count], inhib[inhib_count],
                                          p.FromListConnector(non_plastic),
@@ -550,7 +550,7 @@ def pop_test(connections, test_data, split=4, runtime=2000, exposure_time=200, n
                             p.Projection(output_pop[model_count], inhib[inhib_count],
                                          p.FromListConnector(structural),
                                          receptor_type='inhibitory',
-                                         synapse_type=return_struct_model(input_pop_size, stdp_model))
+                                         synapse_type=return_struct_model(i_size, stdp_model))
                         if len(non_plastic) != 0:
                             p.Projection(output_pop[model_count], inhib[inhib_count],
                                          p.FromListConnector(non_plastic),
@@ -602,7 +602,7 @@ def pop_test(connections, test_data, split=4, runtime=2000, exposure_time=200, n
                             p.Projection(output_pop[model_count], output_pop[model_count],
                                          p.FromListConnector(structural),
                                          receptor_type='excitatory',
-                                         synapse_type=return_struct_model(input_pop_size, stdp_model))
+                                         synapse_type=return_struct_model(outputs, stdp_model))
                         if len(non_plastic) != 0:
                             p.Projection(output_pop[model_count], output_pop[model_count],
                                          p.FromListConnector(non_plastic),
@@ -618,7 +618,7 @@ def pop_test(connections, test_data, split=4, runtime=2000, exposure_time=200, n
                             p.Projection(output_pop[model_count], output_pop[model_count],
                                          p.FromListConnector(structural),
                                          receptor_type='inhibitory',
-                                         synapse_type=return_struct_model(input_pop_size, stdp_model))
+                                         synapse_type=return_struct_model(outputs, stdp_model))
                         if len(non_plastic) != 0:
                             p.Projection(output_pop[model_count], output_pop[model_count],
                                          p.FromListConnector(non_plastic),
