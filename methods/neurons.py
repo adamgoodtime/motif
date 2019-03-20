@@ -152,6 +152,21 @@ class neuron_population(object):
                 else:
                     neuron['weight'] = float(self.pop_size) / float(self.inputs + self.outputs)
                     neuron['weight'] *= self.io_prob
+                #     neuron['type'] = 'input'
+                #     neuron['io'] = io_choice
+                #     if self.default:
+                #         neuron['weight'] = (0.5 / float(self.inputs)) * self.io_prob
+                #     else:
+                #         neuron['weight'] = (float(self.pop_size) / 2.0) / float(self.inputs)
+                #         neuron['weight'] *= self.io_prob
+                # else:
+                #     neuron['type'] = 'output'
+                #     neuron['io'] = io_choice - self.inputs
+                #     if self.default:
+                #         neuron['weight'] = (0.5 / float(self.outputs)) * self.io_prob
+                #     else:
+                #         neuron['weight'] = (float(self.pop_size) / 2.0) / float(self.outputs)
+                #         neuron['weight'] *= self.io_prob
                 neuron['params'] = {}
                 # for param in self.neuron_params:
                 #     neuron['params'][param] = np.random.normal(self.neuron_params[param], self.neuron_param_stdevs[param])

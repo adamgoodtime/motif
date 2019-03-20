@@ -36,6 +36,11 @@ def test_levels(rates=(1, 0.1), weights=(0.1, 0.09, 1, 10), pop_size=1):
         print rate_index
         # for j in range(receive_pop_size):
         spikes = receive_pop[i].get_data('spikes').segments[0].spiketrains
+        for neuron in spikes:
+            for spike_time in neuron:
+                a = float(spike_time)
+                print spike_time
+                print a
         v = receive_pop[i].get_data('v').segments[0].filter(name='v')[0]
         plt.figure("rate = {} - weight = {}".format(rates[rate_index], weights[weight_index]))
         Figure(

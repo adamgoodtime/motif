@@ -36,14 +36,14 @@ random_arms = 0
 viable_parents = 0.2
 elitism = 0.2
 exposure_time = 200
-io_prob = 0.75
+io_prob = 0.75  # 1.0 - (1.0 / 11.0)
 read_pop = 0
 # read_pop = 'Dirty place/good pendulum with plastic and high bins.csv'
 keep_reading = 5
 constant_delays = 0
 base_mutate = 0
 multiple_mutates = True
-exec_thing = 'logic'
+exec_thing = 'mnist'
 plasticity = True
 structural = False
 develop_neurons = True
@@ -109,6 +109,14 @@ for i in range(1, len(truth_table)):
         segment[highest_power] = 1
         current_value -= 2**highest_power
     input_sequence.append(segment)
+
+#MNIST
+max_freq = 5000
+on_duration = 1000
+off_duration = 1000
+data_size = 20
+mnist_runtime = data_size * (on_duration + off_duration)
+mnist_pointer = '../../NE16/poisson'
 
 #erbp params
 erbp_runtime = 20
@@ -199,6 +207,13 @@ def bandit(generations):
             config = 'logic-stoc-{}-run{}-sample{} '.format(truth_table, runtime, score_delay)
         else:
             config = 'logic-{}-run{}-sample{} '.format(truth_table, runtime, score_delay)
+    elif exec_thing == 'mnist':
+        runtime = mnist_runtime
+        test_data_set = input_sequence
+        number_of_tests = len(input_sequence)
+        inputs = 28*28
+        outputs = 10
+        config = 'mnist-freq-{}-on-{}-off-{}-size-{} '.format(max_freq, on_duration, off_duration, data_size)
     elif exec_thing == 'erbp':
         maximum_depth = erbp_max_depth
         make_action = False
@@ -252,6 +267,7 @@ def bandit(generations):
     if stdev_neurons:
         neurons = neuron_population(inputs=inputs,
                                     outputs=outputs,
+                                    pop_size=inputs+outputs+200+agent_pop_size*3,
                                     io_prob=io_prob,
                                     v_rest=-65.0,  # Resting membrane potential in mV.
                                     v_rest_stdev=5,
@@ -295,7 +311,7 @@ def bandit(generations):
                               keep_reading=keep_reading,
                               plasticity=plasticity,
                               structural=structural,
-                              population_size=agent_pop_size*3)
+                              population_size=agent_pop_size*3+inputs+outputs)
 
     # todo :add number of different motifs to the fitness function to promote regularity
 

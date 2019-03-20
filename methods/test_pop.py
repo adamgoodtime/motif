@@ -36,6 +36,7 @@ import pathos.multiprocessing
 from spinn_front_end_common.utilities import globals_variables
 import argparse
 from ast import literal_eval
+from poisson.poisson_tools import *
 
 
 def split_ex_in(connections):
@@ -170,6 +171,13 @@ def pop_test(connections, test_data, split=4, runtime=2000, exposure_time=200, n
             try_count += 1
         print "\nfinished setup seed = ", seed, "\n"
         print config
+        if exec_thing == 'mnist':
+            [data, labels] = get_train_data(mnist_pointer)
+            starting_point = np.random.randint(60000 - data_size)
+            sub_data = data[starting_point: starting_point + data_size]
+            sub_labels = labels[starting_point: starting_point + data_size]
+            mnist_spikes = mnist_poisson_gen(sub_data, 28, 28, max_freq, on_duration, off_duration)
+            input_model = p.Population(28*28, p.SpikeSourceArray(spike_times=mnist_spikes), label='MNIST_input_pop')
         for i in range(len(connections)):
             [in2e, in2i, in2in, in2out, e2in, i2in, e_size, e2e, e2i, i_size,
              i2e, i2i, e2out, i2out, out2e, out2i, out2in, out2out, excite_params, inhib_params] = connections[i]
@@ -241,11 +249,17 @@ def pop_test(connections, test_data, split=4, runtime=2000, exposure_time=200, n
                                              reward_based=reward,
                                              rand_seed=[np.random.randint(0xffff) for j in range(4)],
                                              label='bandit_pop_{}-{}'.format(model_count, i))
+                elif exec_thing == 'mnist':
+                    # shared population already created
+                    None
                 else:
                     print "Incorrect input model selected"
                     raise Exception
-                input_pop_size = input_model.neurons()
-                input_pops.append(p.Population(input_pop_size, input_model))
+                if exec_thing != 'mnist':
+                    input_pop_size = input_model.neurons()
+                    input_pops.append(p.Population(input_pop_size, input_model))
+                else:
+                    input_pops.append(input_model)
                 # added to ensure that the arms and bandit are connected to and from something
                 null_pop = p.Population(1, p.IF_cond_exp(), label='null{}'.format(i))
                 p.Projection(input_pops[model_count], null_pop, p.AllToAllConnector(), p.StaticSynapse(delay=1))
@@ -259,9 +273,10 @@ def pop_test(connections, test_data, split=4, runtime=2000, exposure_time=200, n
                 else:
                     output_pop.append(p.Population(outputs, p.IF_cond_exp(),
                                                    label='output_pop_{}-{}'.format(model_count, i)))
-                if spike_f == 'out' or make_action:
+                if spike_f == 'out' or make_action or exec_thing == 'mnist':
                     output_pop[model_count].record('spikes')
-                p.Projection(output_pop[model_count], input_pops[model_count], p.AllToAllConnector())
+                if exec_thing != 'mnist':
+                    p.Projection(output_pop[model_count], input_pops[model_count], p.AllToAllConnector())
                 if e_size > 0:
                     excite_count += 1
                     excite.append(
@@ -555,7 +570,7 @@ def pop_test(connections, test_data, split=4, runtime=2000, exposure_time=200, n
                             p.Projection(output_pop[model_count], inhib[inhib_count],
                                          p.FromListConnector(non_plastic),
                                          receptor_type='inhibitory')
-                if len(out2in) != 0:
+                if len(out2in) != 0 and exec_thing != 'mnist':
                     [in_ex, in_in] = split_ex_in(out2in)
                     if len(in_ex) != 0:
                         [stdp, structural, non_plastic] = split_plastic(in_ex)
@@ -648,6 +663,7 @@ def pop_test(connections, test_data, split=4, runtime=2000, exposure_time=200, n
             if try_except >= max_attempts:
                 print "calling it a failed population, splitting and rerunning"
                 return 'fail'
+        # p.run(runtime)
         print "\nfinished run seed = ", seed, "\n"
 
     scores = []
@@ -669,7 +685,18 @@ def pop_test(connections, test_data, split=4, runtime=2000, exposure_time=200, n
             excite_spike_count[i] -= max_fail_score
             inhib_spike_count[i] -= max_fail_score
         else:
-            if spike_f or make_action:
+            if spike_f or make_action or exec_thing == 'mnist':
+                if exec_thing == 'mnist':
+                    choices = [[0 for j in range(10)] for k in range(data_size)]
+                    spikes = output_pop[i - fails].get_data('spikes').segments[0].spiketrains
+                    neuron_id = 0
+                    for neuron in spikes:
+                        for spike_time in neuron:
+                            time_segment = 0
+                            while float(spike_time) > (time_segment + 1) * (on_duration + off_duration):
+                                time_segment += 1
+                            choices[time_segment][neuron_id] += 1
+                        neuron_id += 1
                 made_action = False
                 if spike_f == 'out' or make_action:
                     spikes = output_pop[i - fails].get_data('spikes').segments[0].spiketrains
@@ -698,7 +725,15 @@ def pop_test(connections, test_data, split=4, runtime=2000, exposure_time=200, n
                 else:
                     inhib_fail += 1
                     # print "had an inhib failure"
-            scores.append(get_scores(game_pop=input_pops[i - fails], simulator=simulator))
+            if exec_thing == 'mnist':
+                score = 0
+                for j in range(len(choices)):
+                    choice = choices[j].index(np.max(choices[j]))
+                    if choice == sub_labels[j]:
+                        score += 1
+                scores.append([[score]])
+            else:
+                scores.append(get_scores(game_pop=input_pops[i - fails], simulator=simulator))
             # pop[i].stats = {'fitness': scores[i][len(scores[i]) - 1][0]}  # , 'steps': 0}
         # print "\nfinished spikes", seed
         if spike_f or make_action:

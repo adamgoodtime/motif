@@ -653,6 +653,7 @@ class agent_population(object):
                 if not check:
                     print "no i2o"
                     return False
+            print "good agent"
         return child
         
     def check_in_2_out(self, pre, node_list, connections, specific=None):
