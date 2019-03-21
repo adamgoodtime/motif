@@ -10,13 +10,9 @@ import sys, os
 import time
 import socket
 import numpy as np
-from spinn_bandit.python_models.bandit import Bandit
-from python_models.pendulum import Pendulum
-from rank_inverted_pendulum.python_models.rank_pendulum import Rank_Pendulum
-from double_inverted_pendulum.python_models.double_pendulum import DoublePendulum
+# from rank_inverted_pendulum.python_models.rank_pendulum import Rank_Pendulum
+# from double_inverted_pendulum.python_models.double_pendulum import DoublePendulum
 import spinn_gym as gym
-from spinn_arm.python_models.arm import Arm
-# from spinn_breakout import Breakout
 import math
 import itertools
 import sys

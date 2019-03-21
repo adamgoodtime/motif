@@ -25,7 +25,7 @@ split = 1
 new_split = 4  # agent_pop_size
 
 #motif params
-maximum_depth = [4, 10]
+maximum_depth = [20, 100]
 no_bins = [10, 375]
 reset_pop = 0
 size_f = False
@@ -299,7 +299,7 @@ def bandit(generations):
                                     io_prob=io_prob)
 
     motifs = motif_population(neurons,
-                              max_motif_size=maximum_depth[0],
+                              max_motif_size=4,#maximum_depth[0],
                               no_weight_bins=no_bins,
                               no_delay_bins=no_bins,
                               weight_range=(0.005, weight_max),

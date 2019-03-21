@@ -138,6 +138,7 @@ class motif_population(object):
             while i < population_size:
                 self.generate_motif()
                 i += 1
+                print "generated {}/{} motifs".format(i, population_size)
 
         else:
             self.read_population()
