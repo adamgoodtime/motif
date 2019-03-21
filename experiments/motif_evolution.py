@@ -25,7 +25,7 @@ split = 1
 new_split = 4  # agent_pop_size
 
 #motif params
-maximum_depth = [3, 10]
+maximum_depth = [5, 15]
 no_bins = [10, 375]
 reset_pop = 0
 size_f = False
@@ -114,7 +114,7 @@ for i in range(1, len(truth_table)):
 max_freq = 5000
 on_duration = 1000
 off_duration = 1000
-data_size = 20
+data_size = 100
 mnist_runtime = data_size * (on_duration + off_duration)
 
 #erbp params

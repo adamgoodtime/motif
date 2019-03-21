@@ -10,7 +10,6 @@ import sys, os
 import time
 import socket
 import numpy as np
-from spinn_bandit.python_models.bandit import Bandit
 import math
 import itertools
 from copy import deepcopy

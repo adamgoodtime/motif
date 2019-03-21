@@ -1,36 +1,14 @@
 import spynnaker8 as p
-# from spynnaker.pyNN.connections. \
-#     spynnaker_live_spikes_connection import SpynnakerLiveSpikesConnection
-# from spinn_front_end_common.utilities.globals_variables import get_simulator
-#
-# import pylab
-# from spynnaker.pyNN.spynnaker_external_device_plugin_manager import \
-#     SpynnakerExternalDevicePluginManager as ex
-import sys, os
 import time
-import socket
 import numpy as np
 # from rank_inverted_pendulum.python_models.rank_pendulum import Rank_Pendulum
 # from double_inverted_pendulum.python_models.double_pendulum import DoublePendulum
 import spinn_gym as gym
-import math
-import itertools
 import sys
-import termios
-import contextlib
-from copy import deepcopy
-import operator
 from spinn_front_end_common.utilities.globals_variables import get_simulator
 import traceback
-import math
-from methods.networks import motif_population
-import traceback
 import csv
-import threading
-import subprocess
-import pathos.multiprocessing
 from spinn_front_end_common.utilities import globals_variables
-import argparse
 from ast import literal_eval
 from poisson.poisson_tools import *
 
