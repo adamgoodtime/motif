@@ -138,7 +138,7 @@ class motif_population(object):
             while i < population_size:
                 self.generate_motif()
                 i += 1
-                print "generated {}/{} motifs".format(i, population_size)
+                # print "generated {}/{} motifs".format(i, population_size)
 
         else:
             self.read_population()
@@ -319,6 +319,7 @@ class motif_population(object):
             self.motif_configs['{}'.format(motif_id)] = motif
             self.motif_configs['{}'.format(motif_id)]['weight'] = weight
             self.motif_configs['{}'.format(motif_id)]['id'] = motif_id
+            self.motif_configs['{}'.format(motif_id)]['depth'] = self.depth_read('{}'.format(motif_id))
             self.motifs_generated += 1
             # print motif_id
             if read:
@@ -336,42 +337,49 @@ class motif_population(object):
         # add motif with a certain probability
         # possibly combine with a mutate operation?
         motif = deepcopy(self.motif_configs[motif_id])
-        if current_depth < max_depth:
+        if current_depth < max_depth and motif['depth'] < max_depth:
             i = 0
             layer = 0
             if config == 'lowest':
                 None
             # Check config is set to a P() of a new connection
             elif config <= 1:
-                increased_depth = False
-                picked_bigger = False
+                # increased_depth = False
+                # picked_bigger = False
                 for node in motif['node']:
                     # if it is a base node replace it with a motif
                     if node in self.neurons.neuron_configs:
                         # with a certain P() add a new motif
                         if np.random.random() < config:
                             selected_motif = self.select_motif()
-                            if self.motif_configs[selected_motif]['depth'] + current_depth < max_depth:
-                                motif['node'][i] = selected_motif
-                                increased_depth = True
+                            # if self.motif_configs[selected_motif]['depth'] + motif['depth'] < max_depth:
+                            motif['node'][i] = selected_motif
+                            # motif['depth'] = self.motif_configs[selected_motif]['depth'] + current_depth
+                            # increased_depth = True
                     # go another layer down if it's not a base node yet
                     else:
                         sub_motif = self.motif_of_motif(node, config, max_depth, current_depth + 1)
                         # sub_motif_id = self.insert_motif(sub_motif)
                         # motif['node'][i] = sub_motif[sub_motif_id]
-                        motif['node'][i] = self.insert_motif(sub_motif)
-                        new_depth = sub_motif['depth']
+                        motif['node'][i] = sub_motif
+                        # old_depth = self.motif_configs[node]['depth']
+                        # new_depth = self.motif_configs[sub_motif]['depth']
                         # if the depth is bigger adjust it
-                        if new_depth >= motif['depth']:
-                            motif['depth'] = new_depth + 1
-                            picked_bigger = True
+                        # print "old ", old_depth
+                        # print "new ", new_depth
+                        # print "current", current_depth
+                        # print "motif", motif['depth'], "/", max_depth
+                        # if new_depth + current_depth >= motif['depth']:
+                        #     motif['depth'] = new_depth + current_depth + 1
+                            # picked_bigger = True
                     i += 1
                 # check to make sure the depth is correct
-                if increased_depth and not picked_bigger:
-                    motif['depth'] += 1
+                # if increased_depth and not picked_bigger:
+                #     motif['depth'] += 1
             else:
                 # go to a certain depth
                 None
+        motif = self.insert_motif(motif)
         return motif
 
     '''generates a individual which is a motif of motifs up to a certain depth. motif_of_motif is recursively called 
@@ -384,9 +392,12 @@ class motif_population(object):
             depth = self.initial_hierarchy_depth
         # select an initial motif
         motif = self.select_motif()
-        for i in range(depth):
-            motif = self.motif_of_motif(motif, connfig, depth, i)
-            motif = self.insert_motif(motif)
+        # for i in range(depth):
+        while self.motif_configs[motif]['depth'] < depth:
+            motif = self.motif_of_motif(motif, connfig, depth, 0)
+            # if self.motif_configs[motif]['depth'] >= depth:
+            #     break
+            # motif = self.insert_motif(motif)
         return [motif, np.random.randint(200)]
 
     def remove_motif(self, motif):

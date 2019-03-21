@@ -28,6 +28,7 @@ import subprocess
 import pathos.multiprocessing
 from spinn_front_end_common.utilities import globals_variables
 from ast import literal_eval
+from types import ModuleType
 
 # max_fail_score = 0  # -int(runtime / exposure_time)
 setup_retry_time = 60
@@ -92,6 +93,11 @@ def remove_results(test_length, not_a_file):
             os.remove('data {} {}.npy'.format(config, i))
 
 def write_globals(file_id):
+    # non_modules = {}
+    # for thing in globals():
+    #     if not isinstance(globals()[thing], ModuleType):
+    #         non_modules[thing] = globals()[thing]
+    # np.save('globals {}.npy'.format(file_id), non_modules)
     with open('globals {}.csv'.format(file_id), 'w') as file:
         writer = csv.writer(file, delimiter=',', lineterminator='\n')
         for thing in globals():

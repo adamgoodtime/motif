@@ -25,7 +25,7 @@ split = 1
 new_split = 4  # agent_pop_size
 
 #motif params
-maximum_depth = [20, 100]
+maximum_depth = [3, 10]
 no_bins = [10, 375]
 reset_pop = 0
 size_f = False
@@ -116,7 +116,6 @@ on_duration = 1000
 off_duration = 1000
 data_size = 20
 mnist_runtime = data_size * (on_duration + off_duration)
-mnist_pointer = '../../NE16/poisson'
 
 #erbp params
 erbp_runtime = 20
@@ -356,12 +355,12 @@ def bandit(generations):
                 arms.append(arm)
 
         if i == 0:
-            connections = agents.generate_spinn_nets(input=inputs, output=outputs, max_depth=3)
+            connections = agents.generate_spinn_nets(input=inputs, output=outputs, max_depth=maximum_depth[0])
         elif reset_pop:
             if i % reset_pop:
-                connections = agents.generate_spinn_nets(input=inputs, output=outputs, max_depth=3, create='reset')
+                connections = agents.generate_spinn_nets(input=inputs, output=outputs, max_depth=maximum_depth[0], create='reset')
         else:
-            connections = agents.generate_spinn_nets(input=inputs, output=outputs, max_depth=3, create=False)
+            connections = agents.generate_spinn_nets(input=inputs, output=outputs, max_depth=maximum_depth[0], create=False)
 
         # config = 'test'
         if config != 'test':

@@ -34,6 +34,7 @@ import argparse
 from ast import literal_eval
 from poisson.poisson_tools import *
 
+mnist_pointer = '../../NE16/poisson'
 
 def split_ex_in(connections):
     excite = []
@@ -764,6 +765,9 @@ def print_fitnesses(fitnesses):
     np.save('fitnesses {} {}.npy'.format(config, test_id), fitnesses)
 
 def read_globals(config):
+    # read_globals = np.load('globals {}.npy'.format(config))
+    # for thing in read_globals:
+    #     globals()[thing] = read_globals[thing]
     file_name = 'globals {}.csv'.format(config)
     with open(file_name) as from_file:
         csvFile = csv.reader(from_file)

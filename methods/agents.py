@@ -172,6 +172,7 @@ class agent_population(object):
     def generate_population(self, max_depth):
         for i in range(self.pop_size):
             self.agent_pop.append(self.new_individual(max_depth))
+            print "created agent ", i + 1, "of", self.pop_size
 
     '''creates a new individual'''
     def new_individual(self, max_depth):
@@ -622,9 +623,15 @@ class agent_population(object):
         mutate_key['plasticity'] = 0
         mutate_key['sex'] = 3
         child = self.motifs.select_motif()
-        for i in range(self.maximum_depth):
-            child = self.motifs.motif_of_motif(child, 1, self.maximum_depth, i)
-            child = self.motifs.insert_motif(child)
+        # starting_depth = child['depth']
+        new_depth = np.random.randint(self.motifs.initial_hierarchy_depth, self.maximum_depth)
+        while self.motifs.motif_configs[child]['depth'] < new_depth:
+            child = self.motifs.motif_of_motif(child, 1, new_depth, 0)
+        # for i in range(new_depth):
+        #     child = self.motifs.motif_of_motif(child, 1, new_depth, i)
+        #     # child = self.motifs.insert_motif(child)
+        #     if child['depth'] >= new_depth:
+        #         break
         return child
     
     def valid_net(self, child):
@@ -808,6 +815,7 @@ class agent_population(object):
                 children.append([child, np.random.randint(200)])
                 mumate_dict[child] = mutate_key
                 i += 1
+                print "created child", i, "of", birthing
             else:
                 print "not a valid child"
         return children, mumate_dict
