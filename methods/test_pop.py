@@ -737,11 +737,12 @@ def pop_test(connections, test_data, split=4, runtime=2000, exposure_time=200, n
         e_string = "e: {}".format(excite_spike_count[i])
         i_string = "i: {}".format(inhib_spike_count[i])
         score_string = ""
-        if reward == 0:
-            for j in range(len(scores[i])):
-                score_string += "{:4},".format(scores[i][j][0])
-        else:
-            score_string += "{:4},".format(scores[i][len(scores[i])-1][0])
+        # if reward == 0:
+        #     for j in range(len(scores[i])):
+        #         score_string += "{:4},".format(scores[i][j][0])
+        # else:
+        #     score_string += "{:4},".format(scores[i][len(scores[i])-1][0])
+        score_string += "{:4},".format(scores[i][len(scores[i])-1][0])
         print "{:3} | {:8} {:8} - ".format(i, e_string, i_string), score_string
     print "before end = ", seed
     p.end()
