@@ -24,7 +24,7 @@ split = 1
 new_split = 4  # agent_pop_size
 
 #motif params
-maximum_depth = [5, 15]
+maximum_depth = [3, 15]
 no_bins = [10, 375]
 reset_pop = 0
 size_f = False
@@ -42,7 +42,7 @@ keep_reading = 5
 constant_delays = 0
 base_mutate = 0
 multiple_mutates = True
-exec_thing = 'mnist'
+exec_thing = 'recall'
 plasticity = True
 structural = False
 develop_neurons = True
@@ -120,7 +120,7 @@ prob_in_change = 1./2.
 time_period = 200
 stochastic = 1
 recall_reward = 0
-recall_parallel_runs = 4
+recall_parallel_runs = 2
 
 #MNIST
 max_freq = 5000
@@ -342,9 +342,8 @@ def bandit(generations):
                               maximum_depth=maximum_depth,
                               viable_parents=viable_parents)
 
-    config += "reward-{}, max_d-{}, w_max-{}, rents-{}, elite-{}, psize-{}, bins-{}".format(
-        reward, maximum_depth, weight_max, viable_parents, elitism, agent_pop_size,
-        no_bins)
+    config += "max_d-{}, w_max-{}, rents-{}, elite-{}, psize-{}, bins-{}".format(
+        maximum_depth, weight_max, viable_parents, elitism, agent_pop_size, no_bins)
 
     if io_prob:
         config += ", io-{}".format(io_prob)

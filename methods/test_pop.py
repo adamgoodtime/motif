@@ -110,7 +110,7 @@ def get_scores(game_pop, simulator):
     return scores.tolist()
 
 def pop_test(connections, test_data, split=4, runtime=2000, exposure_time=200, noise_rate=100, noise_weight=0.01,
-                reward=0, spike_f=False, make_action=True, exec_thing='bout', seed=0):
+                spike_f=False, make_action=True, exec_thing='bout', seed=0):
     np.random.seed(seed)
     sleep = 10 * np.random.random()
     # time.sleep(sleep)
@@ -718,6 +718,10 @@ def pop_test(connections, test_data, split=4, runtime=2000, exposure_time=200, n
                     if choice == sub_labels[j]:
                         score += 1
                 scores.append([[score]])
+            elif exec_thing == 'recall':
+                score = get_scores(game_pop=input_pops[i - fails], simulator=simulator)
+                accuracy = float(score[len(score) - 2][0]) / float(score[len(score) - 1][0])
+                scores.append([[accuracy]])
             else:
                 scores.append(get_scores(game_pop=input_pops[i - fails], simulator=simulator))
             # pop[i].stats = {'fitness': scores[i][len(scores[i]) - 1][0]}  # , 'steps': 0}
