@@ -221,9 +221,20 @@ def pop_test(connections, test_data, split=4, runtime=2000, exposure_time=200, n
                 elif exec_thing == 'arms':
                     input_model = gym.Bandit(arms=test_data,
                                              reward_delay=exposure_time,
-                                             reward_based=reward,
+                                             reward_based=arms_reward,
                                              rand_seed=[np.random.randint(0xffff) for j in range(4)],
                                              label='bandit_pop_{}-{}'.format(model_count, i))
+                elif exec_thing == 'recall':
+                    input_model = gym.Recall(rate_on=rate_on,
+                                             rate_off=rate_off,
+                                             pop_size=recall_pop_size,
+                                             prob_command=prob_command,
+                                             prob_in_change=prob_in_change,
+                                             time_period=time_period,
+                                             stochastic=stochastic,
+                                             reward=recall_reward,
+                                             rand_seed=[np.random.randint(0xffff) for j in range(4)],
+                                             label='recall_pop_{}-{}'.format(model_count, i))
                 elif exec_thing == 'mnist':
                     # shared population already created
                     None

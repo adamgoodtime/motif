@@ -15,7 +15,6 @@ weight_max = 0.1
 agent_pop_size = 100
 reward_shape = False
 averaging_weights = True
-reward = 1
 noise_rate = 0
 noise_weight = 0.01
 fast_membrane = False
@@ -57,6 +56,7 @@ arm2 = 0.1
 arm3 = 0.1
 arm_len = 1
 arms = []
+arms_reward = 1
 for i in range(arm_len):
     # arms.append([arm1, arm2])
     # arms.append([arm2, arm1])
@@ -110,11 +110,24 @@ for i in range(1, len(truth_table)):
         current_value -= 2**highest_power
     input_sequence.append(segment)
 
+#Recall params
+recall_runtime = 60000
+rate_on = 50
+rate_off = 0
+recall_pop_size = 1
+prob_command = 1./6.
+prob_in_change = 1./2.
+time_period = 200
+stochastic = 1
+recall_reward = 0
+recall_parallel_runs = 4
+
 #MNIST
 max_freq = 5000
 on_duration = 1000
 off_duration = 1000
 data_size = 100
+mnist_parallel_runs = 4
 mnist_runtime = data_size * (on_duration + off_duration)
 
 #erbp params
@@ -144,17 +157,6 @@ def bandit(generations):
         config = 'bout {}-{}-{} '.format(x_factor, y_factor, bricking)
         test_data_set = 'something'
         number_of_tests = 'something'
-    elif exec_thing == 'xor':
-        arms = [[0, 0], [0, 1], [1, 0], [1, 1]]
-        config = 'xor '
-        inputs = 2
-        if reward == 1:
-            outputs = 2
-        else:
-            outputs = 1
-        max_fail_score = -1
-        test_data_set = arms
-        number_of_tests = len(arms)
     elif exec_thing == 'pen':
         runtime = pendulum_runtime
         encoding = 1
@@ -206,10 +208,22 @@ def bandit(generations):
             config = 'logic-stoc-{}-run{}-sample{} '.format(truth_table, runtime, score_delay)
         else:
             config = 'logic-{}-run{}-sample{} '.format(truth_table, runtime, score_delay)
+    elif exec_thing == 'recall':
+        runtime = recall_runtime
+        for j in range(recall_parallel_runs):
+            test_data_set.append(j)
+        number_of_tests = recall_parallel_runs
+        inputs = 4 * recall_pop_size
+        outputs = 2
+        if stochastic:
+            config = 'recall-stoc-pop_s{}-run{}-in_p{}-r_on{} '.format(recall_pop_size, runtime, prob_in_change, rate_on)
+        else:
+            config = 'recall-pop_s{}-run{}-in_p{}-r_on{} '.format(recall_pop_size, runtime, prob_in_change, rate_on)
     elif exec_thing == 'mnist':
         runtime = mnist_runtime
-        test_data_set = input_sequence
-        number_of_tests = len(input_sequence)
+        for j in range(mnist_parallel_runs):
+            test_data_set.append(j)
+        number_of_tests = mnist_parallel_runs
         inputs = 28*28
         outputs = 10
         config = 'mnist-freq-{}-on-{}-off-{}-size-{} '.format(max_freq, on_duration, off_duration, data_size)
