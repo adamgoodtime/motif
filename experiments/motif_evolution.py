@@ -211,7 +211,7 @@ def bandit(generations):
     elif exec_thing == 'recall':
         runtime = recall_runtime
         for j in range(recall_parallel_runs):
-            test_data_set.append(j)
+            test_data_set.append([j])
         number_of_tests = recall_parallel_runs
         inputs = 4 * recall_pop_size
         outputs = 2
@@ -222,7 +222,7 @@ def bandit(generations):
     elif exec_thing == 'mnist':
         runtime = mnist_runtime
         for j in range(mnist_parallel_runs):
-            test_data_set.append(j)
+            test_data_set.append([j])
         number_of_tests = mnist_parallel_runs
         inputs = 28*28
         outputs = 10
