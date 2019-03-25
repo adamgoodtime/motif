@@ -42,9 +42,9 @@ keep_reading = 5
 constant_delays = 0
 base_mutate = 0
 multiple_mutates = True
-exec_thing = 'recall'
+exec_thing = 'arms'
 plasticity = True
-structural = False
+structural = True
 develop_neurons = True
 stdev_neurons = True
 free_label = 0
@@ -58,10 +58,10 @@ arm_len = 1
 arms = []
 arms_reward = 1
 for i in range(arm_len):
-    # arms.append([arm1, arm2])
-    # arms.append([arm2, arm1])
-    for arm in list(itertools.permutations([arm1, arm2, arm3])):
-        arms.append(list(arm))
+    arms.append([arm1, arm2])
+    arms.append([arm2, arm1])
+    # for arm in list(itertools.permutations([arm1, arm2, arm3])):
+    #     arms.append(list(arm))
 # arms = [[0.4, 0.6], [0.6, 0.4], [0.3, 0.7], [0.7, 0.3], [0.2, 0.8], [0.8, 0.2], [0.1, 0.9], [0.9, 0.1]]
 # arms = [[0.4, 0.6], [0.6, 0.4], [0.3, 0.7], [0.7, 0.3], [0.2, 0.8], [0.8, 0.2], [0.1, 0.9], [0.9, 0.1], [0, 1], [1, 0]]
 '''top_prob = 1
@@ -126,8 +126,8 @@ recall_parallel_runs = 2
 max_freq = 5000
 on_duration = 1000
 off_duration = 1000
-data_size = 100
-mnist_parallel_runs = 4
+data_size = 200
+mnist_parallel_runs = 2
 mnist_runtime = data_size * (on_duration + off_duration)
 
 #erbp params
@@ -377,13 +377,8 @@ def bandit(generations):
 
         # config = 'test'
         if config != 'test':
-            # arms = [0.1, 0.9, 0.2]
-            # agents.bandit_test(connections, arms)
-            if exec_thing == 'xor':
-                execfile("../methods/exec_xor.py", globals())
-            else:
-                globals()['exec_thing'] = exec_thing
-                execfile("../methods/exec_subprocess.py", globals())
+            globals()['exec_thing'] = exec_thing
+            execfile("../methods/exec_subprocess.py", globals())
 
         print "returned"
 

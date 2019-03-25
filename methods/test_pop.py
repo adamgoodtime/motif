@@ -49,12 +49,12 @@ def split_plastic(connections):
             non_plastic.append([conn[0], conn[1], conn[2], conn[3]])
     return stdp, structural, non_plastic
 
-def return_struct_model(size, stdp_model=None):
+def return_struct_model(size, stdp_model=None, scale=1):
     default_parameters = {
-        'stdp_model': stdp_model, 'f_rew': 10 ** 4, 'weight': 0.03, 'delay': [1, 16],
-        's_max': 32, 'sigma_form_forward': 1000, 'sigma_form_lateral': 1000,
+        'stdp_model': stdp_model, 'f_rew': 10 ** (2*scale), 'weight': 0.03, 'delay': [1, 15],
+        's_max': 32, 'sigma_form_forward': 1, 'sigma_form_lateral': 1,
         'p_form_forward': 1., 'p_form_lateral': 1.,
-        'p_elim_pot': 1.36 * 10 ** -4, 'p_elim_dep': 0.0245,
+        'p_elim_pot': 1.36 * 10 ** -(2*scale), 'p_elim_dep': 2.450 * 10 ** (-2*scale),
         'grid': np.array([1, size]), 'lateral_inhibition': 0,
         'random_partner': False, 'is_distance_dependent': False}
 
