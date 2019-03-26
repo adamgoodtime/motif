@@ -58,10 +58,10 @@ arm_len = 1
 arms = []
 arms_reward = 1
 for i in range(arm_len):
-    arms.append([arm1, arm2])
-    arms.append([arm2, arm1])
-    # for arm in list(itertools.permutations([arm1, arm2, arm3])):
-    #     arms.append(list(arm))
+    # arms.append([arm1, arm2])
+    # arms.append([arm2, arm1])
+    for arm in list(itertools.permutations([arm1, arm2, arm3])):
+        arms.append(list(arm))
 # arms = [[0.4, 0.6], [0.6, 0.4], [0.3, 0.7], [0.7, 0.3], [0.2, 0.8], [0.8, 0.2], [0.1, 0.9], [0.9, 0.1]]
 # arms = [[0.4, 0.6], [0.6, 0.4], [0.3, 0.7], [0.7, 0.3], [0.2, 0.8], [0.8, 0.2], [0.1, 0.9], [0.9, 0.1], [0, 1], [1, 0]]
 '''top_prob = 1
@@ -408,6 +408,9 @@ def bandit(generations):
         print "2", motifs.total_weight
 
         motifs.adjust_weights(agents.agent_pop, reward_shape=reward_shape, iteration=i, average=averaging_weights, develop_neurons=develop_neurons)
+
+        if i == 30:
+            print "stop"
 
         print "3", motifs.total_weight
 

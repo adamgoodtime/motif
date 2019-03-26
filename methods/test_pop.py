@@ -56,7 +56,7 @@ def return_struct_model(size, stdp_model=None, scale=1):
         'p_form_forward': 1., 'p_form_lateral': 1.,
         'p_elim_pot': 1.36 * 10 ** -(2*scale), 'p_elim_dep': 2.450 * 10 ** (-2*scale),
         'grid': np.array([1, size]), 'lateral_inhibition': 0,
-        'random_partner': False, 'is_distance_dependent': False}
+        'random_partner': True, 'is_distance_dependent': False}
 
     structure_model = p.StructuralMechanismSTDP(**default_parameters)
     #     #todo inhibitory or excitatory, is it jsut creating an edge?, limit to number of cons created

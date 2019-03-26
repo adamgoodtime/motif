@@ -162,6 +162,15 @@ def subprocess_experiments(connections, test_data_set, split=4, runtime=2000, ex
             problem_arms = connection_threads[i][1]
             pool_result[i] = subprocess_experiments(connection_threads[i][0], problem_arms, new_split, runtime,
                                                 exposure_time, noise_rate, noise_weight, spike_f, top=False)
+        elif pool_result[i] == 'fail' and len(connection_threads[i][0]) == 1:
+            new_fail = False
+            while not new_fail:
+                random_key = np.random.random()
+                try:
+                    np.load("failed agent {} {}".format(random_key, config))
+                except:
+                    new_fail = True
+                    np.save("failed agent {} {}".format(random_key, config), connection_threads)
 
     agent_fitness = []
     for thread in pool_result:
