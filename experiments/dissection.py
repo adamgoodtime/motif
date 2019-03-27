@@ -193,13 +193,17 @@ def motif_tracking(file_location, config):
             weight_file.close()
         print "finished 100"
 
+def test_failure(file_location):
+    global connections
+    connections = np.load(file_location)
+    execfile("../methods/exec_subprocess.py", globals())
+
 def read_motif(motif_id, iteration, file_location, config):
     motifs = motif_population(max_motif_size=3,
                               no_weight_bins=5,
                               no_delay_bins=5,
                               weight_range=(0.005, weight_max),
                               # delay_range=(2, 2.00001),
-                              io_weight=[inputs, outputs, io_weight],
                               read_entire_population='{}/Motif population {}: {}.csv'.format(file_location, iteration, config),
                               population_size=100)
 
@@ -453,76 +457,81 @@ def mutate_anal(file_location, config, until):
 
 file_location = 'runtime data/high io, good pendulum'
 
-io_weight = 1
+connections = []
 
 weight_max = 0.1
-
-arm1 = 1
-arm2 = 0
-# arm3 = 0.1
-arm_len = 1
-arms = []
-for i in range(arm_len):
-    arms.append([arm1, arm2])
-    arms.append([arm2, arm1])
-    # for arm in list(itertools.permutations([arm1, arm2, arm3])):
-    #     arms.append(list(arm))
-# arms = [[0.4, 0.6], [0.6, 0.4], [0.3, 0.7], [0.7, 0.3], [0.2, 0.8], [0.8, 0.2], [0.1, 0.9], [0.9, 0.1]]
-arms = [[0.4, 0.6], [0.6, 0.4], [0.3, 0.7], [0.7, 0.3], [0.2, 0.8], [0.8, 0.2], [0.1, 0.9], [0.9, 0.1], [0, 1], [1, 0]]
-'''top_prob = 1
-0.1 = base prob 1
-0.2 equals base prob 2
-etc
-split node and share inputs but half outputs
-arms = [[0.1, 0.2, top_prob, 0.3, 0.2, 0.1, 0.2, 0.1], [top_prob, 0.1, 0.1, 0.2, 0.3, 0.2, 0.1, 0.2],
-        [0.3, top_prob, 0.2, 0.1, 0.1, 0.2, 0.2, 0.1], [0.2, 0.1, 0.1, top_prob, 0.2, 0.3, 0.1, 0.2],
-        [0.1, 0.1, 0.1, 0.2, top_prob, 0.2, 0.3, 0.2], [0.1, 0.2, 0.1, 0.2, 0.2, top_prob, 0.1, 0.3],
-        [0.2, 0.1, 0.3, 0.1, 0.2, 0.1, top_prob, 0.2], [0.1, 0.3, 0.2, 0.2, 0.1, 0.2, 0.1, top_prob]]
-# '''
-if isinstance(arms[0], list):
-    number_of_arms = len(arms[0])
-else:
-    number_of_arms = len(arms)
 
 agent_pop_size = 100
 reward_shape = False
 averaging_weights = True
-reward = 1
 noise_rate = 0
 noise_weight = 0.01
 fast_membrane = False
 
 threading_tests = True
 split = 1
-new_split = agent_pop_size
+new_split = 4  # agent_pop_size
 
-maximum_depth = [4, 10]
-no_bins = [10, 75]
+#motif params
+maximum_depth = [3, 15]
+no_bins = [10, 375]
 reset_pop = 0
 size_f = False
-spike_f = False # 'out'
+spike_f = False#'out'
+make_action = True
 shape_fitness = True
 random_arms = 0
 viable_parents = 0.2
 elitism = 0.2
-runtime = 41000
 exposure_time = 200
-io_weighting = 20
-read_pop = 0  # 'new_io_motif_easy_3.csv'
+io_prob = 0.75  # 1.0 - (1.0 / 11.0)
+read_pop = 0
+# read_pop = 'Dirty place/good pendulum with plastic and high bins.csv'
 keep_reading = 5
-constant_delays = 1
+constant_delays = 0
 base_mutate = 0
 multiple_mutates = True
-exec_thing = 'pen'
-plasticity = False
+exec_thing = 'arms'
+plasticity = True
+structural = True
+develop_neurons = True
+stdev_neurons = True
 free_label = 0
 
-max_fail_score = 0
+#arms params
+arms_runtime = 41000
+arm1 = 0.8
+arm2 = 0.1
+arm3 = 0.1
+arm_len = 1
+arms = []
+arms_reward = 1
+for i in range(arm_len):
+    # arms.append([arm1, arm2])
+    # arms.append([arm2, arm1])
+    for arm in list(itertools.permutations([arm1, arm2, arm3])):
+        arms.append(list(arm))
+# arms = [[0.4, 0.6], [0.6, 0.4], [0.3, 0.7], [0.7, 0.3], [0.2, 0.8], [0.8, 0.2], [0.1, 0.9], [0.9, 0.1]]
+# arms = [[0.4, 0.6], [0.6, 0.4], [0.3, 0.7], [0.7, 0.3], [0.2, 0.8], [0.8, 0.2], [0.1, 0.9], [0.9, 0.1], [0, 1], [1, 0]]
+'''top_prob = 1
+low_prob = 0
+med_prob = 0.1
+hii_prob = 0.2
+arms = [[low_prob, med_prob, top_prob, hii_prob, med_prob, low_prob, med_prob, low_prob], [top_prob, low_prob, low_prob, med_prob, hii_prob, med_prob, low_prob, med_prob],
+        [hii_prob, top_prob, med_prob, low_prob, low_prob, med_prob, med_prob, low_prob], [med_prob, low_prob, low_prob, top_prob, med_prob, hii_prob, low_prob, med_prob],
+        [low_prob, low_prob, low_prob, med_prob, top_prob, med_prob, hii_prob, med_prob], [low_prob, med_prob, low_prob, med_prob, med_prob, top_prob, low_prob, hii_prob],
+        [med_prob, low_prob, hii_prob, low_prob, med_prob, low_prob, top_prob, med_prob], [low_prob, hii_prob, med_prob, med_prob, low_prob, med_prob, low_prob, top_prob]]
+# '''
 
+#pendulum params
+pendulum_runtime = 181000
+double_pen_runtime = 60000
+max_fail_score = 0
 no_v = False
-encoding = 1
+encoding = 0
 time_increment = 20
 pole_length = 1
+pole2_length = 0.1
 pole_angle = [[0.1], [0.2], [-0.1], [-0.2]]
 reward_based = 1
 force_increments = 20
@@ -532,6 +541,50 @@ central = 1
 bin_overlap = 2
 tau_force = 0
 
+#logic params
+logic_runtime = 5000
+score_delay = 200
+stochastic = 1
+truth_table = [0, 1, 1, 0]
+# truth_table = [0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0]
+input_sequence = []
+segment = [0 for j in range(int(np.log2(len(truth_table))))]
+input_sequence.append(segment)
+for i in range(1, len(truth_table)):
+    current_value = i
+    segment = [0 for j in range(int(np.log2(len(truth_table))))]
+    while current_value != 0:
+        highest_power = int(np.log2(current_value))
+        segment[highest_power] = 1
+        current_value -= 2**highest_power
+    input_sequence.append(segment)
+
+#Recall params
+recall_runtime = 60000
+rate_on = 50
+rate_off = 0
+recall_pop_size = 1
+prob_command = 1./6.
+prob_in_change = 1./2.
+time_period = 200
+stochastic = 1
+recall_reward = 0
+recall_parallel_runs = 2
+
+#MNIST
+max_freq = 5000
+on_duration = 1000
+off_duration = 1000
+data_size = 200
+mnist_parallel_runs = 2
+mnist_runtime = data_size * (on_duration + off_duration)
+
+#erbp params
+erbp_runtime = 20
+erbp_max_depth = [5, 100]
+
+#breakout params
+breakout_runtime = 181000
 x_factor = 8
 y_factor = 8
 bricking = 0
@@ -540,25 +593,17 @@ inputs = 0
 outputs = 0
 test_data_set = []
 config = ''
+runtime = 0
 
 if exec_thing == 'br':
+    runtime = arms_runtime
     inputs = (160 / x_factor) * (128 / y_factor)
     outputs = 2
     config = 'bout {}-{}-{} '.format(x_factor, y_factor, bricking)
     test_data_set = 'something'
     number_of_tests = 'something'
-elif exec_thing == 'xor':
-    arms = [[0, 0], [0, 1], [1, 0], [1, 1]]
-    config = 'xor '
-    inputs = 2
-    if reward == 1:
-        outputs = 2
-    else:
-        outputs = 1
-    max_fail_score = -1
-    test_data_set = arms
-    number_of_tests = len(arms)
 elif exec_thing == 'pen':
+    runtime = pendulum_runtime
     encoding = 1
     inputs = 4
     if encoding != 0:
@@ -570,6 +615,7 @@ elif exec_thing == 'pen':
     test_data_set = pole_angle
     number_of_tests = len(pole_angle)
 elif exec_thing == 'rank pen':
+    runtime = pendulum_runtime
     inputs = 4 * number_of_bins
     if no_v:
         inputs /= 2
@@ -577,16 +623,73 @@ elif exec_thing == 'rank pen':
     config = 'rank-pend-an{}-{}-F{}-R{}-B{}-O{}-E{} '.format(pole_angle[0], len(pole_angle), force_increments, max_firing_rate, number_of_bins, bin_overlap, encoding)
     test_data_set = pole_angle
     number_of_tests = len(pole_angle)
-else:
+elif exec_thing == 'double pen':
+    runtime = double_pen_runtime
+    inputs = 6 * number_of_bins
+    if no_v:
+        inputs /= 2
+    outputs = force_increments
+    config = 'double-pend-an{}-{}-pl{}-{}-F{}-R{}-B{}-O{} '.format(pole_angle[0], len(pole_angle), pole_length, pole2_length, force_increments, max_firing_rate, number_of_bins, bin_overlap)
+    test_data_set = pole_angle
+    number_of_tests = len(pole_angle)
+elif exec_thing == 'arms':
+    if isinstance(arms[0], list):
+        number_of_arms = len(arms[0])
+    else:
+        number_of_arms = len(arms)
+    runtime = arms_runtime
     test_data_set = arms
     inputs = 2
     outputs = number_of_arms
     config = 'bandit-{}-{}-{} '.format(arms[0][0], len(arms), random_arms)
     number_of_tests = len(arms)
+elif exec_thing == 'logic':
+    runtime = logic_runtime
+    test_data_set = input_sequence
+    number_of_tests = len(input_sequence)
+    inputs = len(input_sequence[0])
+    outputs = 2
+    if stochastic:
+        config = 'logic-stoc-{}-run{}-sample{} '.format(truth_table, runtime, score_delay)
+    else:
+        config = 'logic-{}-run{}-sample{} '.format(truth_table, runtime, score_delay)
+elif exec_thing == 'recall':
+    runtime = recall_runtime
+    for j in range(recall_parallel_runs):
+        test_data_set.append([j])
+    number_of_tests = recall_parallel_runs
+    inputs = 4 * recall_pop_size
+    outputs = 2
+    if stochastic:
+        config = 'recall-stoc-pop_s{}-run{}-in_p{}-r_on{} '.format(recall_pop_size, runtime, prob_in_change, rate_on)
+    else:
+        config = 'recall-pop_s{}-run{}-in_p{}-r_on{} '.format(recall_pop_size, runtime, prob_in_change, rate_on)
+elif exec_thing == 'mnist':
+    runtime = mnist_runtime
+    for j in range(mnist_parallel_runs):
+        test_data_set.append([j])
+    number_of_tests = mnist_parallel_runs
+    inputs = 28*28
+    outputs = 10
+    config = 'mnist-freq-{}-on-{}-off-{}-size-{} '.format(max_freq, on_duration, off_duration, data_size)
+elif exec_thing == 'erbp':
+    maximum_depth = erbp_max_depth
+    make_action = False
+    runtime = erbp_runtime
+    inputs = 0
+    outputs = 0
+    test_data_set = [[0], [1]]
+    number_of_tests = len(test_data_set)
+    config = 'erbp {} {} '.format(runtime, maximum_depth)
+else:
+    print "\nNot a correct test setting\n"
+    raise Exception
 if plasticity:
     config += 'pl '
 if averaging_weights:
     config += 'ave '
+if make_action:
+    config += 'action '
 if spike_f:
     if spike_f == 'out':
         config += 'out-spikes '
@@ -611,22 +714,23 @@ if constant_delays:
 if fast_membrane:
     config += 'fast_mem '
 if no_v:
-    config += 'no_v'
+    config += 'no_v '
+if develop_neurons:
+    config += 'dev_n '
+if stdev_neurons:
+    config += 'stdev_n '
 if free_label:
     config += '{} '.format(free_label)
 
-config += "ex-{}, reward-{}, max_d-{}, w_max-{}, rents-{}, elite-{}, psize-{}, bins-{}".format(
-    exec_thing, reward, maximum_depth, weight_max, viable_parents, elitism, agent_pop_size,
-    no_bins)
+config += "max_d-{}, w_max-{}, rents-{}, elite-{}, psize-{}, bins-{}".format(
+    maximum_depth, weight_max, viable_parents, elitism, agent_pop_size, no_bins)
 
-if io_weighting:
-    config += ", io-{}".format(io_weighting)
+if io_prob:
+    config += ", io-{}".format(io_prob)
 else:
-    config += " {}".format(io_weight)
+    config += " {}".format(motifs.global_io[1])
 if read_pop:
     config += ' read-{}'.format(keep_reading)
-# config = "bandit reward_shape:{}, reward:{}, noise r-w:{}-{}, arms:{}-{}-{}, max_d{}, size:{}, spikes:{}, w_max{}".format(
-#     reward_shape, reward, noise_rate, noise_weight, arms[0], len(arms), random_arms, maximum_depth, size_fitness, spikes_fitness, weight_max)
 
 # motif_tracking(file_location, config)
 # read_motif('12202', 30, file_location, config)
