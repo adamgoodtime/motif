@@ -50,13 +50,17 @@ def split_plastic(connections):
     return stdp, structural, non_plastic
 
 def return_struct_model(size, stdp_model=None, scale=1):
+    if constant_delays:
+        delays = constant_delays
+    else:
+        delays = [1, 15]
     default_parameters = {
-        'stdp_model': stdp_model, 'f_rew': 10 ** (2*scale), 'weight': 0.03, 'delay': [1, 15],
+        'stdp_model': stdp_model, 'f_rew': 10 ** (2*scale), 'weight': weight_max/3, 'delay': delays,
         's_max': 32, 'sigma_form_forward': 1, 'sigma_form_lateral': 1,
         'p_form_forward': 1., 'p_form_lateral': 1.,
-        'p_elim_pot': 1.36 * 10 ** -(2*scale), 'p_elim_dep': 2.450 * 10 ** (-2*scale),
+        'p_elim_pot': 0, 'p_elim_dep': 2.450 * 10 ** (-2*scale),
         'grid': np.array([1, size]), 'lateral_inhibition': 0,
-        'random_partner': True, 'is_distance_dependent': False}
+        'random_partner': False, 'is_distance_dependent': False}
 
     structure_model = p.StructuralMechanismSTDP(**default_parameters)
     #     #todo inhibitory or excitatory, is it jsut creating an edge?, limit to number of cons created
@@ -134,7 +138,16 @@ def pop_test(connections, test_data, split=4, runtime=2000, exposure_time=200, n
         while time.time() - start < setup_retry_time:
             try:
                 p.setup(timestep=1.0, min_delay=1, max_delay=127)
-                p.set_number_of_neurons_per_core(p.IF_cond_exp, 100)
+                if neuron_choice == 'IF_cond_exp':
+                    neuron_type = p.IF_cond_exp
+                elif neuron_choice == 'IF_curr_exp':
+                    neuron_type = p.IF_curr_exp
+                elif neuron_choice == 'IF_curr_alpha':
+                    neuron_type = p.IF_curr_alpha
+                else:
+                    print "incorrect neuron type"
+                    raise Exception
+                p.set_number_of_neurons_per_core(neuron_type, 100)
                 print "\nfinished setup seed = ", seed, "\n"
                 print "test data = ", test_data
                 break
@@ -247,17 +260,17 @@ def pop_test(connections, test_data, split=4, runtime=2000, exposure_time=200, n
                 else:
                     input_pops.append(input_model)
                 # added to ensure that the arms and bandit are connected to and from something
-                null_pop = p.Population(1, p.IF_cond_exp(), label='null{}'.format(i))
+                null_pop = p.Population(1, neuron_type(), label='null{}'.format(i))
                 p.Projection(input_pops[model_count], null_pop, p.AllToAllConnector(), p.StaticSynapse(delay=1))
                 if fast_membrane:
-                    output_pop.append(p.Population(outputs, p.IF_cond_exp(tau_m=0.5,  # parameters for a fast membrane
+                    output_pop.append(p.Population(outputs, neuron_type(tau_m=0.5,  # parameters for a fast membrane
                                                                           tau_refrac=0,
                                                                           v_thresh=-64,
                                                                           tau_syn_E=0.5,
                                                                           tau_syn_I=0.5),
                                                    label='output_pop_{}-{}'.format(model_count, i)))
                 else:
-                    output_pop.append(p.Population(outputs, p.IF_cond_exp(),
+                    output_pop.append(p.Population(outputs, neuron_type(),
                                                    label='output_pop_{}-{}'.format(model_count, i)))
                 if spike_f == 'out' or make_action or exec_thing == 'mnist':
                     output_pop[model_count].record('spikes')
@@ -266,7 +279,7 @@ def pop_test(connections, test_data, split=4, runtime=2000, exposure_time=200, n
                 if e_size > 0:
                     excite_count += 1
                     excite.append(
-                        p.Population(e_size, p.IF_cond_exp(**excite_params),
+                        p.Population(e_size, neuron_type(**excite_params),
                                      label='excite_pop_{}-{}'.format(excite_count, i)))
                     if noise_rate:
                         excite_noise = p.Population(e_size, p.SpikeSourcePoisson(rate=noise_rate))
@@ -277,7 +290,7 @@ def pop_test(connections, test_data, split=4, runtime=2000, exposure_time=200, n
                     excite_marker.append(i)
                 if i_size > 0:
                     inhib_count += 1
-                    inhib.append(p.Population(i_size, p.IF_cond_exp(**inhib_params),
+                    inhib.append(p.Population(i_size, neuron_type(**inhib_params),
                                               label='inhib_pop_{}-{}'.format(inhib_count, i)))
                     if noise_rate:
                         inhib_noise = p.Population(i_size, p.SpikeSourcePoisson(rate=noise_rate))
@@ -289,7 +302,7 @@ def pop_test(connections, test_data, split=4, runtime=2000, exposure_time=200, n
                 stdp_model = p.STDPMechanism(
                     timing_dependence=p.SpikePairRule(
                         tau_plus=20., tau_minus=20.0, A_plus=0.02, A_minus=0.02),
-                    weight_dependence=p.AdditiveWeightDependence(w_min=0, w_max=0.1))
+                    weight_dependence=p.AdditiveWeightDependence(w_min=0, w_max=weight_max))
                 if len(in2e) != 0:
                     [in_ex, in_in] = split_ex_in(in2e)
                     if len(in_ex) != 0:
@@ -784,6 +797,7 @@ print "thing"
 # args = parser.parse_args()
 config = sys.argv[1] #literal_eval(args.config)
 test_id = sys.argv[2]#literal_eval(args.test_id)
+neuron_choice = sys.argv[3]
 file_name = 'data {} {}.npy'.format(config, test_id)
 connections_and_config = np.load(file_name)
 

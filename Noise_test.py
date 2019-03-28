@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 from bandit.spinn_bandit.python_models.bandit import Bandit
 import numpy as np
 
-def test_levels(rates=(1, 0.1), weights=(0.1, 0.09, 1, 10), pop_size=1):
+def test_levels(rates=(1, 0.2), weights=(4.7, 4.75, 4.8, 22.5, 23, 23.5), pop_size=1):
     counter = 0
     receive_pop = []
     spike_input = []
@@ -12,7 +12,8 @@ def test_levels(rates=(1, 0.1), weights=(0.1, 0.09, 1, 10), pop_size=1):
     p.set_number_of_neurons_per_core(p.IF_cond_exp, 10)
     for rate in rates:
         for weight in weights:
-            receive_pop.append(p.Population(pop_size, p.IF_cond_exp()))#, label="receive_pop{}-{}".format(rate, weight)))
+            thing = p.IF_curr_alpha
+            receive_pop.append(p.Population(pop_size, thing()))#, label="receive_pop{}-{}".format(rate, weight)))
 
             receive_pop[counter].record(['spikes', 'v'])#["spikes"])
 
@@ -42,7 +43,7 @@ def test_levels(rates=(1, 0.1), weights=(0.1, 0.09, 1, 10), pop_size=1):
                 print spike_time
                 print a
         v = receive_pop[i].get_data('v').segments[0].filter(name='v')[0]
-        plt.figure("rate = {} - weight = {}".format(rates[rate_index], weights[weight_index]))
+        plt.figure("alpha rate = {} - weight = {}".format(rates[rate_index], weights[weight_index]))
         Figure(
             Panel(spikes, xlabel="Time (ms)", ylabel="nID", xticks=True),
             Panel(v, ylabel="Membrane potential (mV)", yticks=True)

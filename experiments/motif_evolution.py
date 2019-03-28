@@ -24,29 +24,35 @@ split = 1
 new_split = 4  # agent_pop_size
 
 #motif params
-maximum_depth = [3, 15]
+maximum_depth = [3, 10]
 no_bins = [10, 375]
 reset_pop = 0
 size_f = False
 spike_f = False#'out'
+# depth fitness
 make_action = True
 shape_fitness = True
 random_arms = 0
 viable_parents = 0.2
 elitism = 0.2
 exposure_time = 200
-io_prob = 0.75  # 1.0 - (1.0 / 11.0)
-read_pop = 0
-# read_pop = 'Dirty place/good pendulum with plastic and high bins.csv'
+io_prob = 0.95  # 1.0 - (1.0 / 11.0)
+read_motifs = 0
+# read_motifs = 'Dirty place/Motif pop xor pl 200 stdev_n.npy'
+# read_motifs = 'Dirty place/Motif pop xor pl 5000 stdev_n.npy'
+read_neurons = 0
+# read_neurons = 'Dirty place/Neuron pop xor pl 200 stdev_n.npy'
+# read_neurons = 'Dirty place/Neuron pop xor pl 5000 stdev_n.npy'
 keep_reading = 5
 constant_delays = 0
 base_mutate = 0
 multiple_mutates = True
 exec_thing = 'arms'
 plasticity = True
-structural = True
+structural = False
 develop_neurons = True
 stdev_neurons = True
+neuron_type = 'IF_curr_exp'
 free_label = 0
 
 #arms params
@@ -58,10 +64,10 @@ arm_len = 1
 arms = []
 arms_reward = 1
 for i in range(arm_len):
-    # arms.append([arm1, arm2])
-    # arms.append([arm2, arm1])
-    for arm in list(itertools.permutations([arm1, arm2, arm3])):
-        arms.append(list(arm))
+    arms.append([arm1, arm2])
+    arms.append([arm2, arm1])
+    # for arm in list(itertools.permutations([arm1, arm2, arm3])):
+    #     arms.append(list(arm))
 # arms = [[0.4, 0.6], [0.6, 0.4], [0.3, 0.7], [0.7, 0.3], [0.2, 0.8], [0.8, 0.2], [0.1, 0.9], [0.9, 0.1]]
 # arms = [[0.4, 0.6], [0.6, 0.4], [0.3, 0.7], [0.7, 0.3], [0.2, 0.8], [0.8, 0.2], [0.1, 0.9], [0.9, 0.1], [0, 1], [1, 0]]
 '''top_prob = 1
@@ -77,6 +83,7 @@ arms = [[low_prob, med_prob, top_prob, hii_prob, med_prob, low_prob, med_prob, l
 #pendulum params
 pendulum_runtime = 181000
 double_pen_runtime = 60000
+pendulum_delays = 1
 max_fail_score = 0
 no_v = False
 encoding = 0
@@ -148,7 +155,7 @@ runtime = 0
 
 def bandit(generations):
     print "starting"
-    global connections, arms, max_fail_score, pole_angle, inputs, outputs, config, test_data_set, encoding, runtime, maximum_depth, make_action
+    global connections, arms, max_fail_score, pole_angle, inputs, outputs, config, test_data_set, encoding, runtime, maximum_depth, make_action, constant_delays, weight_max
 
     if exec_thing == 'br':
         runtime = arms_runtime
@@ -159,6 +166,7 @@ def bandit(generations):
         number_of_tests = 'something'
     elif exec_thing == 'pen':
         runtime = pendulum_runtime
+        constant_delays = pendulum_delays
         encoding = 1
         inputs = 4
         if encoding != 0:
@@ -171,6 +179,7 @@ def bandit(generations):
         number_of_tests = len(pole_angle)
     elif exec_thing == 'rank pen':
         runtime = pendulum_runtime
+        constant_delays = pendulum_delays
         inputs = 4 * number_of_bins
         if no_v:
             inputs /= 2
@@ -180,6 +189,7 @@ def bandit(generations):
         number_of_tests = len(pole_angle)
     elif exec_thing == 'double pen':
         runtime = double_pen_runtime
+        constant_delays = pendulum_delays
         inputs = 6 * number_of_bins
         if no_v:
             inputs /= 2
@@ -241,6 +251,8 @@ def bandit(generations):
         raise Exception
     if plasticity:
         config += 'pl '
+    if structural:
+        config += 'strc '
     if averaging_weights:
         config += 'ave '
     if make_action:
@@ -277,50 +289,33 @@ def bandit(generations):
     if free_label:
         config += '{} '.format(free_label)
 
-    if stdev_neurons:
-        neurons = neuron_population(inputs=inputs,
-                                    outputs=outputs,
-                                    pop_size=inputs+outputs+200+agent_pop_size*3,
-                                    io_prob=io_prob,
-                                    v_rest=-65.0,  # Resting membrane potential in mV.
-                                    v_rest_stdev=5,
-                                    cm=1.0,  # Capacity of the membrane in nF
-                                    cm_stdev=0.3,
-                                    tau_m=20.0,  # Membrane time constant in ms.
-                                    tau_m_stdev=5,
-                                    tau_refrac=0.1,  # Duration of refractory period in ms.
-                                    tau_refrac_stdev=0.03,
-                                    tau_syn_E=5,  # Rise time of the excitatory synaptic alpha function in ms.
-                                    tau_syn_E_stdev=1.6,
-                                    tau_syn_I=5,  # Rise time of the inhibitory synaptic alpha function in ms.
-                                    tau_syn_I_stdev=1.6,
-                                    e_rev_E=0.0,  # Reversal potential for excitatory input in mV
-                                    e_rev_E_stdev=0,
-                                    e_rev_I=-70.0,  # Reversal potential for inhibitory input in mV
-                                    e_rev_I_stdev=3,
-                                    v_thresh=-50.0,  # Spike threshold in mV.
-                                    v_thresh_stdev=5,
-                                    v_reset=-65.0,  # Reset potential after a spike in mV.
-                                    v_reset_stdev=5,
-                                    i_offset=3.0,  # Offset current in nA
-                                    i_offset_stdev=1,
-                                    v=-65.0,  # 'v_starting'
-                                    v_stdev=5)
-    else:
-        neurons = neuron_population(inputs=inputs,
-                                    outputs=outputs,
-                                    io_prob=io_prob)
+    neurons = neuron_population(inputs=inputs,
+                                outputs=outputs,
+                                pop_size=inputs+outputs+200+agent_pop_size*3,
+                                io_prob=io_prob,
+                                read_population=read_neurons,
+                                neuron_type=neuron_type,
+                                default=stdev_neurons)
 
+    if neuron_type == 'IF_cond_exp':
+        weight_max = 0.1
+    elif neuron_type == 'IF_curr_exp':
+        weight_max = 4.8
+    elif neuron_type == 'IF_curr_alpha':
+        weight_max = 23.5
+    else:
+        print "incorrect neuron type"
+        raise Exception
     motifs = motif_population(neurons,
                               max_motif_size=4,#maximum_depth[0],
                               no_weight_bins=no_bins,
                               no_delay_bins=no_bins,
                               weight_range=(0.005, weight_max),
                               constant_delays=constant_delays,
-                              # delay_range=(10., 10.0000001),
+                              delay_range=(1., 15.),
                               neuron_types=(['excitatory', 'inhibitory']),
                               global_io=('highest', 'seeded', 'in'),
-                              read_entire_population=read_pop,
+                              read_entire_population=read_motifs,
                               keep_reading=keep_reading,
                               plasticity=plasticity,
                               structural=structural,
@@ -349,7 +344,7 @@ def bandit(generations):
         config += ", io-{}".format(io_prob)
     else:
         config += " {}".format(motifs.global_io[1])
-    if read_pop:
+    if read_motifs:
         config += ' read-{}'.format(keep_reading)
 
     for i in range(generations):
@@ -407,10 +402,10 @@ def bandit(generations):
 
         print "2", motifs.total_weight
 
-        motifs.adjust_weights(agents.agent_pop, reward_shape=reward_shape, iteration=i, average=averaging_weights, develop_neurons=develop_neurons)
-
-        if i == 30:
+        if i % 30 == 0:
             print "stop"
+
+        motifs.adjust_weights(agents.agent_pop, reward_shape=reward_shape, iteration=i, average=averaging_weights, develop_neurons=develop_neurons)
 
         print "3", motifs.total_weight
 

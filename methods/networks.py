@@ -148,6 +148,7 @@ class motif_population(object):
     '''Reads a motif population from a npy file and inputs each motif into the set'''
     def read_population(self):
         read_motifs = np.load(self.read_entire_population)
+        read_motifs = read_motifs.tolist()
         for motif_id in read_motifs:
             self.insert_motif(read_motifs[motif_id], read=True)
 
@@ -319,7 +320,10 @@ class motif_population(object):
             self.motif_configs['{}'.format(motif_id)] = motif
             self.motif_configs['{}'.format(motif_id)]['weight'] = weight
             self.motif_configs['{}'.format(motif_id)]['id'] = motif_id
-            self.motif_configs['{}'.format(motif_id)]['depth'] = self.depth_read('{}'.format(motif_id))
+            if read:
+                self.motif_configs['{}'.format(motif_id)]['depth'] = motif['depth']
+            else:
+                self.motif_configs['{}'.format(motif_id)]['depth'] = self.depth_read('{}'.format(motif_id))
             self.motifs_generated += 1
             # print motif_id
             if read:

@@ -400,7 +400,7 @@ def mutate_anal(file_location, config, until):
                         agent_score = literal_eval(temp[2])
         except:
             traceback.print_exc()
-            print "no more files or bad config"
+            print "no more files or bad config"jhvjhgchgc
             if i > 10:
                 with open('{}/meta data/Mutate over time until {}: {}.csv'.format(file_location, until, config), 'w') as mutate_file:
                     writer = csv.writer(mutate_file, delimiter=',', lineterminator='\n')

@@ -571,6 +571,8 @@ class agent_population(object):
     def mate(self, mum, dad, mutate_key):
         # maybe the crossover should be more than just random, incorporating depth or some other dad decision metric
         # maybe take the seed randomly from mum or dad?
+        # normally distributed around similar depth as a decision metric
+        # swap with comparable motif in terms of IO on node or count of sensory motor neurons
         if mutate_key == {}:
             mutate_key['motif'] = 0
             mutate_key['new'] = 0

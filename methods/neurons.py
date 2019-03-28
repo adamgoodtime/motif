@@ -1,4 +1,5 @@
 import numpy as np
+from numpy.core import multiarray
 import math
 import itertools
 from copy import deepcopy
@@ -10,34 +11,35 @@ from ast import literal_eval
 
 class neuron_population(object):
     def __init__(self,
-                 v_rest=-65.0,  # Resting membrane potential in mV.
-                 v_rest_stdev=0,
-                 cm=1.0,  # Capacity of the membrane in nF
-                 cm_stdev=0,
-                 tau_m=20.0,  # Membrane time constant in ms.
-                 tau_m_stdev=0,
-                 tau_refrac=0.1,  # Duration of refractory period in ms.
-                 tau_refrac_stdev=0,
-                 tau_syn_E=5,  # Rise time of the excitatory synaptic alpha function in ms.
-                 tau_syn_E_stdev=0,
-                 tau_syn_I=5,  # Rise time of the inhibitory synaptic alpha function in ms.
-                 tau_syn_I_stdev=0,
-                 e_rev_E=0.0,  # Reversal potential for excitatory input in mV
-                 e_rev_E_stdev=0,
-                 e_rev_I=-70.0,  # Reversal potential for inhibitory input in mV
-                 e_rev_I_stdev=0,
-                 v_thresh=-50.0,  # Spike threshold in mV.
-                 v_thresh_stdev=0,
-                 v_reset=-65.0,  # Reset potential after a spike in mV.
-                 v_reset_stdev=0,
-                 i_offset=0.0,  # Offset current in nA
-                 i_offset_stdev=0,
-                 v=-65.0,  # 'v_starting'
-                 v_stdev=0,
-                 gsyn_exc=0.0,
-                 gsyn_exc_stdev=0,
-                 gsyn_inh=0.0,
-                 gsyn_inh_stdev=0,
+                 # v_rest=-65.0,  # Resting membrane potential in mV.
+                 # v_rest_stdev=0,
+                 # cm=1.0,  # Capacity of the membrane in nF
+                 # cm_stdev=0,
+                 # tau_m=20.0,  # Membrane time constant in ms.
+                 # tau_m_stdev=0,
+                 # tau_refrac=0.1,  # Duration of refractory period in ms.
+                 # tau_refrac_stdev=0,
+                 # tau_syn_E=5,  # Rise time of the excitatory synaptic alpha function in ms.
+                 # tau_syn_E_stdev=0,
+                 # tau_syn_I=5,  # Rise time of the inhibitory synaptic alpha function in ms.
+                 # tau_syn_I_stdev=0,
+                 # e_rev_E=0.0,  # Reversal potential for excitatory input in mV
+                 # e_rev_E_stdev=0,
+                 # e_rev_I=-70.0,  # Reversal potential for inhibitory input in mV
+                 # e_rev_I_stdev=0,
+                 # v_thresh=-50.0,  # Spike threshold in mV.
+                 # v_thresh_stdev=0,
+                 # v_reset=-65.0,  # Reset potential after a spike in mV.
+                 # v_reset_stdev=0,
+                 # i_offset=0.0,  # Offset current in nA
+                 # i_offset_stdev=0,
+                 # v=-65.0,  # 'v_starting'
+                 # v_stdev=0,
+                 # gsyn_exc=0.0,
+                 # gsyn_exc_stdev=0,
+                 # gsyn_inh=0.0,
+                 # gsyn_inh_stdev=0,
+                 neuron_type='IF_cond_exp',
                  default=False,
                  io_prob=0.5,
                  inputs=0,
@@ -47,6 +49,77 @@ class neuron_population(object):
                  keep_reading=0,
                  pop_size=200
                  ):
+
+        if neuron_type == 'IF_cond_exp':
+            v_rest = -65.0,  # Resting membrane potential in mV.
+            v_rest_stdev = 5,
+            cm = 1.0,  # Capacity of the membrane in nF
+            cm_stdev = 0.3,
+            tau_m = 20.0,  # Membrane time constant in ms.
+            tau_m_stdev = 5,
+            tau_refrac = 0.1,  # Duration of refractory period in ms.
+            tau_refrac_stdev = 0.03,
+            tau_syn_E = 5,  # Rise time of the excitatory synaptic alpha function in ms.
+            tau_syn_E_stdev = 1.6,
+            tau_syn_I = 5,  # Rise time of the inhibitory synaptic alpha function in ms.
+            tau_syn_I_stdev = 1.6,
+            e_rev_E = 0.0,  # Reversal potential for excitatory input in mV
+            e_rev_E_stdev = 0,
+            e_rev_I = -70.0,  # Reversal potential for inhibitory input in mV
+            e_rev_I_stdev = 3,
+            v_thresh = -50.0,  # Spike threshold in mV.
+            v_thresh_stdev = 5,
+            v_reset = -65.0,  # Reset potential after a spike in mV.
+            v_reset_stdev = 5,
+            i_offset = 3.0,  # Offset current in nA
+            i_offset_stdev = 1,
+            v = -65.0,  # 'v_starting'
+            v_stdev = 5
+        elif neuron_type == 'IF_curr_exp':
+            v_rest = -65.0,  # Resting membrane potential in mV.
+            v_rest_stdev = 5,
+            cm = 1.0,  # Capacity of the membrane in nF
+            cm_stdev = 0.3,
+            tau_m = 20.0,  # Membrane time constant in ms.
+            tau_m_stdev = 5,
+            tau_refrac = 0.1,  # Duration of refractory period in ms.
+            tau_refrac_stdev = 0.03,
+            tau_syn_E = 5,  # Rise time of the excitatory synaptic alpha function in ms.
+            tau_syn_E_stdev = 1.6,
+            tau_syn_I = 5,  # Rise time of the inhibitory synaptic alpha function in ms.
+            tau_syn_I_stdev = 1.6,
+            v_thresh = -50.0,  # Spike threshold in mV.
+            v_thresh_stdev = 5,
+            v_reset = -65.0,  # Reset potential after a spike in mV.
+            v_reset_stdev = 5,
+            i_offset = 3.0,  # Offset current in nA
+            i_offset_stdev = 1,
+            v = -65.0,  # 'v_starting'
+            v_stdev = 5
+        elif neuron_type == 'IF_curr_alpha':
+            v_rest = -65.0,  # Resting membrane potential in mV.
+            v_rest_stdev = 5,
+            cm = 1.0,  # Capacity of the membrane in nF
+            cm_stdev = 0.3,
+            tau_m = 20.0,  # Membrane time constant in ms.
+            tau_m_stdev = 5,
+            tau_refrac = 0.1,  # Duration of refractory period in ms.
+            tau_refrac_stdev = 0.03,
+            tau_syn_E = 0.5,  # Rise time of the excitatory synaptic alpha function in ms.
+            tau_syn_E_stdev = 0.16,
+            tau_syn_I = 0.5,  # Rise time of the inhibitory synaptic alpha function in ms.
+            tau_syn_I_stdev = 0.16,
+            v_thresh = -50.0,  # Spike threshold in mV.
+            v_thresh_stdev = 5,
+            v_reset = -65.0,  # Reset potential after a spike in mV.
+            v_reset_stdev = 5,
+            i_offset = 3.0,  # Offset current in nA
+            i_offset_stdev = 1,
+            v = -65.0,  # 'v_starting'
+            v_stdev = 5
+        else:
+            print "incorrect neuron type selected"
+            raise Exception
 
         # neuron params
         self.v_rest = v_rest
@@ -61,10 +134,11 @@ class neuron_population(object):
         self.tau_syn_E_stdev = tau_syn_E_stdev
         self.tau_syn_I = tau_syn_I
         self.tau_syn_I_stdev = tau_syn_I_stdev
-        self.e_rev_E = e_rev_E
-        self.e_rev_E_stdev = e_rev_E_stdev
-        self.e_rev_I = e_rev_I
-        self.e_rev_I_stdev = e_rev_I_stdev
+        if neuron_type == 'IF_cond_exp':
+            self.e_rev_E = e_rev_E
+            self.e_rev_E_stdev = e_rev_E_stdev
+            self.e_rev_I = e_rev_I
+            self.e_rev_I_stdev = e_rev_I_stdev
         self.v_thresh = v_thresh
         self.v_thresh_stdev = v_thresh_stdev
         self.v_reset = v_reset
@@ -92,8 +166,9 @@ class neuron_population(object):
         self.neuron_params['tau_refrac'] = self.tau_refrac
         self.neuron_params['tau_syn_E'] = self.tau_syn_E
         self.neuron_params['tau_syn_I'] = self.tau_syn_I
-        self.neuron_params['e_rev_E'] = self.e_rev_E
-        self.neuron_params['e_rev_I'] = self.e_rev_I
+        if neuron_type == 'IF_cond_exp':
+            self.neuron_params['e_rev_E'] = self.e_rev_E
+            self.neuron_params['e_rev_I'] = self.e_rev_I
         self.neuron_params['v_thresh'] = self.v_thresh
         self.neuron_params['v_reset'] = self.v_reset
         self.neuron_params['i_offset'] = self.i_offset
@@ -108,8 +183,9 @@ class neuron_population(object):
         self.neuron_param_stdevs['tau_refrac'] = self.tau_refrac_stdev
         self.neuron_param_stdevs['tau_syn_E'] = self.tau_syn_E_stdev
         self.neuron_param_stdevs['tau_syn_I'] = self.tau_syn_I_stdev
-        self.neuron_param_stdevs['e_rev_E'] = self.e_rev_E_stdev
-        self.neuron_param_stdevs['e_rev_I'] = self.e_rev_I_stdev
+        if neuron_type == 'IF_cond_exp':
+            self.neuron_param_stdevs['e_rev_E'] = self.e_rev_E_stdev
+            self.neuron_param_stdevs['e_rev_I'] = self.e_rev_I_stdev
         self.neuron_param_stdevs['v_thresh'] = self.v_thresh_stdev
         self.neuron_param_stdevs['v_reset'] = self.v_reset_stdev
         self.neuron_param_stdevs['i_offset'] = self.i_offset_stdev
@@ -117,11 +193,6 @@ class neuron_population(object):
         # self.neuron_param_stdevs['gsyn_exc'] = self.gsyn_exc_stdev
         # self.neuron_param_stdevs['gsyn_inh'] = self.gsyn_inh_stdev
 
-        default_check = 0
-        for param in self.neuron_param_stdevs:
-            default_check += self.neuron_param_stdevs[param]
-        if not default_check:
-            self.default = True
         if self.default:
             for param in self.neuron_param_stdevs:
                 self.neuron_param_stdevs[param] = 0
@@ -320,6 +391,7 @@ class neuron_population(object):
     def load_neurons(self):
         file_name = self.read_population
         read_neurons = np.load(file_name)
+        read_neurons = read_neurons.tolist()
         for neuron_id in read_neurons:
             self.insert_neuron(read_neurons[neuron_id], read=True)
 

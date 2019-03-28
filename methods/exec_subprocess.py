@@ -132,13 +132,15 @@ def subprocess_experiments(connections, test_data_set, split=4, runtime=2000, ex
             call = [sys.executable,
                     '../methods/learn_a_sinusoid.py',
                     config,
-                    str(test_id)
+                    str(test_id),
+                    neuron_type
                     ]
         else:
             call = [sys.executable,
                     '../methods/test_pop.py',
                     config,
-                    str(test_id)
+                    str(test_id),
+                    neuron_type
                     ]
         np.save('data {} {}.npy'.format(config, test_id), conn_thread)
         p = subprocess.Popen(call, stdout=None, stderr=None)
