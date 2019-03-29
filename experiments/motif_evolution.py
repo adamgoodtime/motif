@@ -52,7 +52,7 @@ plasticity = True
 structural = False
 develop_neurons = True
 stdev_neurons = True
-neuron_type = 'IF_curr_exp'
+neuron_type = 'IF_cond_exp'
 free_label = 0
 
 #arms params
