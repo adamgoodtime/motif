@@ -253,8 +253,9 @@ class neuron_population(object):
                     else:
                         neuron['type'] = 'inhibitory'
                     neuron['params'] = {}
-                    for param in self.neuron_params:
-                        neuron['params'][param] = np.random.normal(self.neuron_params[param], self.neuron_param_stdevs[param])
+                    if not self.default:
+                        for param in self.neuron_params:
+                            neuron['params'][param] = np.random.normal(self.neuron_params[param], self.neuron_param_stdevs[param])
                     if self.inputs + self.outputs > 0:
                         base_weight = float(self.pop_size) / float(self.pop_size - self.inputs - self.outputs)
                         base_weight *= (1. - self.io_prob)

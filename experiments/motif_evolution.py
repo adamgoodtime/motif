@@ -295,7 +295,7 @@ def bandit(generations):
                                 io_prob=io_prob,
                                 read_population=read_neurons,
                                 neuron_type=neuron_type,
-                                default=stdev_neurons)
+                                default=not stdev_neurons)
 
     if neuron_type == 'IF_cond_exp':
         weight_max = 0.1
