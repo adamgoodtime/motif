@@ -157,15 +157,16 @@ def subprocess_experiments(connections, test_data_set, split=4, runtime=2000, ex
     pool_result = read_results(test_id)
 
     for i in range(len(pool_result)):
-        if pool_result[i] == 'fail' and len(connection_threads[i][0]) > 1:
+        if isinstance(pool_result[i], str) and len(connection_threads[i][0]) > 1:
             if new_split == split:
                 new_split = agent_pop_size
             print "splitting ", len(connection_threads[i][0]), " into ", new_split, " pieces"
             problem_arms = connection_threads[i][1]
             pool_result[i] = subprocess_experiments(connection_threads[i][0], problem_arms, new_split, runtime,
                                                 exposure_time, noise_rate, noise_weight, spike_f, top=False)
-        elif pool_result[i] == 'fail' and len(connection_threads[i][0]) == 1:
+        elif isinstance(pool_result[i], str) and len(connection_threads[i][0]) == 1:
             new_fail = False
+            connection_threads.append(pool_result[i])
             while not new_fail:
                 random_key = np.random.random()
                 try:
@@ -173,6 +174,7 @@ def subprocess_experiments(connections, test_data_set, split=4, runtime=2000, ex
                 except:
                     new_fail = True
                     np.save("failed agent {} {}".format(random_key, config), connection_threads)
+            pool_result[i] = 'fail'
 
     agent_fitness = []
     for thread in pool_result:

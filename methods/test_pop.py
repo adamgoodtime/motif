@@ -649,6 +649,7 @@ def pop_test(connections, test_data, split=4, runtime=2000, exposure_time=200, n
             try_except = max_attempts
             break
         except:
+            failure = traceback.format_exc()
             traceback.print_exc()
             try:
                 print "\nrun 2 seed = ", seed, "\n"
@@ -661,7 +662,7 @@ def pop_test(connections, test_data, split=4, runtime=2000, exposure_time=200, n
             print "failed to run on attempt ", try_except, "\n"  # . total fails: ", all_fails, "\n"
             if try_except >= max_attempts:
                 print "calling it a failed population, splitting and rerunning"
-                return 'fail'
+                return failure
         # p.run(runtime)
         print "\nfinished run seed = ", seed, "\n"
 
