@@ -188,7 +188,14 @@ def subprocess_experiments(connections, test_data_set, split=4, runtime=2000, ex
         for i in range(len(test_data_set)):
             test_results = []
             for j in range(agent_pop_size):
-                test_results.append(copy_fitness[(i * agent_pop_size) + j])
+                try:
+                    test_results.append(copy_fitness[(i * agent_pop_size) + j])
+                except:
+                    traceback.print_exc()
+                    print "failed adding result #", i, "/", j
+                    print "\ncopy fitness:", copy_fitness
+                    print "\nresult so far:", test_results
+                    raise Exception
             agent_fitness.append(test_results)
         if size_f:
             test_results = []
