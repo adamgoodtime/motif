@@ -158,11 +158,13 @@ def subprocess_experiments(connections, test_data_set, split=4, runtime=2000, ex
 
     for i in range(len(pool_result)):
         if isinstance(pool_result[i], str) and len(connection_threads[i][0]) > 1:
-            if new_split == split:
-                new_split = agent_pop_size
-            print "splitting ", len(connection_threads[i][0]), " into ", new_split, " pieces"
+            if not top:
+                split = agent_pop_size
+            else:
+                split = new_split
+            print "splitting ", len(connection_threads[i][0]), " into ", split, " pieces"
             problem_arms = connection_threads[i][1]
-            pool_result[i] = subprocess_experiments(connection_threads[i][0], problem_arms, new_split, runtime,
+            pool_result[i] = subprocess_experiments(connection_threads[i][0], problem_arms, split, runtime,
                                                 exposure_time, noise_rate, noise_weight, spike_f, top=False)
         elif isinstance(pool_result[i], str) and len(connection_threads[i][0]) == 1:
             new_fail = False
