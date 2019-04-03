@@ -45,6 +45,7 @@ read_neurons = 0
 # read_neurons = 'Dirty place/Neuron pop xor pl 5000 stdev_n.npy'
 keep_reading = 5
 constant_delays = 0
+max_delay = 25.0
 base_mutate = 0
 multiple_mutates = True
 exec_thing = 'arms'
@@ -53,6 +54,7 @@ structural = False
 develop_neurons = True
 stdev_neurons = True
 neuron_type = 'IF_cond_exp'
+max_input_current = 0.8
 free_label = 0
 
 #arms params
@@ -277,7 +279,9 @@ def bandit(generations):
     if noise_rate:
         config += 'n r-w-{}-{} '.format(noise_rate, noise_weight)
     if constant_delays:
-        config += 'delay-{} '.format(constant_delays)
+        config += 'const d-{} '.format(constant_delays)
+    else:
+        config += 'max d-{} '.format(max_delay)
     if fast_membrane:
         config += 'fast_mem '
     if no_v:
@@ -286,6 +290,7 @@ def bandit(generations):
         config += 'dev_n '
     if stdev_neurons:
         config += 'stdev_n '
+        config += 'inc-{} '.format(max_input_current)
     if free_label:
         config += '{} '.format(free_label)
 
@@ -293,16 +298,20 @@ def bandit(generations):
                                 outputs=outputs,
                                 pop_size=inputs+outputs+200+agent_pop_size*3,
                                 io_prob=io_prob,
+                                max_input_current=max_input_current,
                                 read_population=read_neurons,
                                 neuron_type=neuron_type,
                                 default=not stdev_neurons)
 
     if neuron_type == 'IF_cond_exp':
         weight_max = 0.1
+        config += 'cond '
     elif neuron_type == 'IF_curr_exp':
-        weight_max = 4.8
+        weight_max = 4.
+        config += 'cure '
     elif neuron_type == 'IF_curr_alpha':
         weight_max = 23.5
+        config += 'cura '
     else:
         print "incorrect neuron type"
         raise Exception
@@ -312,7 +321,7 @@ def bandit(generations):
                               no_delay_bins=no_bins,
                               weight_range=(0.005, weight_max),
                               constant_delays=constant_delays,
-                              delay_range=(1., 15.),
+                              delay_range=(1., max_delay),
                               neuron_types=(['excitatory', 'inhibitory']),
                               global_io=('highest', 'seeded', 'in'),
                               read_entire_population=read_motifs,
@@ -337,15 +346,22 @@ def bandit(generations):
                               maximum_depth=maximum_depth,
                               viable_parents=viable_parents)
 
-    config += "max_d-{}, w_max-{}, rents-{}, elite-{}, psize-{}, bins-{}".format(
-        maximum_depth, weight_max, viable_parents, elitism, agent_pop_size, no_bins)
+    # config += "max_d-{}, rents-{}, elite-{}, psize-{}, bins-{}".format(
+    #     maximum_depth, viable_parents, elitism, agent_pop_size, no_bins)
+
+    config += "max_d-{}, bins-{}".format(
+        maximum_depth, no_bins)
 
     if io_prob:
         config += ", io-{}".format(io_prob)
     else:
         config += " {}".format(motifs.global_io[1])
-    if read_motifs:
-        config += ' read-{}'.format(keep_reading)
+    if read_motifs and read_neurons:
+        config += ' readmn-{}'.format(keep_reading)
+    elif read_motifs:
+        config += ' readm-{}'.format(keep_reading)
+    elif read_neurons:
+        config += ' readn-{}'.format(keep_reading)
 
     for i in range(generations):
 
