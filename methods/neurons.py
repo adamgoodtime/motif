@@ -92,7 +92,7 @@ class neuron_population(object):
             v_thresh_stdev = 5
             v_reset = -65.0  # Reset potential after a spike in mV.
             v_reset_stdev = 5
-            i_offset = 3.0  # Offset current in nA
+            i_offset = 3.0  # Offset current in nA 0.8 to force spikes
             i_offset_stdev = 1
             v = -65.0  # 'v_starting'
             v_stdev = 5
@@ -113,10 +113,18 @@ class neuron_population(object):
             v_thresh_stdev = 5
             v_reset = -65.0  # Reset potential after a spike in mV.
             v_reset_stdev = 5
-            i_offset = 3.0  # Offset current in nA
+            i_offset = 3.0  # Offset current in nA 0.8 to force spikes
             i_offset_stdev = 1
             v = -65.0  # 'v_starting'
             v_stdev = 5
+        elif neuron_type == 'izhikevich':
+            a = 0.02
+            b = 0.2
+            c = -65.0
+            d = 2.0
+            i_offset = 0.0 #between 3 and 4 spikes regularly
+            v = -70
+            u = -14
         else:
             print "incorrect neuron type selected"
             raise Exception
