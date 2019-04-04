@@ -144,6 +144,8 @@ def pop_test(connections, test_data, split=4, runtime=2000, exposure_time=200, n
                     neuron_type = p.IF_curr_exp
                 elif neuron_choice == 'IF_curr_alpha':
                     neuron_type = p.IF_curr_alpha
+                elif neuron_choice == 'calcium':
+                    neuron_type = p.extra_models.IFCurrExpCa2Adaptive
                 else:
                     print "incorrect neuron type"
                     raise Exception
@@ -167,7 +169,7 @@ def pop_test(connections, test_data, split=4, runtime=2000, exposure_time=200, n
             mnist_spikes = mnist_poisson_gen(sub_data, 28, 28, max_freq, on_duration, off_duration)
             input_model = p.Population(28*28, p.SpikeSourceArray(spike_times=mnist_spikes), label='MNIST_input_pop')
         for i in range(len(connections)):
-            [in2e, in2i, in2in, in2out, e2in, i2in, e_size, e2e, e2i, i_size,
+            [in2e, in2i, in2in, in2out, e2in, i2in, e_size, e2e, e2i, i_size, # turned off connections to inputs except output
              i2e, i2i, e2out, i2out, out2e, out2i, out2in, out2out, excite_params, inhib_params] = connections[i]
             if len(in2e) == 0 and len(in2i) == 0 and len(in2out) == 0:
                 failures.append(i)

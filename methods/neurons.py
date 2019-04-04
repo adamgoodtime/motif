@@ -118,6 +118,35 @@ class neuron_population(object):
             i_offset_stdev = 1
             v = -65.0  # 'v_starting'
             v_stdev = 5
+        elif neuron_type == 'calcium':
+            v_rest = -65.0  # Resting membrane potential in mV.
+            v_rest_stdev = 5
+            cm = 1.0  # Capacity of the membrane in nF
+            cm_stdev = 0.3
+            tau_m = 20.0  # Membrane time constant in ms.
+            tau_m_stdev = 5
+            tau_refrac = 0.1  # Duration of refractory period in ms.
+            tau_refrac_stdev = 0.03
+            tau_syn_E = 5  # Rise time of the excitatory synaptic alpha function in ms.
+            tau_syn_E_stdev = 1.6
+            tau_syn_I = 5  # Rise time of the inhibitory synaptic alpha function in ms.
+            tau_syn_I_stdev = 1.6
+            v_thresh = -50.0  # Spike threshold in mV.
+            v_thresh_stdev = 5
+            v_reset = -65.0  # Reset potential after a spike in mV.
+            v_reset_stdev = 5
+            i_offset = max_input_current  # Offset current in nA
+            i_offset_stdev = max_input_current / 3
+            v = -65.0  # 'v_starting'
+            v_stdev = 5
+            tau_ca2 = 50.0  # Time constant of the calcium current
+            tau_ca2_stdev = 5.0
+            i_ca2 = 0.0  # Constant calcium current
+            i_ca2_stdev = 0.0
+            i_alpha = 0.1  # Amount the calcium current increases by after spiking
+            i_alpha_stdev = 0.03
+            isyn_exc = 0.0  # Rise time of excitatory something?
+            isyn_inh = 0.0  # Rise time of inhibitory something?
         elif neuron_type == 'izhikevich':
             a = 0.02
             b = 0.2
@@ -148,6 +177,11 @@ class neuron_population(object):
             self.e_rev_E_stdev = e_rev_E_stdev
             self.e_rev_I = e_rev_I
             self.e_rev_I_stdev = e_rev_I_stdev
+        elif neuron_type == 'calcium':
+            self.tau_ca2 = 50.0
+            self.tau_ca2_stdev = 5.0
+            self.i_alpha = 0.1
+            self.i_alpha_stdev = 0.03
         self.v_thresh = v_thresh
         self.v_thresh_stdev = v_thresh_stdev
         self.v_reset = v_reset
@@ -178,6 +212,9 @@ class neuron_population(object):
         if neuron_type == 'IF_cond_exp':
             self.neuron_params['e_rev_E'] = self.e_rev_E
             self.neuron_params['e_rev_I'] = self.e_rev_I
+        if neuron_type == 'calcium':
+            self.neuron_params['tau_ca2'] = self.tau_ca2
+            self.neuron_params['i_alpha'] = self.i_alpha
         self.neuron_params['v_thresh'] = self.v_thresh
         self.neuron_params['v_reset'] = self.v_reset
         self.neuron_params['i_offset'] = self.i_offset
@@ -195,6 +232,9 @@ class neuron_population(object):
         if neuron_type == 'IF_cond_exp':
             self.neuron_param_stdevs['e_rev_E'] = self.e_rev_E_stdev
             self.neuron_param_stdevs['e_rev_I'] = self.e_rev_I_stdev
+        if neuron_type == 'calcium':
+            self.neuron_param_stdevs['tau_ca2'] = self.tau_ca2_stdev
+            self.neuron_param_stdevs['i_alpha'] = self.i_alpha_stdev
         self.neuron_param_stdevs['v_thresh'] = self.v_thresh_stdev
         self.neuron_param_stdevs['v_reset'] = self.v_reset_stdev
         self.neuron_param_stdevs['i_offset'] = self.i_offset_stdev

@@ -4,15 +4,15 @@ import matplotlib.pyplot as plt
 from bandit.spinn_bandit.python_models.bandit import Bandit
 import numpy as np
 
-def test_levels(rates=(1, 0.2), weights=(4.7, 4.75, 4.8, 22.5, 23, 23.5), pop_size=1):
+def test_levels(rates=(1, 0.2, 20), weights=(4.7, 4.75, 4.8, 22.5, 23, 23.5), pop_size=1):
     counter = 0
     receive_pop = []
     spike_input = []
     p.setup(timestep=1, min_delay=1, max_delay=127)
-    p.set_number_of_neurons_per_core(p.IF_cond_exp, 10)
+    thing = p.IF_curr_exp
+    p.set_number_of_neurons_per_core(thing, 10)
     for rate in rates:
         for weight in weights:
-            thing = p.IF_curr_alpha
             receive_pop.append(p.Population(pop_size, thing()))#, label="receive_pop{}-{}".format(rate, weight)))
 
             receive_pop[counter].record(['spikes', 'v'])#["spikes"])
@@ -43,7 +43,7 @@ def test_levels(rates=(1, 0.2), weights=(4.7, 4.75, 4.8, 22.5, 23, 23.5), pop_si
                 print spike_time
                 print a
         v = receive_pop[i].get_data('v').segments[0].filter(name='v')[0]
-        plt.figure("alpha rate = {} - weight = {}".format(rates[param_index], weights[weight_index]))
+        plt.figure("alpha rate = {} - weight = {} {}".format(rates[param_index], weights[weight_index], thing))
         Figure(
             Panel(spikes, xlabel="Time (ms)", ylabel="nID", xticks=True),
             Panel(v, ylabel="Membrane potential (mV)", yticks=True)
@@ -53,22 +53,22 @@ def test_levels(rates=(1, 0.2), weights=(4.7, 4.75, 4.8, 22.5, 23, 23.5), pop_si
     # End simulation
     p.end()
 
-def test_params(params=(0.1, 0.2, 0.3, 0.4), weights=(0, 5), pop_size=1):
+def test_params(params=(0.1, 0.2, 0.3, 0.4), weights=(0, 1), pop_size=1):
     counter = 0
     receive_pop = []
     spike_input = []
     p.setup(timestep=1, min_delay=1, max_delay=127)
-    thing = p.IF_curr_exp
+    thing = p.extra_models.IFCurrExpCa2Adaptive
     p.set_number_of_neurons_per_core(thing, 10)
     for param in params:
         for weight in weights:
             # thing = p.IF_curr_alpha
-            receive_pop.append(p.Population(pop_size, thing(i_offset=param+0.5)))#, label="receive_pop{}-{}".format(rate, weight)))
+            receive_pop.append(p.Population(pop_size, thing(i_c=param+0.5)))#, label="receive_pop{}-{}".format(rate, weight)))
 
             receive_pop[counter].record(['spikes', 'v'])#["spikes"])
 
             # Connect key spike injector to input population
-            spike_input.append(p.Population(pop_size, p.SpikeSourcePoisson(rate=1), label="input_connect{}-{}".format(param, weight)))
+            spike_input.append(p.Population(pop_size, p.SpikeSourcePoisson(rate=2), label="input_connect{}-{}".format(param, weight)))
             p.Projection(
                 spike_input[counter], receive_pop[counter], p.OneToOneConnector(), p.StaticSynapse(weight=weight))
 
@@ -154,8 +154,8 @@ def test_packets(rate=100, weight=0.01, probability=0.7, seed=27, pop_size=2, co
     p.end()
     print "ended"
 
-# test_levels()
-test_params()
+test_levels()
+# test_params()
 # for prob in np.linspace(0.2,1,100):
 #     seed = np.random.randint(0,1000)
 #     print "seed:", seed, "prob:", prob

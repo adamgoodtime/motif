@@ -562,7 +562,7 @@ class motif_population(object):
             node_count += 1
         return all_connections
 
-    def construct_io(self, agent_connections, inputs, outputs):
+    def construct_io(self, agent_connections):
         indexed_ex = []
         indexed_in = []
         e2e = []
@@ -637,7 +637,9 @@ class motif_population(object):
                     in_post = self.neurons.neuron_configs[conn[1][0]]['io']
                     post_index = in_post
             if self.constant_delays:
-                conn[4] = self.constant_delays
+                conn[3] = self.constant_delays
+            if self.plasticity == 'all':
+                conn[4] = 'stdp'
             if pre_ex and post_ex:
                 e2e.append((pre_index, post_index, conn[2], conn[3], conn[4]))
             elif pre_ex and post_in:
@@ -695,12 +697,12 @@ class motif_population(object):
         return in2e, in2i, in2in, in2out, e2in, i2in, len(indexed_ex), e2e, e2i, len(indexed_in), \
                i2e, i2i, e2out, i2out, out2e, out2i, out2in, out2out, excite_params, inhib_params
 
-    def convert_individual(self, agent, inputs, outputs):
+    def convert_individual(self, agent):
         if isinstance(agent, list):
             agent_conn = self.read_motif(agent[0])
         else:
             agent_conn = self.read_motif(agent)
-        spinn_conn = self.construct_io(agent_conn, inputs, outputs)
+        spinn_conn = self.construct_io(agent_conn)
         return spinn_conn
 
     '''Returns a list of the lower level motifs which comprise a higher level one'''

@@ -49,11 +49,11 @@ max_delay = 25.0
 base_mutate = 0
 multiple_mutates = True
 exec_thing = 'arms'
-plasticity = True
+plasticity = False
 structural = False
 develop_neurons = True
 stdev_neurons = True
-neuron_type = 'IF_cond_exp'
+neuron_type = 'calcium'
 max_input_current = 0.8
 free_label = 0
 
@@ -252,7 +252,10 @@ def bandit(generations):
         print "\nNot a correct test setting\n"
         raise Exception
     if plasticity:
-        config += 'pl '
+        if plasticity == 'all':
+            config += 'pall'
+        else:
+            config += 'pl '
     if structural:
         config += 'strc '
     if averaging_weights:
@@ -307,10 +310,13 @@ def bandit(generations):
         weight_max = 0.1
         config += 'cond '
     elif neuron_type == 'IF_curr_exp':
-        weight_max = 4.
+        weight_max = 4.8
         config += 'cure '
     elif neuron_type == 'IF_curr_alpha':
         weight_max = 23.5
+        config += 'cura '
+    elif neuron_type == 'calcium':
+        weight_max = 4.8
         config += 'cura '
     else:
         print "incorrect neuron type"
@@ -363,7 +369,7 @@ def bandit(generations):
     elif read_neurons:
         config += ' readn-{}'.format(keep_reading)
 
-    for i in range(generations):
+    for gen in range(generations):
 
         print config
 
@@ -378,10 +384,10 @@ def bandit(generations):
                 arm.append(total)
                 arms.append(arm)
 
-        if i == 0:
+        if gen == 0:
             connections = agents.generate_spinn_nets(input=inputs, output=outputs, max_depth=maximum_depth[0])
         elif reset_pop:
-            if i % reset_pop:
+            if gen % reset_pop:
                 connections = agents.generate_spinn_nets(input=inputs, output=outputs, max_depth=maximum_depth[0], create='reset')
         else:
             connections = agents.generate_spinn_nets(input=inputs, output=outputs, max_depth=maximum_depth[0], create=False)
@@ -412,34 +418,34 @@ def bandit(generations):
 
         agents.pass_fitnesses(fitnesses, max_fail_score, fitness_shaping=shape_fitness)
 
-        agents.status_update(fitnesses, i, config, number_of_tests)
+        agents.status_update(fitnesses, gen, config, number_of_tests, connections)
 
         print "\nconfig: ", config, "\n"
 
         print "2", motifs.total_weight
 
-        if i % 30 == 0:
+        if gen % 30 == 0:
             print "stop"
 
-        motifs.adjust_weights(agents.agent_pop, reward_shape=reward_shape, iteration=i, average=averaging_weights, develop_neurons=develop_neurons)
+        motifs.adjust_weights(agents.agent_pop, reward_shape=reward_shape, iteration=gen, average=averaging_weights, develop_neurons=develop_neurons)
 
         print "3", motifs.total_weight
 
         if config != 'test':
-            motifs.save_motifs(i, config)
-            agents.save_agents(i, config)
+            motifs.save_motifs(gen, config)
+            agents.save_agents(gen, config)
             if stdev_neurons:
-                neurons.save_neurons(i, config)
+                neurons.save_neurons(gen, config)
 
         print "4", motifs.total_weight
 
-        motifs.set_delay_bins(no_bins, i, generations)
-        motifs.set_weight_bins(no_bins, i, generations)
-        agents.set_max_d(maximum_depth, i, generations)
+        motifs.set_delay_bins(no_bins, gen, generations)
+        motifs.set_weight_bins(no_bins, gen, generations)
+        agents.set_max_d(maximum_depth, gen, generations)
 
         agents.evolve(species=False)
 
-        print "finished", i, motifs.total_weight
+        print "finished", gen, motifs.total_weight
 
 
 # adjust population weights and clean up unused motifs

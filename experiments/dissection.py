@@ -210,7 +210,7 @@ def read_motif(motif_id, iteration, file_location, config):
     motif = motifs.motif_configs[motif_id]
     motif_struct = motifs.read_motif(motif_id)
     [in2e, in2i, in2in, in2out, e2in, i2in, e_size, e2e, e2i, i_size,
-     i2e, i2i, e2out, i2out, out2e, out2i, out2in, out2out] = motifs.convert_individual(motif_id, inputs, outputs)
+     i2e, i2i, e2out, i2out, out2e, out2i, out2in, out2out] = motifs.convert_individual(motif_id)
     connections = [in2e, in2i, in2in, in2out, e2in, i2in, e_size, e2e, e2i, i_size,
      i2e, i2i, e2out, i2out, out2e, out2i, out2in, out2out]
     # motif1 = motifs.motif_configs[motif_id-1]

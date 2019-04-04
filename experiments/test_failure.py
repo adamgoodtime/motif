@@ -31,9 +31,9 @@ def test_failure(file_location, file):
     connections_setup = np.load(file_location+file)
     connections_setup = connections_setup.tolist()
     trace_error = connections_setup[len(connections_setup)-1]
-    # print trace_error
-    # del connections_setup[len(connections_setup)-1]
-    pop_test(*connections_setup[0])
+    print "trace back was:\n", trace_error
+    del connections_setup[len(connections_setup)-1]
+    pop_test(*connections_setup)
 
 def split_ex_in(connections):
     excite = []
