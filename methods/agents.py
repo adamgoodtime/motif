@@ -908,10 +908,11 @@ class agent_population(object):
             agent_file.close()
 
     def save_agent_connections(self, agent, iteration, config):
-        connections = self.convert_agent(agent)
-        connections.append("fitness:".format(agent[2]))
-        connections.append("score:".format(agent[3]))
-        np.save('best agent {}: score({}), {}.npy'.format(iteration, agent[3], config), connections)
+        conn_and_result = []
+        conn_and_result.append(self.convert_agent(agent))
+        conn_and_result.append("fitness:".format(agent[2]))
+        conn_and_result.append("score:".format(agent[3]))
+        np.save('best agent {}: score({}), {}.npy'.format(iteration, agent[3], config), conn_and_result)
         # with open('best agent {}: score({}), {}.csv'.format(iteration, agent[3], config), 'w') as conn_file:
         #     writer = csv.writer(conn_file, delimiter=',', lineterminator='\n')
         #     for thing in connections:
