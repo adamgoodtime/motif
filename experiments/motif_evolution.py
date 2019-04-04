@@ -157,7 +157,7 @@ runtime = 0
 
 def bandit(generations):
     print "starting"
-    global connections, arms, max_fail_score, pole_angle, inputs, outputs, config, test_data_set, encoding, runtime, maximum_depth, make_action, constant_delays, weight_max
+    global connections, arms, max_fail_score, pole_angle, inputs, outputs, config, test_data_set, encoding, runtime, maximum_depth, make_action, constant_delays, weight_max, max_input_current
 
     if exec_thing == 'br':
         runtime = arms_runtime
@@ -292,7 +292,9 @@ def bandit(generations):
         config += 'dev_n '
     if stdev_neurons:
         config += 'stdev_n '
-    config += 'inc-{} '.format(max_input_current)
+        config += 'inc-{} '.format(max_input_current)
+    else:
+        max_input_current = 0
     if free_label:
         config += '{} '.format(free_label)
 
