@@ -184,6 +184,7 @@ def bandit(generations):
         constant_delays = pendulum_delays
         inputs = 4 * number_of_bins
         if no_v:
+            config += "\b-no_v "
             inputs /= 2
         outputs = force_increments
         config = 'rank-pend-an{}-{}-F{}-R{}-B{}-O{}-E{} '.format(pole_angle[0], len(pole_angle), force_increments, max_firing_rate, number_of_bins, bin_overlap, encoding)
@@ -287,13 +288,11 @@ def bandit(generations):
         config += 'max d-{} '.format(max_delay)
     if fast_membrane:
         config += 'fast_mem '
-    if no_v:
-        config += 'no_v '
     if develop_neurons:
         config += 'dev_n '
     if stdev_neurons:
         config += 'stdev_n '
-        config += 'inc-{} '.format(max_input_current)
+    config += 'inc-{} '.format(max_input_current)
     if free_label:
         config += '{} '.format(free_label)
 
@@ -317,7 +316,7 @@ def bandit(generations):
         config += 'cura '
     elif neuron_type == 'calcium':
         weight_max = 4.8
-        config += 'cura '
+        config += 'calc '
     else:
         print "incorrect neuron type"
         raise Exception
