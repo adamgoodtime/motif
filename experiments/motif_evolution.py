@@ -48,12 +48,12 @@ constant_delays = 0
 max_delay = 25.0
 base_mutate = 0
 multiple_mutates = True
-exec_thing = 'recall'
-plasticity = False
+exec_thing = 'arms'
+plasticity = 'all'
 structural = False
 develop_neurons = True
 stdev_neurons = True
-neuron_type = 'calcium'
+neuron_type = 'IF_cond_exp'
 max_input_current = 0.8
 calcium_tau = 500
 free_label = 0
@@ -424,7 +424,7 @@ def bandit(generations):
 
         print "2", motifs.total_weight
 
-        if gen % 30 == 0:
+        if gen % 10 == 0:
             print "stop"
 
         motifs.adjust_weights(agents.agent_pop, reward_shape=reward_shape, iteration=gen, average=averaging_weights, develop_neurons=develop_neurons)

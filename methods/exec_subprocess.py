@@ -158,7 +158,9 @@ def subprocess_experiments(connections, test_data_set, split=4, runtime=2000, ex
 
     for i in range(len(pool_result)):
         if isinstance(pool_result[i], str) and len(connection_threads[i][0]) > 1:
-            if not top:
+            if plasticity == 'pall':
+                split = 2
+            elif not top:
                 split = agent_pop_size
             else:
                 split = new_split
@@ -183,10 +185,10 @@ def subprocess_experiments(connections, test_data_set, split=4, runtime=2000, ex
             while not new_fail:
                 random_key = np.random.random()
                 try:
-                    np.load("failed agent {} {}".format(random_key, config))
+                    np.load("failed pop size-{} {} {}".format(len(connection_threads[i][0]), random_key, config))
                 except:
                     new_fail = True
-                    np.save("failed agent {} {}".format(random_key, config), connection_threads[i])
+                    np.save("failed pop size-{} {} {}".format(len(connection_threads[i][0]), random_key, config), connection_threads[i])
             pool_result[i] = 'fail'
 
     agent_fitness = []
