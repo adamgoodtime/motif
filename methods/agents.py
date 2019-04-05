@@ -1089,75 +1089,115 @@ class agent_population(object):
             self.print_tracking(config)
 
     def print_tracking(self, config):
-        print "\nmin excite", self.min_excite_neurons
-        print "average excite", self.average_excite_neurons
-        print "max excite", self.max_excite_neurons
-        print "score ave excite", self.weighted_excite_score
-        print "fitness ave excite", self.weighted_excite_fitness
-        print "best score excite", self.best_score_excite
-        print "best fitness excite", self.best_fitness_excite
-
-        print "\nmin inhib", self.min_inhib_neurons
-        print "average inhib", self.average_inhib_neurons
-        print "max inhib", self.max_inhib_neurons
-        print "score ave inhib", self.weighted_inhib_score
-        print "fitness ave inhib", self.weighted_inhib_fitness
+        print "\nbest score excite", self.best_score_excite
         print "best score inhib", self.best_score_inhib
-        print "best fitness inhib", self.best_fitness_inhib
-
-        print "\nmin conn", self.min_connections
-        print "average conn", self.average_connections
-        print "max conn", self.max_connections
-        print "score ave conn", self.weighted_conn_score
-        print "fitness ave conn", self.weighted_conn_fitness
         print "best score conn", self.best_score_conn
-        print "best fitness conn", self.best_fitness_conn
-
-        print "\nmin pl", self.min_pl_ratio
-        print "average pl", self.average_pl_ratio
-        print "max pl", self.max_pl_ratio
-        print "score ave pl", self.weighted_pl_ratio_score
-        print "fitness ave pl", self.weighted_pl_ratio_fitness
         print "best score pl", self.best_score_pl_ratio
-        print "best fitness pl", self.best_fitness_pl_ratio, "\n"
+
+        print "\nbest fitness excite", self.best_fitness_excite
+        print "best fitness inhib", self.best_fitness_inhib
+        print "best fitness conn", self.best_fitness_conn
+        print "best fitness pl", self.best_fitness_pl_ratio
+
+        print "\naverage excite", self.average_excite_neurons
+        print "average inhib", self.average_inhib_neurons
+        print "average conn", self.average_connections
+        print "average pl", self.average_pl_ratio
+
+        print "\nscore ave excite", self.weighted_excite_score
+        print "score ave inhib", self.weighted_inhib_score
+        print "score ave conn", self.weighted_conn_score
+        print "score ave pl", self.weighted_pl_ratio_score
+
+        print "\nfitness ave excite", self.weighted_excite_fitness
+        print "fitness ave inhib", self.weighted_inhib_fitness
+        print "fitness ave conn", self.weighted_conn_fitness
+        print "fitness ave pl", self.weighted_pl_ratio_fitness
+
+        print "\nmin excite", self.min_excite_neurons
+        print "min inhib", self.min_inhib_neurons
+        print "min conn", self.min_connections
+        print "min pl", self.min_pl_ratio
+
+        print "\nmax excite", self.max_excite_neurons
+        print "max inhib", self.max_inhib_neurons
+        print "max conn", self.max_connections
+        print "max pl", self.max_pl_ratio, "\n"
 
         with open('network tracking {}.csv'.format(config), 'w') as network_file:
             writer = csv.writer(network_file, delimiter=',', lineterminator='\n')
 
-            writer.writerow(["min excite", self.min_excite_neurons])
-            writer.writerow(["average excite", self.average_excite_neurons])
-            writer.writerow(["max excite", self.max_excite_neurons])
-            writer.writerow(["score ave excite", self.weighted_excite_score])
-            writer.writerow(["fitness ave excite", self.weighted_excite_fitness])
-            writer.writerow(["best score excite", self.best_score_excite])
-            writer.writerow(["best fitness excite", self.best_fitness_excite])
-            writer.writerow([""])
+            writer.writerow([config])
 
-            writer.writerow(["min inhib", self.min_inhib_neurons])
-            writer.writerow(["average inhib", self.average_inhib_neurons])
-            writer.writerow(["max inhib", self.max_inhib_neurons])
-            writer.writerow(["score ave inhib", self.weighted_inhib_score])
-            writer.writerow(["fitness ave inhib", self.weighted_inhib_fitness])
+            writer.writerow(["\nbest score excite", self.best_score_excite])
             writer.writerow(["best score inhib", self.best_score_inhib])
-            writer.writerow(["best fitness inhib", self.best_fitness_inhib])
-            writer.writerow([""])
-
-            writer.writerow(["min conn", self.min_connections])
-            writer.writerow(["average conn", self.average_connections])
-            writer.writerow(["max conn", self.max_connections])
-            writer.writerow(["score ave conn", self.weighted_conn_score])
-            writer.writerow(["fitness ave conn", self.weighted_conn_fitness])
             writer.writerow(["best score conn", self.best_score_conn])
-            writer.writerow(["best fitness conn", self.best_fitness_conn])
-            writer.writerow([""])
-
-            writer.writerow(["min pl", self.min_pl_ratio])
-            writer.writerow(["average pl", self.average_pl_ratio])
-            writer.writerow(["max pl", self.max_pl_ratio])
-            writer.writerow(["score ave pl", self.weighted_pl_ratio_score])
-            writer.writerow(["fitness ave pl", self.weighted_pl_ratio_fitness])
             writer.writerow(["best score pl", self.best_score_pl_ratio])
+
+            writer.writerow(["\nbest fitness excite", self.best_fitness_excite])
+            writer.writerow(["best fitness inhib", self.best_fitness_inhib])
+            writer.writerow(["best fitness conn", self.best_fitness_conn])
             writer.writerow(["best fitness pl", self.best_fitness_pl_ratio])
+
+            writer.writerow(["\naverage excite", self.average_excite_neurons])
+            writer.writerow(["average inhib", self.average_inhib_neurons])
+            writer.writerow(["average conn", self.average_connections])
+            writer.writerow(["average pl", self.average_pl_ratio])
+
+            writer.writerow(["\nscore ave excite", self.weighted_excite_score])
+            writer.writerow(["score ave inhib", self.weighted_inhib_score])
+            writer.writerow(["score ave conn", self.weighted_conn_score])
+            writer.writerow(["score ave pl", self.weighted_pl_ratio_score])
+
+            writer.writerow(["\nfitness ave excite", self.weighted_excite_fitness])
+            writer.writerow(["fitness ave inhib", self.weighted_inhib_fitness])
+            writer.writerow(["fitness ave conn", self.weighted_conn_fitness])
+            writer.writerow(["fitness ave pl", self.weighted_pl_ratio_fitness])
+
+            writer.writerow(["\nmin excite", self.min_excite_neurons])
+            writer.writerow(["min inhib", self.min_inhib_neurons])
+            writer.writerow(["min conn", self.min_connections])
+            writer.writerow(["min pl", self.min_pl_ratio])
+
+            writer.writerow(["\nmax excite", self.max_excite_neurons])
+            writer.writerow(["max inhib", self.max_inhib_neurons])
+            writer.writerow(["max conn", self.max_connections])
+            writer.writerow(["max pl", self.max_pl_ratio, "\n"])
+
+            # writer.writerow(["min excite", self.min_excite_neurons])
+            # writer.writerow(["average excite", self.average_excite_neurons])
+            # writer.writerow(["max excite", self.max_excite_neurons])
+            # writer.writerow(["score ave excite", self.weighted_excite_score])
+            # writer.writerow(["fitness ave excite", self.weighted_excite_fitness])
+            # writer.writerow(["best score excite", self.best_score_excite])
+            # writer.writerow(["best fitness excite", self.best_fitness_excite])
+            # writer.writerow([""])
+            #
+            # writer.writerow(["min inhib", self.min_inhib_neurons])
+            # writer.writerow(["average inhib", self.average_inhib_neurons])
+            # writer.writerow(["max inhib", self.max_inhib_neurons])
+            # writer.writerow(["score ave inhib", self.weighted_inhib_score])
+            # writer.writerow(["fitness ave inhib", self.weighted_inhib_fitness])
+            # writer.writerow(["best score inhib", self.best_score_inhib])
+            # writer.writerow(["best fitness inhib", self.best_fitness_inhib])
+            # writer.writerow([""])
+            #
+            # writer.writerow(["min conn", self.min_connections])
+            # writer.writerow(["average conn", self.average_connections])
+            # writer.writerow(["max conn", self.max_connections])
+            # writer.writerow(["score ave conn", self.weighted_conn_score])
+            # writer.writerow(["fitness ave conn", self.weighted_conn_fitness])
+            # writer.writerow(["best score conn", self.best_score_conn])
+            # writer.writerow(["best fitness conn", self.best_fitness_conn])
+            # writer.writerow([""])
+            #
+            # writer.writerow(["min pl", self.min_pl_ratio])
+            # writer.writerow(["average pl", self.average_pl_ratio])
+            # writer.writerow(["max pl", self.max_pl_ratio])
+            # writer.writerow(["score ave pl", self.weighted_pl_ratio_score])
+            # writer.writerow(["fitness ave pl", self.weighted_pl_ratio_fitness])
+            # writer.writerow(["best score pl", self.best_score_pl_ratio])
+            # writer.writerow(["best fitness pl", self.best_fitness_pl_ratio])
 
             network_file.close()
 

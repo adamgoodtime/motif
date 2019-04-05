@@ -48,13 +48,14 @@ constant_delays = 0
 max_delay = 25.0
 base_mutate = 0
 multiple_mutates = True
-exec_thing = 'arms'
+exec_thing = 'recall'
 plasticity = False
 structural = False
 develop_neurons = True
 stdev_neurons = True
 neuron_type = 'calcium'
 max_input_current = 0.8
+calcium_tau = 500
 free_label = 0
 
 #arms params
@@ -254,7 +255,7 @@ def bandit(generations):
         raise Exception
     if plasticity:
         if plasticity == 'all':
-            config += 'pall'
+            config += 'pall '
         else:
             config += 'pl '
     if structural:
@@ -293,8 +294,6 @@ def bandit(generations):
     if stdev_neurons:
         config += 'stdev_n '
         config += 'inc-{} '.format(max_input_current)
-    else:
-        max_input_current = 0
     if free_label:
         config += '{} '.format(free_label)
 
@@ -318,7 +317,7 @@ def bandit(generations):
         config += 'cura '
     elif neuron_type == 'calcium':
         weight_max = 4.8
-        config += 'calc '
+        config += 'calc-{} '.format(calcium_tau)
     else:
         print "incorrect neuron type"
         raise Exception

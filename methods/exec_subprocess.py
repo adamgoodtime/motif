@@ -177,6 +177,17 @@ def subprocess_experiments(connections, test_data_set, split=4, runtime=2000, ex
                     new_fail = True
                     np.save("failed agent {} {}".format(random_key, config), connection_threads[i])
             pool_result[i] = 'fail'
+        elif isinstance(pool_result[i], str) and plasticity == 'all':
+            new_fail = False
+            connection_threads[i].append(pool_result[i])
+            while not new_fail:
+                random_key = np.random.random()
+                try:
+                    np.load("failed agent {} {}".format(random_key, config))
+                except:
+                    new_fail = True
+                    np.save("failed agent {} {}".format(random_key, config), connection_threads[i])
+            pool_result[i] = 'fail'
 
     agent_fitness = []
     for thread in pool_result:

@@ -40,6 +40,7 @@ class neuron_population(object):
                  # gsyn_inh=0.0,
                  # gsyn_inh_stdev=0,
                  max_input_current=0.8,
+                 calcium_tau=50,
                  neuron_type='IF_cond_exp',
                  default=False,
                  io_prob=0.5,
@@ -139,8 +140,8 @@ class neuron_population(object):
             i_offset_stdev = max_input_current / 3
             v = -65.0  # 'v_starting'
             v_stdev = 5
-            tau_ca2 = 50.0  # Time constant of the calcium current
-            tau_ca2_stdev = 5.0
+            tau_ca2 = calcium_tau  # Time constant of the calcium current
+            tau_ca2_stdev = calcium_tau / 5
             i_ca2 = 0.0  # Constant calcium current
             i_ca2_stdev = 0.0
             i_alpha = 0.1  # Amount the calcium current increases by after spiking
@@ -243,6 +244,9 @@ class neuron_population(object):
         # self.neuron_param_stdevs['gsyn_inh'] = self.gsyn_inh_stdev
 
         if self.default:
+            # self.neuron_param_stdevs = {}
+            # self.neuron_params = {}
+            self.neuron_params['i_offset'] = 0
             for param in self.neuron_param_stdevs:
                 self.neuron_param_stdevs[param] = 0
             self.pop_size = self.inputs + self.outputs + 2
