@@ -29,10 +29,10 @@ no_bins = [10, 375]
 reset_pop = 0
 size_f = False
 spike_f = False#'out'
+repeat_best_amount = 5
 # depth fitness
 make_action = True
 shape_fitness = True
-random_arms = 0
 viable_parents = 0.2
 elitism = 0.2
 exposure_time = 200
@@ -48,12 +48,12 @@ constant_delays = 0
 max_delay = 25.0
 base_mutate = 0
 multiple_mutates = True
-exec_thing = 'recall'
+exec_thing = 'logic'
 plasticity = True
 structural = False
 develop_neurons = True
 stdev_neurons = True
-neuron_type = 'calcium'
+neuron_type = 'IF_cond_exp'
 max_input_current = 0.8
 calcium_tau = 50
 free_label = 0
@@ -64,6 +64,7 @@ constant_input = 1
 arms_stochastic = 0
 arms_rate_on = 20
 arms_rate_off = 5
+random_arms = 0
 arm1 = 0.8
 arm2 = 0.1
 arm3 = 0.1
@@ -108,7 +109,7 @@ tau_force = 0
 
 #logic params
 logic_runtime = 5000
-score_delay = 200
+score_delay = 5000
 logic_stochastic = 1
 logic_rate_on = 20
 logic_rate_off = 5
@@ -222,7 +223,14 @@ def bandit(generations):
         test_data_set = arms
         inputs = 2
         outputs = number_of_arms
-        config = 'bandit-{}-{}-{} '.format(arms[0][0], len(arms), random_arms)
+        if random_arms:
+            config = 'bandit-rand-{}-{} '.format(arms[0][0], len(arms))
+        else:
+            config = 'bandit-{}-{} '.format(arms[0][0], len(arms))
+        if constant_input:
+            if stochastic:
+                config += 'stoc '
+            config += 'on-{} off-{} '.format(rate_on, rate_off)
         number_of_tests = len(arms)
     elif exec_thing == 'logic':
         stochastic = logic_stochastic
@@ -237,6 +245,7 @@ def bandit(generations):
             config = 'logic-stoc-{}-run{}-sample{} '.format(truth_table, runtime, score_delay)
         else:
             config = 'logic-{}-run{}-sample{} '.format(truth_table, runtime, score_delay)
+        config += 'on-{} off-{} '.format(rate_on, rate_off)
     elif exec_thing == 'recall':
         stochastic = recall_stochastic
         runtime = recall_runtime
@@ -387,6 +396,9 @@ def bandit(generations):
     elif read_neurons:
         config += ' readn-{}'.format(keep_reading)
 
+    best_performance_score = []
+    best_performance_fitness = []
+
     for gen in range(generations):
 
         print config
@@ -410,6 +422,12 @@ def bandit(generations):
         else:
             connections = agents.generate_spinn_nets(input=inputs, output=outputs, max_depth=maximum_depth[0], create=False)
 
+        if gen != 0:
+            for i in range(repeat_best_amount):
+                connections.append(best_score_connections)
+            for i in range(repeat_best_amount):
+                connections.append(best_fitness_connections)
+
         # config = 'test'
         if config != 'test':
             globals()['exec_thing'] = exec_thing
@@ -422,7 +440,7 @@ def bandit(generations):
         print "1", motifs.total_weight
 
         agent_spikes = []
-        for k in range(agent_pop_size):
+        for k in range(len(connections)):
             spike_total = 0
             for j in range(number_of_tests):
                 if isinstance(fitnesses[j][k], list):
@@ -434,9 +452,35 @@ def bandit(generations):
         if spike_f:
             fitnesses.append(agent_spikes)
 
+        if gen != 0:
+            best_agent_repeat_score = []
+            best_agent_repeat_fitness = []
+            for i in range(len(fitnesses)):
+                print fitnesses[i][agent_pop_size:agent_pop_size+repeat_best_amount]
+                best_agent_repeat_score.append(fitnesses[i][agent_pop_size:agent_pop_size+repeat_best_amount])
+                best_agent_repeat_fitness.append(fitnesses[i][agent_pop_size+repeat_best_amount:agent_pop_size+(2*repeat_best_amount)])
+                fitnesses[i] = fitnesses[i][0:agent_pop_size]
+            test_scores = [0 for i in range(repeat_best_amount)]
+            test_fitness = [0 for i in range(repeat_best_amount)]
+            for i in range(number_of_tests):
+                for j in range(repeat_best_amount):
+                    test_scores[j] += best_agent_repeat_score[i][j]
+                    test_fitness[j] += best_agent_repeat_fitness[i][j]
+            best_performance_score.append(np.average(test_scores))
+            best_performance_fitness.append(np.average(test_fitness))
+
         agents.pass_fitnesses(fitnesses, max_fail_score, fitness_shaping=shape_fitness)
 
-        agents.status_update(fitnesses, gen, config, number_of_tests, connections)
+        [best_score_connections, best_fitness_connections] = agents.status_update(fitnesses, gen, config, number_of_tests, connections, best_performance_score, best_performance_fitness)
+
+        if gen != 0:
+            print "The performance of the best agent from last generation was:"
+            print "Score:"
+            for i in range(number_of_tests):
+                print best_agent_repeat_score[i]
+            print "Fitness:"
+            for i in range(number_of_tests):
+                print best_agent_repeat_fitness[i]
 
         print "\nconfig: ", config, "\n"
 

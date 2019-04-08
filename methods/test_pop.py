@@ -268,14 +268,14 @@ def pop_test(connections, test_data, split=4, runtime=2000, exposure_time=200, n
                 else:
                     input_pops.append(input_model)
                 # added to ensure that the arms and bandit are connected to and from something
-                null_pop = p.Population(1, neuron_type(), label='null{}'.format(i))
-                p.Projection(input_pops[model_count], null_pop, p.AllToAllConnector(), p.StaticSynapse(delay=1))
+                # null_pop = p.Population(1, neuron_type(), label='null{}'.format(i))
+                # p.Projection(input_pops[model_count], null_pop, p.AllToAllConnector(), p.StaticSynapse(delay=1))
                 if fast_membrane:
                     output_pop.append(p.Population(outputs, neuron_type(tau_m=0.5,  # parameters for a fast membrane
-                                                                          tau_refrac=0,
-                                                                          v_thresh=-64,
-                                                                          tau_syn_E=0.5,
-                                                                          tau_syn_I=0.5),
+                                                                        tau_refrac=0,
+                                                                        v_thresh=-64,
+                                                                        tau_syn_E=0.5,
+                                                                        tau_syn_I=0.5),
                                                    label='output_pop_{}-{}'.format(model_count, i)))
                 else:
                     output_pop.append(p.Population(outputs, neuron_type(),

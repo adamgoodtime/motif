@@ -108,7 +108,7 @@ def write_globals(file_id):
 def subprocess_experiments(connections, test_data_set, split=4, runtime=2000, exposure_time=200, noise_rate=100, noise_weight=0.01,
                   size_f=False, spike_f=False, make_action=True, top=True):
     global new_split
-    step_size = len(connections) / split
+    step_size = int(np.ceil(float(len(connections)) / float(split)))
     if step_size == 0:
         step_size = 1
     if isinstance(test_data_set[0], list):
@@ -204,9 +204,9 @@ def subprocess_experiments(connections, test_data_set, split=4, runtime=2000, ex
         agent_fitness = []
         for i in range(len(test_data_set)):
             test_results = []
-            for j in range(agent_pop_size):
+            for j in range(len(connections)):
                 try:
-                    test_results.append(copy_fitness[(i * agent_pop_size) + j])
+                    test_results.append(copy_fitness[(i * len(connections)) + j])
                 except:
                     traceback.print_exc()
                     print "failed adding result #", i, "/", j
@@ -216,7 +216,7 @@ def subprocess_experiments(connections, test_data_set, split=4, runtime=2000, ex
             agent_fitness.append(test_results)
         if size_f:
             test_results = []
-            for i in range(agent_pop_size):
+            for i in range(len(connections)):
                 test_results.append(connections[i][6] + connections[i][9])
             agent_fitness.append(test_results)
 

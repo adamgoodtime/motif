@@ -928,12 +928,16 @@ class agent_population(object):
         #     writer.writerow(["score", agent[3]])
         #     conn_file.close()
 
-    def save_status(self, config, iteration):
+    def save_status(self, config, iteration, best_performance_score, best_performance_fitness):
         with open('status for {}.csv'.format(config), 'w') as status_file:
             writer = csv.writer(status_file, delimiter=',', lineterminator='\n')
             writer.writerow(['on iteration: {}'.format(iteration)])
             writer.writerow(['maximum score'])
             writer.writerow(self.max_score)
+            writer.writerow(['best performance score'])
+            writer.writerow(best_performance_score)
+            writer.writerow(['best performance fitness'])
+            writer.writerow(best_performance_fitness)
             writer.writerow(['average score'])
             writer.writerow(self.average_score)
             writer.writerow(['minimum score'])
@@ -954,10 +958,11 @@ class agent_population(object):
                     for attribute in mutate_key:
                         writer.writerow([attribute, mutate_key[attribute]])
                 except:
-                    print "no key for agent ", agent[0]
+                    None
+                    # print "no key for agent ", agent[0]
             key_file.close()
 
-    def status_update(self, combined_fitnesses, iteration, config, len_arms, connections):
+    def status_update(self, combined_fitnesses, iteration, config, len_arms, connections, best_performance_score, best_performance_fitness):
         total_scores = [0 for i in range(len(combined_fitnesses))]
         average_fitness = 0
         worst_score = 100000000
@@ -1010,6 +1015,7 @@ class agent_population(object):
         self.max_fitness.append(round(best_fitness, 2))
         self.min_fitness.append(round(worst_fitness, 2))
         self.average_fitness.append(round(average_fitness / len(self.agent_pop), 2))
+        print "best performance fitness:", best_performance_fitness
         print "maximum fitness:", self.max_fitness
         # print "average fitness:", self.total_average
         print "minimum fitness:", self.min_fitness
@@ -1018,14 +1024,18 @@ class agent_population(object):
             best_scores += ', {:3}'.format(combined_fitnesses[i][best_agent_s])
         print "best score was ", best_score, " by agent:", best_agent_s, \
             "with a score of: ", best_scores
+        print "best performance score:", best_performance_score
         print "maximum score:", self.max_score
         print "average score:", self.average_score
         print "minimum score:", self.min_score
         if config != 'test':
             self.save_agent_connections(self.agent_pop[best_agent], iteration, 'score '+config)
             self.save_agent_connections(self.agent_pop[best_agent_s], iteration, 'fitness '+config)
-            self.save_status(config, iteration)
+            self.save_status(config, iteration, best_performance_score, best_performance_fitness)
             self.save_mutate_keys(iteration, config)
+        best_score_connections = self.convert_agent(self.agent_pop[best_agent])
+        best_fitness_connections = self.convert_agent(self.agent_pop[best_agent_s])
+        return best_score_connections, best_fitness_connections
 
     def track_networks(self, connections, config):
         e_sizes = []
