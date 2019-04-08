@@ -170,6 +170,13 @@ class agent_population(object):
         self.weighted_pl_ratio_fitness = []
         self.best_score_pl_ratio = []
         self.best_fitness_pl_ratio = []
+        self.min_m_depth = []
+        self.average_m_depth = []
+        self.max_m_depth = []
+        self.weighted_m_depth_score = []
+        self.weighted_m_depth_fitness = []
+        self.best_score_m_depth = []
+        self.best_fitness_m_depth = []
 
     '''sets the maximum depth allowed by the agents to progressively change depth as the algorithm progresses'''
     def set_max_d(self, depth, iteration, max_iterations):
@@ -1025,6 +1032,7 @@ class agent_population(object):
         i_sizes = []
         number_of_connections = []
         plasticity_ratio = []
+        depths = []
         scores_list = []
         fitness_list = []
         for i in range(self.pop_size):
@@ -1050,6 +1058,7 @@ class agent_population(object):
             plasticity_ratio.append(round(pl_ratio, 2))
             scores_list.append(self.agent_pop[i][3])
             fitness_list.append(self.agent_pop[i][2])
+            depths.append(self.motifs.motif_configs[self.agent_pop[i][0]]['depth'])
         best_score_index = scores_list.index(np.max(scores_list))
         best_fitness_index = fitness_list.index(np.max(fitness_list))
 
@@ -1085,42 +1094,57 @@ class agent_population(object):
         self.best_score_pl_ratio.append(plasticity_ratio[best_score_index])
         self.best_fitness_pl_ratio.append(plasticity_ratio[best_fitness_index])
 
+        self.min_m_depth.append(np.min(depths))
+        self.average_m_depth.append(round(np.average(depths), 2))
+        self.max_m_depth.append(np.max(depths))
+        self.weighted_m_depth_fitness.append(round(np.average(depths, weights=scores_list), 2))
+        self.weighted_m_depth_fitness.append(round(np.average(depths, weights=fitness_list), 2))
+        self.best_score_m_depth.append(depths[best_score_index])
+        self.best_fitness_m_depth.append(depths[best_fitness_index])
+
         if config != 'test':
             self.print_tracking(config)
 
     def print_tracking(self, config):
         print "\nbest score excite", self.best_score_excite
         print "best score inhib", self.best_score_inhib
+        print "best score depth", self.best_score_m_depth
         print "best score conn", self.best_score_conn
         print "best score pl", self.best_score_pl_ratio
 
         print "\nbest fitness excite", self.best_fitness_excite
         print "best fitness inhib", self.best_fitness_inhib
+        print "best fitness depth", self.best_fitness_m_depth
         print "best fitness conn", self.best_fitness_conn
         print "best fitness pl", self.best_fitness_pl_ratio
 
         print "\naverage excite", self.average_excite_neurons
         print "average inhib", self.average_inhib_neurons
+        print "average depth", self.average_m_depth
         print "average conn", self.average_connections
         print "average pl", self.average_pl_ratio
 
         print "\nscore ave excite", self.weighted_excite_score
         print "score ave inhib", self.weighted_inhib_score
+        print "score ave depth", self.weighted_m_depth_score
         print "score ave conn", self.weighted_conn_score
         print "score ave pl", self.weighted_pl_ratio_score
 
         print "\nfitness ave excite", self.weighted_excite_fitness
         print "fitness ave inhib", self.weighted_inhib_fitness
+        print "fitness ave depth", self.weighted_m_depth_fitness
         print "fitness ave conn", self.weighted_conn_fitness
         print "fitness ave pl", self.weighted_pl_ratio_fitness
 
         print "\nmin excite", self.min_excite_neurons
         print "min inhib", self.min_inhib_neurons
+        print "min depth", self.min_m_depth
         print "min conn", self.min_connections
         print "min pl", self.min_pl_ratio
 
         print "\nmax excite", self.max_excite_neurons
         print "max inhib", self.max_inhib_neurons
+        print "max depth", self.max_m_depth
         print "max conn", self.max_connections
         print "max pl", self.max_pl_ratio, "\n"
 
@@ -1128,39 +1152,45 @@ class agent_population(object):
             writer = csv.writer(network_file, delimiter=',', lineterminator='\n')
 
             writer.writerow([config])
-
             writer.writerow(["\nbest score excite", self.best_score_excite])
             writer.writerow(["best score inhib", self.best_score_inhib])
+            writer.writerow(["best score depth", self.best_score_m_depth])
             writer.writerow(["best score conn", self.best_score_conn])
             writer.writerow(["best score pl", self.best_score_pl_ratio])
 
             writer.writerow(["\nbest fitness excite", self.best_fitness_excite])
             writer.writerow(["best fitness inhib", self.best_fitness_inhib])
+            writer.writerow(["best fitness depth", self.best_fitness_m_depth])
             writer.writerow(["best fitness conn", self.best_fitness_conn])
             writer.writerow(["best fitness pl", self.best_fitness_pl_ratio])
 
             writer.writerow(["\naverage excite", self.average_excite_neurons])
             writer.writerow(["average inhib", self.average_inhib_neurons])
+            writer.writerow(["average depth", self.average_m_depth])
             writer.writerow(["average conn", self.average_connections])
             writer.writerow(["average pl", self.average_pl_ratio])
 
             writer.writerow(["\nscore ave excite", self.weighted_excite_score])
             writer.writerow(["score ave inhib", self.weighted_inhib_score])
+            writer.writerow(["score ave depth", self.weighted_m_depth_score])
             writer.writerow(["score ave conn", self.weighted_conn_score])
             writer.writerow(["score ave pl", self.weighted_pl_ratio_score])
 
             writer.writerow(["\nfitness ave excite", self.weighted_excite_fitness])
             writer.writerow(["fitness ave inhib", self.weighted_inhib_fitness])
+            writer.writerow(["fitness ave depth", self.weighted_m_depth_fitness])
             writer.writerow(["fitness ave conn", self.weighted_conn_fitness])
             writer.writerow(["fitness ave pl", self.weighted_pl_ratio_fitness])
 
             writer.writerow(["\nmin excite", self.min_excite_neurons])
             writer.writerow(["min inhib", self.min_inhib_neurons])
+            writer.writerow(["min depth", self.min_m_depth])
             writer.writerow(["min conn", self.min_connections])
             writer.writerow(["min pl", self.min_pl_ratio])
 
             writer.writerow(["\nmax excite", self.max_excite_neurons])
             writer.writerow(["max inhib", self.max_inhib_neurons])
+            writer.writerow(["max depth", self.max_m_depth])
             writer.writerow(["max conn", self.max_connections])
             writer.writerow(["max pl", self.max_pl_ratio, "\n"])
 

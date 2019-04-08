@@ -231,12 +231,18 @@ def pop_test(connections, test_data, split=4, runtime=2000, exposure_time=200, n
                                             input_sequence=test_data,
                                             stochastic=stochastic,
                                             score_delay=score_delay,
+                                            rate_on=rate_on,
+                                            rate_off=rate_off,
                                             rand_seed=[np.random.randint(0xffff) for j in range(4)],
                                             label='logic_pop_{}-{}'.format(model_count, i))
                 elif exec_thing == 'arms':
                     input_model = gym.Bandit(arms=test_data,
                                              reward_delay=exposure_time,
                                              reward_based=arms_reward,
+                                             stochastic=stochastic,
+                                             constant_input=constant_input,
+                                             rate_on=rate_on,
+                                             rate_off=rate_off,
                                              rand_seed=[np.random.randint(0xffff) for j in range(4)],
                                              label='bandit_pop_{}-{}'.format(model_count, i))
                 elif exec_thing == 'recall':

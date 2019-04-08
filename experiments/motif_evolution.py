@@ -36,7 +36,7 @@ random_arms = 0
 viable_parents = 0.2
 elitism = 0.2
 exposure_time = 200
-io_prob = 0.95  # 1.0 - (1.0 / 11.0)
+io_prob = 0.75  # 1.0 - (1.0 / 11.0)
 read_motifs = 0
 # read_motifs = 'Dirty place/Motif pop xor pl 200 stdev_n.npy'
 # read_motifs = 'Dirty place/Motif pop xor pl 5000 stdev_n.npy'
@@ -48,18 +48,22 @@ constant_delays = 0
 max_delay = 25.0
 base_mutate = 0
 multiple_mutates = True
-exec_thing = 'arms'
-plasticity = 'all'
+exec_thing = 'recall'
+plasticity = True
 structural = False
 develop_neurons = True
 stdev_neurons = True
-neuron_type = 'IF_cond_exp'
+neuron_type = 'calcium'
 max_input_current = 0.8
-calcium_tau = 500
+calcium_tau = 50
 free_label = 0
 
 #arms params
-arms_runtime = 41000
+arms_runtime = 21000
+constant_input = 1
+arms_stochastic = 0
+arms_rate_on = 20
+arms_rate_off = 5
 arm1 = 0.8
 arm2 = 0.1
 arm3 = 0.1
@@ -105,7 +109,9 @@ tau_force = 0
 #logic params
 logic_runtime = 5000
 score_delay = 200
-stochastic = 1
+logic_stochastic = 1
+logic_rate_on = 20
+logic_rate_off = 5
 truth_table = [0, 1, 1, 0]
 # truth_table = [0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0]
 input_sequence = []
@@ -122,13 +128,13 @@ for i in range(1, len(truth_table)):
 
 #Recall params
 recall_runtime = 60000
-rate_on = 50
-rate_off = 0
+recall_rate_on = 50
+recall_rate_off = 0
 recall_pop_size = 1
 prob_command = 1./6.
 prob_in_change = 1./2.
 time_period = 200
-stochastic = 1
+recall_stochastic = 1
 recall_reward = 0
 recall_parallel_runs = 2
 
@@ -155,13 +161,16 @@ outputs = 0
 test_data_set = []
 config = ''
 runtime = 0
+stochastic = -1
+rate_on = 0
+rate_off = 0
 
 def bandit(generations):
     print "starting"
-    global connections, arms, max_fail_score, pole_angle, inputs, outputs, config, test_data_set, encoding, runtime, maximum_depth, make_action, constant_delays, weight_max, max_input_current
+    global connections, arms, max_fail_score, pole_angle, inputs, outputs, config, test_data_set, encoding, runtime, maximum_depth, make_action, constant_delays, weight_max, max_input_current, stochastic, rate_on, rate_off
 
     if exec_thing == 'br':
-        runtime = arms_runtime
+        runtime = breakout_runtime
         inputs = (160 / x_factor) * (128 / y_factor)
         outputs = 2
         config = 'bout {}-{}-{} '.format(x_factor, y_factor, bricking)
@@ -202,6 +211,9 @@ def bandit(generations):
         test_data_set = pole_angle
         number_of_tests = len(pole_angle)
     elif exec_thing == 'arms':
+        stochastic = arms_stochastic
+        rate_on = arms_rate_on
+        rate_off = arms_rate_off
         if isinstance(arms[0], list):
             number_of_arms = len(arms[0])
         else:
@@ -213,7 +225,10 @@ def bandit(generations):
         config = 'bandit-{}-{}-{} '.format(arms[0][0], len(arms), random_arms)
         number_of_tests = len(arms)
     elif exec_thing == 'logic':
+        stochastic = logic_stochastic
         runtime = logic_runtime
+        rate_on = logic_rate_on
+        rate_off = logic_rate_off
         test_data_set = input_sequence
         number_of_tests = len(input_sequence)
         inputs = len(input_sequence[0])
@@ -223,7 +238,10 @@ def bandit(generations):
         else:
             config = 'logic-{}-run{}-sample{} '.format(truth_table, runtime, score_delay)
     elif exec_thing == 'recall':
+        stochastic = recall_stochastic
         runtime = recall_runtime
+        rate_on = recall_rate_on
+        rate_off = recall_rate_off
         for j in range(recall_parallel_runs):
             test_data_set.append([j])
         number_of_tests = recall_parallel_runs

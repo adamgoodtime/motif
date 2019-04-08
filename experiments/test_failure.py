@@ -26,6 +26,99 @@ outputs = 2
 config = ''
 max_fail_score = -1000000
 weight_max = 0.1
+fast_membrane = False
+
+#arms params
+arms_runtime = 41000
+arm1 = 0.8
+arm2 = 0.1
+arm3 = 0.1
+arm_len = 1
+arms = []
+arms_reward = 1
+for i in range(arm_len):
+    arms.append([arm1, arm2])
+    arms.append([arm2, arm1])
+    # for arm in list(itertools.permutations([arm1, arm2, arm3])):
+    #     arms.append(list(arm))
+# arms = [[0.4, 0.6], [0.6, 0.4], [0.3, 0.7], [0.7, 0.3], [0.2, 0.8], [0.8, 0.2], [0.1, 0.9], [0.9, 0.1]]
+# arms = [[0.4, 0.6], [0.6, 0.4], [0.3, 0.7], [0.7, 0.3], [0.2, 0.8], [0.8, 0.2], [0.1, 0.9], [0.9, 0.1], [0, 1], [1, 0]]
+'''top_prob = 1
+low_prob = 0
+med_prob = 0.1
+hii_prob = 0.2
+arms = [[low_prob, med_prob, top_prob, hii_prob, med_prob, low_prob, med_prob, low_prob], [top_prob, low_prob, low_prob, med_prob, hii_prob, med_prob, low_prob, med_prob],
+        [hii_prob, top_prob, med_prob, low_prob, low_prob, med_prob, med_prob, low_prob], [med_prob, low_prob, low_prob, top_prob, med_prob, hii_prob, low_prob, med_prob],
+        [low_prob, low_prob, low_prob, med_prob, top_prob, med_prob, hii_prob, med_prob], [low_prob, med_prob, low_prob, med_prob, med_prob, top_prob, low_prob, hii_prob],
+        [med_prob, low_prob, hii_prob, low_prob, med_prob, low_prob, top_prob, med_prob], [low_prob, hii_prob, med_prob, med_prob, low_prob, med_prob, low_prob, top_prob]]
+# '''
+
+#pendulum params
+pendulum_runtime = 181000
+double_pen_runtime = 60000
+pendulum_delays = 1
+max_fail_score = 0
+no_v = False
+encoding = 0
+time_increment = 20
+pole_length = 1
+pole2_length = 0.1
+pole_angle = [[0.1], [0.2], [-0.1], [-0.2]]
+reward_based = 1
+force_increments = 20
+max_firing_rate = 1000
+number_of_bins = 6
+central = 1
+bin_overlap = 2
+tau_force = 0
+
+#logic params
+logic_runtime = 5000
+score_delay = 200
+stochastic = 1
+truth_table = [0, 1, 1, 0]
+# truth_table = [0, 1, 1, 0, 1, 0, 0, 1, 1, 0, 0, 1, 0, 1, 1, 0]
+input_sequence = []
+segment = [0 for j in range(int(np.log2(len(truth_table))))]
+input_sequence.append(segment)
+for i in range(1, len(truth_table)):
+    current_value = i
+    segment = [0 for j in range(int(np.log2(len(truth_table))))]
+    while current_value != 0:
+        highest_power = int(np.log2(current_value))
+        segment[highest_power] = 1
+        current_value -= 2**highest_power
+    input_sequence.append(segment)
+
+#Recall params
+recall_runtime = 60000
+rate_on = 50
+rate_off = 0
+recall_pop_size = 1
+prob_command = 1./6.
+prob_in_change = 1./2.
+time_period = 200
+stochastic = 1
+recall_reward = 0
+recall_parallel_runs = 2
+
+#MNIST
+max_freq = 5000
+on_duration = 1000
+off_duration = 1000
+data_size = 200
+mnist_parallel_runs = 2
+mnist_runtime = data_size * (on_duration + off_duration)
+
+#erbp params
+erbp_runtime = 20
+erbp_max_depth = [5, 100]
+
+#breakout params
+breakout_runtime = 181000
+x_factor = 8
+y_factor = 8
+bricking = 0
 
 def test_failure(file_location, file):
     connections_setup = np.load(file_location+file)
@@ -113,8 +206,8 @@ def get_scores(game_pop, simulator):
         simulator.graph_mapper, simulator.buffer_manager, simulator.machine_time_step)
     return scores.tolist()
 
-def pop_test(connections, test_data, split=4, runtime=41000, exposure_time=200, noise_rate=0, noise_weight=0.01,
-                spike_f=False, make_action=True, exec_thing='arms', seed=0):
+def pop_test(connections, test_data, split=4, runtime=2000, exposure_time=200, noise_rate=100, noise_weight=0.01,
+                spike_f=False, make_action=True, exec_thing='bout', seed=0):
     np.random.seed(seed)
     sleep = 10 * np.random.random()
     # time.sleep(sleep)
@@ -138,8 +231,18 @@ def pop_test(connections, test_data, split=4, runtime=41000, exposure_time=200, 
         while time.time() - start < setup_retry_time:
             try:
                 p.setup(timestep=1.0, min_delay=1, max_delay=127)
-                neuron_type = p.IF_cond_exp
-                p.set_number_of_neurons_per_core(neuron_type, 100)
+                if neuron_choice == 'IF_cond_exp':
+                    neuron_type = p.IF_cond_exp
+                elif neuron_choice == 'IF_curr_exp':
+                    neuron_type = p.IF_curr_exp
+                elif neuron_choice == 'IF_curr_alpha':
+                    neuron_type = p.IF_curr_alpha
+                elif neuron_choice == 'calcium':
+                    neuron_type = p.extra_models.IFCurrExpCa2Adaptive
+                else:
+                    print "incorrect neuron type"
+                    raise Exception
+                p.set_number_of_neurons_per_core(neuron_type, 32)
                 print "\nfinished setup seed = ", seed, "\n"
                 print "test data = ", test_data
                 break
@@ -150,26 +253,120 @@ def pop_test(connections, test_data, split=4, runtime=41000, exposure_time=200, 
             print "\nsetup", try_count, " seed = ", seed, "\n", "\n"
             try_count += 1
         print "\nfinished setup seed = ", seed, "\n"
+        print config
+        if exec_thing == 'mnist':
+            [data, labels] = get_train_data(mnist_pointer)
+            starting_point = np.random.randint(60000 - data_size)
+            sub_data = data[starting_point: starting_point + data_size]
+            sub_labels = labels[starting_point: starting_point + data_size]
+            mnist_spikes = mnist_poisson_gen(sub_data, 28, 28, max_freq, on_duration, off_duration)
+            input_model = p.Population(28*28, p.SpikeSourceArray(spike_times=mnist_spikes), label='MNIST_input_pop')
         for i in range(len(connections)):
-            [in2e, in2i, in2in, in2out, e2in, i2in, e_size, e2e, e2i, i_size,
+            [in2e, in2i, in2in, in2out, e2in, i2in, e_size, e2e, e2i, i_size, # turned off connections to inputs except output
              i2e, i2i, e2out, i2out, out2e, out2i, out2in, out2out, excite_params, inhib_params] = connections[i]
             if len(in2e) == 0 and len(in2i) == 0 and len(in2out) == 0:
                 failures.append(i)
                 print "agent {} was not properly connected to the game".format(i)
             else:
                 model_count += 1
-                input_model = gym.Bandit(arms=test_data,
-                                         reward_delay=exposure_time,
-                                         reward_based=0,
-                                         rand_seed=[np.random.randint(0xffff) for j in range(4)],
-                                         label='bandit_pop_{}-{}'.format(model_count, i))
-                input_pop_size = input_model.neurons()
-                input_pops.append(p.Population(input_pop_size, input_model))
+                if exec_thing == 'pen':
+                    input_model = gym.Pendulum(encoding=encoding,
+                                               time_increment=time_increment,
+                                               pole_length=pole_length,
+                                               pole_angle=test_data[0],
+                                               reward_based=reward_based,
+                                               force_increments=force_increments,
+                                               max_firing_rate=max_firing_rate,
+                                               number_of_bins=number_of_bins,
+                                               central=central,
+                                               bin_overlap=bin_overlap,
+                                               tau_force=tau_force,
+                                               rand_seed=[np.random.randint(0xffff) for j in range(4)],
+                                               label='pendulum_pop_{}-{}'.format(model_count, i))
+                elif exec_thing == 'rank pen':
+                    input_model = Rank_Pendulum(encoding=encoding,
+                                                time_increment=time_increment,
+                                                pole_length=pole_length,
+                                                pole_angle=test_data[0],
+                                                reward_based=reward_based,
+                                                force_increments=force_increments,
+                                                max_firing_rate=max_firing_rate,
+                                                number_of_bins=number_of_bins,
+                                                central=central,
+                                                bin_overlap=bin_overlap,
+                                                tau_force=tau_force,
+                                                rand_seed=[np.random.randint(0xffff) for j in range(4)],
+                                                label='rank_pendulum_pop_{}-{}'.format(model_count, i))
+                elif exec_thing == 'double pen':
+                    input_model = gym.DoublePendulum(encoding=encoding,
+                                                     time_increment=time_increment,
+                                                     pole_length=pole_length,
+                                                     pole_angle=test_data[0],
+                                                     pole2_length=pole2_length,
+                                                     pole2_angle=pole2_angle,
+                                                     reward_based=reward_based,
+                                                     force_increments=force_increments,
+                                                     max_firing_rate=max_firing_rate,
+                                                     number_of_bins=number_of_bins,
+                                                     central=central,
+                                                     bin_overlap=bin_overlap,
+                                                     tau_force=tau_force,
+                                                     rand_seed=[np.random.randint(0xffff) for j in range(4)],
+                                                     label='double_pendulum_pop_{}-{}'.format(model_count, i))
+                elif exec_thing == 'bout':
+                    input_model = gym.Breakout(x_factor=x_factor,
+                                               y_factor=y_factor,
+                                               bricking=bricking,
+                                               random_seed=[np.random.randint(0xffff) for j in range(4)],
+                                               label='breakout_pop_{}-{}'.format(model_count, i))
+                elif exec_thing == 'logic':
+                    input_model = gym.Logic(truth_table=truth_table,
+                                            input_sequence=test_data,
+                                            stochastic=stochastic,
+                                            score_delay=score_delay,
+                                            rand_seed=[np.random.randint(0xffff) for j in range(4)],
+                                            label='logic_pop_{}-{}'.format(model_count, i))
+                elif exec_thing == 'arms':
+                    input_model = gym.Bandit(arms=test_data,
+                                             reward_delay=exposure_time,
+                                             reward_based=arms_reward,
+                                             rand_seed=[np.random.randint(0xffff) for j in range(4)],
+                                             label='bandit_pop_{}-{}'.format(model_count, i))
+                elif exec_thing == 'recall':
+                    input_model = gym.Recall(rate_on=rate_on,
+                                             rate_off=rate_off,
+                                             pop_size=recall_pop_size,
+                                             prob_command=prob_command,
+                                             prob_in_change=prob_in_change,
+                                             time_period=time_period,
+                                             stochastic=stochastic,
+                                             reward=recall_reward,
+                                             rand_seed=[np.random.randint(0xffff) for j in range(4)],
+                                             label='recall_pop_{}-{}'.format(model_count, i))
+                elif exec_thing == 'mnist':
+                    # shared population already created
+                    None
+                else:
+                    print "Incorrect input model selected"
+                    raise Exception
+                if exec_thing != 'mnist':
+                    input_pop_size = input_model.neurons()
+                    input_pops.append(p.Population(input_pop_size, input_model))
+                else:
+                    input_pops.append(input_model)
                 # added to ensure that the arms and bandit are connected to and from something
                 null_pop = p.Population(1, neuron_type(), label='null{}'.format(i))
-                p.Projection(input_pops[model_count], null_pop, p.AllToAllConnector(), p.StaticSynapse(delay=1))
-                output_pop.append(p.Population(outputs, neuron_type(),
-                                               label='output_pop_{}-{}'.format(model_count, i)))
+                # p.Projection(input_pops[model_count], null_pop, p.AllToAllConnector(), p.StaticSynapse(delay=1))
+                if fast_membrane:
+                    output_pop.append(p.Population(outputs, neuron_type(tau_m=0.5,  # parameters for a fast membrane
+                                                                          tau_refrac=0,
+                                                                          v_thresh=-64,
+                                                                          tau_syn_E=0.5,
+                                                                          tau_syn_I=0.5),
+                                                   label='output_pop_{}-{}'.format(model_count, i)))
+                else:
+                    output_pop.append(p.Population(outputs, neuron_type(),
+                                                   label='output_pop_{}-{}'.format(model_count, i)))
                 if spike_f == 'out' or make_action or exec_thing == 'mnist':
                     output_pop[model_count].record('spikes')
                 if exec_thing != 'mnist':
@@ -547,6 +744,7 @@ def pop_test(connections, test_data, split=4, runtime=41000, exposure_time=200, 
             try_except = max_attempts
             break
         except:
+            failure = traceback.format_exc()
             traceback.print_exc()
             try:
                 print "\nrun 2 seed = ", seed, "\n"
@@ -559,7 +757,7 @@ def pop_test(connections, test_data, split=4, runtime=41000, exposure_time=200, 
             print "failed to run on attempt ", try_except, "\n"  # . total fails: ", all_fails, "\n"
             if try_except >= max_attempts:
                 print "calling it a failed population, splitting and rerunning"
-                return 'fail'
+                return failure
         # p.run(runtime)
         print "\nfinished run seed = ", seed, "\n"
 
@@ -583,6 +781,17 @@ def pop_test(connections, test_data, split=4, runtime=41000, exposure_time=200, 
             inhib_spike_count[i] -= max_fail_score
         else:
             if spike_f or make_action or exec_thing == 'mnist':
+                if exec_thing == 'mnist':
+                    choices = [[0 for j in range(10)] for k in range(data_size)]
+                    spikes = output_pop[i - fails].get_data('spikes').segments[0].spiketrains
+                    neuron_id = 0
+                    for neuron in spikes:
+                        for spike_time in neuron:
+                            time_segment = 0
+                            while float(spike_time) > (time_segment + 1) * (on_duration + off_duration):
+                                time_segment += 1
+                            choices[time_segment][neuron_id] += 1
+                        neuron_id += 1
                 made_action = False
                 if spike_f == 'out' or make_action:
                     spikes = output_pop[i - fails].get_data('spikes').segments[0].spiketrains
@@ -611,7 +820,14 @@ def pop_test(connections, test_data, split=4, runtime=41000, exposure_time=200, 
                 else:
                     inhib_fail += 1
                     # print "had an inhib failure"
-            if exec_thing == 'recall':
+            if exec_thing == 'mnist':
+                score = 0
+                for j in range(len(choices)):
+                    choice = choices[j].index(np.max(choices[j]))
+                    if choice == sub_labels[j]:
+                        score += 1
+                scores.append([[score]])
+            elif exec_thing == 'recall':
                 score = get_scores(game_pop=input_pops[i - fails], simulator=simulator)
                 accuracy = float(score[len(score) - 2][0]) / float(score[len(score) - 1][0])
                 scores.append([[accuracy]])
@@ -643,6 +859,7 @@ def pop_test(connections, test_data, split=4, runtime=41000, exposure_time=200, 
     print config
     return agent_fitness
 
-file_loc = '/home/adampcloth/Documents/Simulations/Motif/failed agents/errors in master/'
-file_name = 'failed agent 0.87180560467 bandit-0.4-10-0 pl ave action shape_f multate dev_n stdev_n 5000 max_d-[3, 10], w_max-0.1, rents-0.2, elite-0.2, psize-100, bins-[10, 375], io-0.95 read-5.npy'
+neuron_choice = 'IF_cond_exp'
+file_loc = '/home/adampcloth/Documents/Simulations/Motif/failed agents/newest pull of master with synapses expander and memory issues and ready state/'
+file_name = 'failed agent 0.7288786784 logic-stoc-[0, 1, 1, 0]-run5000-sample5000 pl ave action shape_f multate max d-50.0 dev_n stdev_n inc-0.8 cond max_d-[3, 10], bins-[10, 375], io-0.95.npy'
 test_failure(file_loc, file_name)
