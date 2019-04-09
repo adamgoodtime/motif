@@ -230,7 +230,7 @@ def bandit(generations):
         if constant_input:
             if stochastic:
                 config += 'stoc '
-            config += 'on-{} off-{} '.format(rate_on, rate_off)
+            config += 'on-{} off-{} r{}'.format(rate_on, rate_off, arms_reward)
         number_of_tests = len(arms)
     elif exec_thing == 'logic':
         stochastic = logic_stochastic
