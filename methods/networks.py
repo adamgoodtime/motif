@@ -638,6 +638,7 @@ class motif_population(object):
                     post_index = in_post
             if self.constant_delays:
                 conn[3] = self.constant_delays
+            conn[3] = int(round(conn[3]))
             if self.plasticity == 'all':
                 conn[4] = 'stdp'
             if pre_ex and post_ex:

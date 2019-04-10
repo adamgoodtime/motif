@@ -48,7 +48,7 @@ constant_delays = 0
 max_delay = 25.0
 base_mutate = 0
 multiple_mutates = True
-exec_thing = 'logic'
+exec_thing = 'arms'
 plasticity = True
 structural = False
 develop_neurons = True
@@ -59,9 +59,9 @@ calcium_tau = 50
 free_label = 0
 
 #arms params
-arms_runtime = 21000
+arms_runtime = 20000
 constant_input = 1
-arms_stochastic = 0
+arms_stochastic = 1
 arms_rate_on = 20
 arms_rate_off = 5
 random_arms = 0
@@ -230,7 +230,7 @@ def bandit(generations):
         if constant_input:
             if stochastic:
                 config += 'stoc '
-            config += 'on-{} off-{} r{}'.format(rate_on, rate_off, arms_reward)
+            config += 'on-{} off-{} r{} '.format(rate_on, rate_off, arms_reward)
         number_of_tests = len(arms)
     elif exec_thing == 'logic':
         stochastic = logic_stochastic
