@@ -1,11 +1,3 @@
-import spynnaker8 as p
-# from spynnaker.pyNN.connections. \
-#     spynnaker_live_spikes_connection import SpynnakerLiveSpikesConnection
-# from spinn_front_end_common.utilities.globals_variables import get_simulator
-#
-# import pylab
-# from spynnaker.pyNN.spynnaker_external_device_plugin_manager import \
-#     SpynnakerExternalDevicePluginManager as ex
 import sys, os
 import time
 import socket
@@ -106,19 +98,26 @@ def write_globals(file_id):
         file.close()
 
 def subprocess_experiments(connections, test_data_set, split=4, runtime=2000, exposure_time=200, noise_rate=100, noise_weight=0.01,
-                  size_f=False, spike_f=False, make_action=True, top=True):
+                  size_f=False, spike_f=False, make_action=True, top=True, parallel=True):
     global new_split
     step_size = int(np.ceil(float(len(connections)) / float(split)))
     if step_size == 0:
         step_size = 1
     if isinstance(test_data_set[0], list):
         connection_threads = []
-        all_configs = [[[connections[x:x + step_size], test_data, split, runtime, exposure_time, noise_rate, noise_weight,
-                         spike_f, make_action, exec_thing, np.random.randint(1000000000)] for x in xrange(0, len(connections), step_size)]
-                       for test_data in test_data_set]
-        for test in all_configs:
-            for set_up in test:
-                connection_threads.append(set_up)
+        if parallel:
+            all_configs = [[[connections[x:x + step_size], test_data, split, runtime, exposure_time, noise_rate, noise_weight,
+                             spike_f, make_action, exec_thing, np.random.randint(1000000000)] for x in xrange(0, len(connections), step_size)]
+                           for test_data in test_data_set]
+            for test in all_configs:
+                for set_up in test:
+                    connection_threads.append(set_up)
+        else:
+            all_configs = [[[connections[x:x + step_size], test_data_set, split, runtime, exposure_time, noise_rate, noise_weight,
+                             spike_f, make_action, exec_thing, np.random.randint(1000000000)] for x in xrange(0, len(connections), step_size)]]
+            for test in all_configs:
+                for set_up in test:
+                    connection_threads.append(set_up)
     else:
         connection_threads = [[connections[x:x + step_size], test_data_set, split, runtime, exposure_time, noise_rate,
                                noise_weight, spike_f, make_action, exec_thing, np.random.randint(1000000000)]
@@ -161,13 +160,16 @@ def subprocess_experiments(connections, test_data_set, split=4, runtime=2000, ex
             if plasticity == 'pall':
                 split = 2
             elif not top:
-                split = agent_pop_size
+                if parallel:
+                    split = agent_pop_size
+                else:
+                    split = int(len(connection_threads[i][0]) / 8)
             else:
                 split = new_split
             print "splitting ", len(connection_threads[i][0]), " into ", split, " pieces"
             problem_arms = connection_threads[i][1]
             pool_result[i] = subprocess_experiments(connection_threads[i][0], problem_arms, split, runtime,
-                                                exposure_time, noise_rate, noise_weight, spike_f, top=False)
+                                                exposure_time, noise_rate, noise_weight, spike_f, top=False, parallel=parallel, make_action=make_action)
         elif isinstance(pool_result[i], str) and len(connection_threads[i][0]) == 1:
             new_fail = False
             connection_threads[i].append(pool_result[i])
@@ -232,7 +234,7 @@ def print_fitnesses(fitnesses):
 
 if threading_tests:
     fitnesses = subprocess_experiments(connections, test_data_set, split, runtime, exposure_time, noise_rate, noise_weight,
-                                   size_f, spike_f, make_action, True)
+                                   size_f, spike_f, make_action, True, parallel)
 else:
     fitnesses = pop_test(connections, test_data=arms[0], split=split, runtime=runtime, exposure_time=exposure_time,
                          noise_rate=noise_rate, noise_weight=noise_weight, spike_f=spike_f,

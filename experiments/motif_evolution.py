@@ -57,6 +57,7 @@ neuron_type = 'IF_cond_exp'
 max_input_current = 0.8
 calcium_tau = 50
 free_label = 0
+parallel = False
 
 #arms params
 arms_runtime = 20000
@@ -77,7 +78,7 @@ for i in range(arm_len):
     # for arm in list(itertools.permutations([arm1, arm2, arm3])):
     #     arms.append(list(arm))
 # arms = [[0.4, 0.6], [0.6, 0.4], [0.3, 0.7], [0.7, 0.3], [0.2, 0.8], [0.8, 0.2], [0.1, 0.9], [0.9, 0.1]]
-# arms = [[0.4, 0.6], [0.6, 0.4], [0.3, 0.7], [0.7, 0.3], [0.2, 0.8], [0.8, 0.2], [0.1, 0.9], [0.9, 0.1], [0, 1], [1, 0]]
+arms = [[0.4, 0.6], [0.6, 0.4], [0.3, 0.7], [0.7, 0.3], [0.2, 0.8], [0.8, 0.2], [0.1, 0.9], [0.9, 0.1], [0, 1], [1, 0]]
 '''top_prob = 1
 low_prob = 0
 med_prob = 0.1
@@ -179,26 +180,27 @@ def bandit(generations):
         number_of_tests = 'something'
     elif exec_thing == 'pen':
         runtime = pendulum_runtime
-        constant_delays = pendulum_delays
+        # constant_delays = pendulum_delays
         encoding = 1
         inputs = 4
         if encoding != 0:
             inputs *= number_of_bins
-        if no_v:
-            inputs /= 2
         outputs = 2
         config = 'pend-an{}-{}-F{}-R{}-B{}-O{} '.format(pole_angle[0], len(pole_angle), force_increments, max_firing_rate, number_of_bins, bin_overlap)
+        if no_v:
+            inputs /= 2
+            config += "\b-no_v "
         test_data_set = pole_angle
         number_of_tests = len(pole_angle)
     elif exec_thing == 'rank pen':
         runtime = pendulum_runtime
         constant_delays = pendulum_delays
         inputs = 4 * number_of_bins
+        outputs = force_increments
+        config = 'rank-pend-an{}-{}-F{}-R{}-B{}-O{}-E{} '.format(pole_angle[0], len(pole_angle), force_increments, max_firing_rate, number_of_bins, bin_overlap, encoding)
         if no_v:
             config += "\b-no_v "
             inputs /= 2
-        outputs = force_increments
-        config = 'rank-pend-an{}-{}-F{}-R{}-B{}-O{}-E{} '.format(pole_angle[0], len(pole_angle), force_increments, max_firing_rate, number_of_bins, bin_overlap, encoding)
         test_data_set = pole_angle
         number_of_tests = len(pole_angle)
     elif exec_thing == 'double pen':

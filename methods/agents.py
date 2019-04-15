@@ -1,11 +1,3 @@
-import spynnaker8 as p
-# from spynnaker.pyNN.connections. \
-#     spynnaker_live_spikes_connection import SpynnakerLiveSpikesConnection
-# from spinn_front_end_common.utilities.globals_variables import get_simulator
-#
-# import pylab
-# from spynnaker.pyNN.spynnaker_external_device_plugin_manager import \
-#     SpynnakerExternalDevicePluginManager as ex
 import sys, os
 import time
 import socket

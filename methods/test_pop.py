@@ -168,483 +168,494 @@ def pop_test(connections, test_data, split=4, runtime=2000, exposure_time=200, n
             sub_labels = labels[starting_point: starting_point + data_size]
             mnist_spikes = mnist_poisson_gen(sub_data, 28, 28, max_freq, on_duration, off_duration)
             input_model = p.Population(28*28, p.SpikeSourceArray(spike_times=mnist_spikes), label='MNIST_input_pop')
-        for i in range(len(connections)):
-            [in2e, in2i, in2in, in2out, e2in, i2in, e_size, e2e, e2i, i_size, # turned off connections to inputs except output
-             i2e, i2i, e2out, i2out, out2e, out2i, out2in, out2out, excite_params, inhib_params] = connections[i]
-            if len(in2e) == 0 and len(in2i) == 0 and len(in2out) == 0:
-                failures.append(i)
-                print "agent {} was not properly connected to the game".format(i)
+        if isinstance(test_data[0], list):
+            if exec_thing == 'arms':
+                if len(test_data) > 2:
+                    test_data_set = test_data
+                else:
+                    test_data_set = [test_data]
             else:
-                model_count += 1
-                if exec_thing == 'pen':
-                    input_model = gym.Pendulum(encoding=encoding,
-                                               time_increment=time_increment,
-                                               pole_length=pole_length,
-                                               pole_angle=test_data[0],
-                                               reward_based=reward_based,
-                                               force_increments=force_increments,
-                                               max_firing_rate=max_firing_rate,
-                                               number_of_bins=number_of_bins,
-                                               central=central,
-                                               bin_overlap=bin_overlap,
-                                               tau_force=tau_force,
-                                               rand_seed=[np.random.randint(0xffff) for j in range(4)],
-                                               label='pendulum_pop_{}-{}'.format(model_count, i))
-                elif exec_thing == 'rank pen':
-                    input_model = Rank_Pendulum(encoding=encoding,
-                                                time_increment=time_increment,
-                                                pole_length=pole_length,
-                                                pole_angle=test_data[0],
-                                                reward_based=reward_based,
-                                                force_increments=force_increments,
-                                                max_firing_rate=max_firing_rate,
-                                                number_of_bins=number_of_bins,
-                                                central=central,
-                                                bin_overlap=bin_overlap,
-                                                tau_force=tau_force,
+                test_data_set = test_data
+        else:
+            test_data_set = [test_data]
+        for test_data in test_data_set:
+            for i in range(len(connections)):
+                [in2e, in2i, in2in, in2out, e2in, i2in, e_size, e2e, e2i, i_size, # turned off connections to inputs except output
+                 i2e, i2i, e2out, i2out, out2e, out2i, out2in, out2out, excite_params, inhib_params] = connections[i]
+                if len(in2e) == 0 and len(in2i) == 0 and len(in2out) == 0:
+                    failures.append(i)
+                    print "agent {} was not properly connected to the game".format(i)
+                else:
+                    model_count += 1
+                    if exec_thing == 'pen':
+                        input_model = gym.Pendulum(encoding=encoding,
+                                                   time_increment=time_increment,
+                                                   pole_length=pole_length,
+                                                   pole_angle=test_data[0],
+                                                   reward_based=reward_based,
+                                                   force_increments=force_increments,
+                                                   max_firing_rate=max_firing_rate,
+                                                   number_of_bins=number_of_bins,
+                                                   central=central,
+                                                   bin_overlap=bin_overlap,
+                                                   tau_force=tau_force,
+                                                   rand_seed=[np.random.randint(0xffff) for j in range(4)],
+                                                   label='pendulum_pop_{}-{}'.format(model_count, i))
+                    elif exec_thing == 'rank pen':
+                        input_model = Rank_Pendulum(encoding=encoding,
+                                                    time_increment=time_increment,
+                                                    pole_length=pole_length,
+                                                    pole_angle=test_data[0],
+                                                    reward_based=reward_based,
+                                                    force_increments=force_increments,
+                                                    max_firing_rate=max_firing_rate,
+                                                    number_of_bins=number_of_bins,
+                                                    central=central,
+                                                    bin_overlap=bin_overlap,
+                                                    tau_force=tau_force,
+                                                    rand_seed=[np.random.randint(0xffff) for j in range(4)],
+                                                    label='rank_pendulum_pop_{}-{}'.format(model_count, i))
+                    elif exec_thing == 'double pen':
+                        input_model = gym.DoublePendulum(encoding=encoding,
+                                                         time_increment=time_increment,
+                                                         pole_length=pole_length,
+                                                         pole_angle=test_data[0],
+                                                         pole2_length=pole2_length,
+                                                         pole2_angle=pole2_angle,
+                                                         reward_based=reward_based,
+                                                         force_increments=force_increments,
+                                                         max_firing_rate=max_firing_rate,
+                                                         number_of_bins=number_of_bins,
+                                                         central=central,
+                                                         bin_overlap=bin_overlap,
+                                                         tau_force=tau_force,
+                                                         rand_seed=[np.random.randint(0xffff) for j in range(4)],
+                                                         label='double_pendulum_pop_{}-{}'.format(model_count, i))
+                    elif exec_thing == 'bout':
+                        input_model = gym.Breakout(x_factor=x_factor,
+                                                   y_factor=y_factor,
+                                                   bricking=bricking,
+                                                   random_seed=[np.random.randint(0xffff) for j in range(4)],
+                                                   label='breakout_pop_{}-{}'.format(model_count, i))
+                    elif exec_thing == 'logic':
+                        input_model = gym.Logic(truth_table=truth_table,
+                                                input_sequence=test_data,
+                                                stochastic=stochastic,
+                                                score_delay=score_delay,
+                                                rate_on=rate_on,
+                                                rate_off=rate_off,
                                                 rand_seed=[np.random.randint(0xffff) for j in range(4)],
-                                                label='rank_pendulum_pop_{}-{}'.format(model_count, i))
-                elif exec_thing == 'double pen':
-                    input_model = gym.DoublePendulum(encoding=encoding,
-                                                     time_increment=time_increment,
-                                                     pole_length=pole_length,
-                                                     pole_angle=test_data[0],
-                                                     pole2_length=pole2_length,
-                                                     pole2_angle=pole2_angle,
-                                                     reward_based=reward_based,
-                                                     force_increments=force_increments,
-                                                     max_firing_rate=max_firing_rate,
-                                                     number_of_bins=number_of_bins,
-                                                     central=central,
-                                                     bin_overlap=bin_overlap,
-                                                     tau_force=tau_force,
-                                                     rand_seed=[np.random.randint(0xffff) for j in range(4)],
-                                                     label='double_pendulum_pop_{}-{}'.format(model_count, i))
-                elif exec_thing == 'bout':
-                    input_model = gym.Breakout(x_factor=x_factor,
-                                               y_factor=y_factor,
-                                               bricking=bricking,
-                                               random_seed=[np.random.randint(0xffff) for j in range(4)],
-                                               label='breakout_pop_{}-{}'.format(model_count, i))
-                elif exec_thing == 'logic':
-                    input_model = gym.Logic(truth_table=truth_table,
-                                            input_sequence=test_data,
-                                            stochastic=stochastic,
-                                            score_delay=score_delay,
-                                            rate_on=rate_on,
-                                            rate_off=rate_off,
-                                            rand_seed=[np.random.randint(0xffff) for j in range(4)],
-                                            label='logic_pop_{}-{}'.format(model_count, i))
-                elif exec_thing == 'arms':
-                    input_model = gym.Bandit(arms=test_data,
-                                             reward_delay=exposure_time,
-                                             reward_based=arms_reward,
-                                             stochastic=stochastic,
-                                             constant_input=constant_input,
-                                             rate_on=rate_on,
-                                             rate_off=rate_off,
-                                             rand_seed=[np.random.randint(0xffff) for j in range(4)],
-                                             label='bandit_pop_{}-{}'.format(model_count, i))
-                elif exec_thing == 'recall':
-                    input_model = gym.Recall(rate_on=rate_on,
-                                             rate_off=rate_off,
-                                             pop_size=recall_pop_size,
-                                             prob_command=prob_command,
-                                             prob_in_change=prob_in_change,
-                                             time_period=time_period,
-                                             stochastic=stochastic,
-                                             reward=recall_reward,
-                                             rand_seed=[np.random.randint(0xffff) for j in range(4)],
-                                             label='recall_pop_{}-{}'.format(model_count, i))
-                elif exec_thing == 'mnist':
-                    # shared population already created
-                    None
-                else:
-                    print "Incorrect input model selected"
-                    raise Exception
-                if exec_thing != 'mnist':
-                    input_pop_size = input_model.neurons()
-                    input_pops.append(p.Population(input_pop_size, input_model))
-                else:
-                    input_pops.append(input_model)
-                # added to ensure that the arms and bandit are connected to and from something
-                # null_pop = p.Population(1, neuron_type(), label='null{}'.format(i))
-                # p.Projection(input_pops[model_count], null_pop, p.AllToAllConnector(), p.StaticSynapse(delay=1))
-                if fast_membrane:
-                    output_pop.append(p.Population(outputs, neuron_type(tau_m=0.5,  # parameters for a fast membrane
-                                                                        tau_refrac=0,
-                                                                        v_thresh=-64,
-                                                                        tau_syn_E=0.5,
-                                                                        tau_syn_I=0.5),
-                                                   label='output_pop_{}-{}'.format(model_count, i)))
-                else:
-                    output_pop.append(p.Population(outputs, neuron_type(),
-                                                   label='output_pop_{}-{}'.format(model_count, i)))
-                if spike_f == 'out' or make_action or exec_thing == 'mnist':
-                    output_pop[model_count].record('spikes')
-                if exec_thing != 'mnist':
-                    p.Projection(output_pop[model_count], input_pops[model_count], p.AllToAllConnector())
-                if e_size > 0:
-                    excite_count += 1
-                    excite.append(
-                        p.Population(e_size, neuron_type(**excite_params),
-                                     label='excite_pop_{}-{}'.format(excite_count, i)))
-                    if noise_rate:
-                        excite_noise = p.Population(e_size, p.SpikeSourcePoisson(rate=noise_rate))
-                        p.Projection(excite_noise, excite[excite_count], p.OneToOneConnector(),
-                                     p.StaticSynapse(weight=noise_weight), receptor_type='excitatory')
-                    if spike_f:
-                        excite[excite_count].record('spikes')
-                    excite_marker.append(i)
-                if i_size > 0:
-                    inhib_count += 1
-                    inhib.append(p.Population(i_size, neuron_type(**inhib_params),
-                                              label='inhib_pop_{}-{}'.format(inhib_count, i)))
-                    if noise_rate:
-                        inhib_noise = p.Population(i_size, p.SpikeSourcePoisson(rate=noise_rate))
-                        p.Projection(inhib_noise, inhib[inhib_count], p.OneToOneConnector(),
-                                     p.StaticSynapse(weight=noise_weight), receptor_type='excitatory')
-                    if spike_f:
-                        inhib[inhib_count].record('spikes')
-                    inhib_marker.append(i)
-                stdp_model = p.STDPMechanism(
-                    timing_dependence=p.SpikePairRule(
-                        tau_plus=20., tau_minus=20.0, A_plus=0.02, A_minus=0.02),
-                    weight_dependence=p.AdditiveWeightDependence(w_min=0, w_max=weight_max))
-                if len(in2e) != 0:
-                    [in_ex, in_in] = split_ex_in(in2e)
-                    if len(in_ex) != 0:
-                        [stdp, structural, non_plastic] = split_plastic(in_ex)
+                                                label='logic_pop_{}-{}'.format(model_count, i))
+                    elif exec_thing == 'arms':
+                        input_model = gym.Bandit(arms=test_data,
+                                                 reward_delay=exposure_time,
+                                                 reward_based=arms_reward,
+                                                 stochastic=stochastic,
+                                                 constant_input=constant_input,
+                                                 rate_on=rate_on,
+                                                 rate_off=rate_off,
+                                                 rand_seed=[np.random.randint(0xffff) for j in range(4)],
+                                                 label='bandit_pop_{}-{}'.format(model_count, i))
+                    elif exec_thing == 'recall':
+                        input_model = gym.Recall(rate_on=rate_on,
+                                                 rate_off=rate_off,
+                                                 pop_size=recall_pop_size,
+                                                 prob_command=prob_command,
+                                                 prob_in_change=prob_in_change,
+                                                 time_period=time_period,
+                                                 stochastic=stochastic,
+                                                 reward=recall_reward,
+                                                 rand_seed=[np.random.randint(0xffff) for j in range(4)],
+                                                 label='recall_pop_{}-{}'.format(model_count, i))
+                    elif exec_thing == 'mnist':
+                        # shared population already created
+                        None
+                    else:
+                        print "Incorrect input model selected"
+                        raise Exception
+                    if exec_thing != 'mnist':
+                        input_pop_size = input_model.neurons()
+                        input_pops.append(p.Population(input_pop_size, input_model))
+                    else:
+                        input_pops.append(input_model)
+                    # added to ensure that the arms and bandit are connected to and from something
+                    # null_pop = p.Population(1, neuron_type(), label='null{}'.format(i))
+                    # p.Projection(input_pops[model_count], null_pop, p.AllToAllConnector(), p.StaticSynapse(delay=1))
+                    if fast_membrane:
+                        output_pop.append(p.Population(outputs, neuron_type(tau_m=0.5,  # parameters for a fast membrane
+                                                                            tau_refrac=0,
+                                                                            v_thresh=-64,
+                                                                            tau_syn_E=0.5,
+                                                                            tau_syn_I=0.5),
+                                                       label='output_pop_{}-{}'.format(model_count, i)))
+                    else:
+                        output_pop.append(p.Population(outputs, neuron_type(),
+                                                       label='output_pop_{}-{}'.format(model_count, i)))
+                    if spike_f == 'out' or make_action or exec_thing == 'mnist':
+                        output_pop[model_count].record('spikes')
+                    if exec_thing != 'mnist':
+                        p.Projection(output_pop[model_count], input_pops[model_count], p.AllToAllConnector())
+                    if e_size > 0:
+                        excite_count += 1
+                        excite.append(
+                            p.Population(e_size, neuron_type(**excite_params),
+                                         label='excite_pop_{}-{}'.format(excite_count, i)))
+                        if noise_rate:
+                            excite_noise = p.Population(e_size, p.SpikeSourcePoisson(rate=noise_rate))
+                            p.Projection(excite_noise, excite[excite_count], p.OneToOneConnector(),
+                                         p.StaticSynapse(weight=noise_weight), receptor_type='excitatory')
+                        if spike_f:
+                            excite[excite_count].record('spikes')
+                        excite_marker.append(i)
+                    if i_size > 0:
+                        inhib_count += 1
+                        inhib.append(p.Population(i_size, neuron_type(**inhib_params),
+                                                  label='inhib_pop_{}-{}'.format(inhib_count, i)))
+                        if noise_rate:
+                            inhib_noise = p.Population(i_size, p.SpikeSourcePoisson(rate=noise_rate))
+                            p.Projection(inhib_noise, inhib[inhib_count], p.OneToOneConnector(),
+                                         p.StaticSynapse(weight=noise_weight), receptor_type='excitatory')
+                        if spike_f:
+                            inhib[inhib_count].record('spikes')
+                        inhib_marker.append(i)
+                    stdp_model = p.STDPMechanism(
+                        timing_dependence=p.SpikePairRule(
+                            tau_plus=20., tau_minus=20.0, A_plus=0.02, A_minus=0.02),
+                        weight_dependence=p.AdditiveWeightDependence(w_min=0, w_max=weight_max))
+                    if len(in2e) != 0:
+                        [in_ex, in_in] = split_ex_in(in2e)
+                        if len(in_ex) != 0:
+                            [stdp, structural, non_plastic] = split_plastic(in_ex)
+                            if len(stdp) != 0:
+                                p.Projection(input_pops[model_count], excite[excite_count],
+                                             p.FromListConnector(stdp),
+                                             receptor_type='excitatory',
+                                             synapse_type=stdp_model)
+                            if len(structural) != 0:
+                                p.Projection(input_pops[model_count], excite[excite_count],
+                                             p.FromListConnector(structural),
+                                             receptor_type='excitatory',
+                                             synapse_type=return_struct_model(e_size, stdp_model))
+                            if len(non_plastic) != 0:
+                                p.Projection(input_pops[model_count], excite[excite_count],
+                                             p.FromListConnector(non_plastic),
+                                             receptor_type='excitatory')
+                        if len(in_in) != 0:
+                            [stdp, structural, non_plastic] = split_plastic(in_in)
+                            if len(stdp) != 0:
+                                p.Projection(input_pops[model_count], excite[excite_count],
+                                             p.FromListConnector(stdp),
+                                             receptor_type='inhibitory',
+                                             synapse_type=stdp_model)
+                            if len(structural) != 0:
+                                p.Projection(input_pops[model_count], excite[excite_count],
+                                             p.FromListConnector(structural),
+                                             receptor_type='inhibitory',
+                                             synapse_type=return_struct_model(e_size, stdp_model))
+                            if len(non_plastic) != 0:
+                                p.Projection(input_pops[model_count], excite[excite_count],
+                                             p.FromListConnector(non_plastic),
+                                             receptor_type='inhibitory')
+                    if len(in2i) != 0:
+                        [in_ex, in_in] = split_ex_in(in2i)
+                        if len(in_ex) != 0:
+                            [stdp, structural, non_plastic] = split_plastic(in_ex)
+                            if len(stdp) != 0:
+                                p.Projection(input_pops[model_count], inhib[inhib_count],
+                                             p.FromListConnector(stdp),
+                                             receptor_type='excitatory',
+                                             synapse_type=stdp_model)
+                            if len(structural) != 0:
+                                p.Projection(input_pops[model_count], inhib[inhib_count],
+                                             p.FromListConnector(structural),
+                                             receptor_type='excitatory',
+                                             synapse_type=return_struct_model(i_size, stdp_model))
+                            if len(non_plastic) != 0:
+                                p.Projection(input_pops[model_count], inhib[inhib_count],
+                                             p.FromListConnector(non_plastic),
+                                             receptor_type='excitatory')
+                        if len(in_in) != 0:
+                            [stdp, structural, non_plastic] = split_plastic(in_in)
+                            if len(stdp) != 0:
+                                p.Projection(input_pops[model_count], inhib[inhib_count],
+                                             p.FromListConnector(stdp),
+                                             receptor_type='inhibitory',
+                                             synapse_type=stdp_model)
+                            if len(structural) != 0:
+                                p.Projection(input_pops[model_count], inhib[inhib_count],
+                                             p.FromListConnector(structural),
+                                             receptor_type='inhibitory',
+                                             synapse_type=return_struct_model(i_size, stdp_model))
+                            if len(non_plastic) != 0:
+                                p.Projection(input_pops[model_count], inhib[inhib_count],
+                                             p.FromListConnector(non_plastic),
+                                             receptor_type='inhibitory')
+                    if len(in2out) != 0:
+                        [in_ex, in_in] = split_ex_in(in2out)
+                        if len(in_ex) != 0:
+                            [stdp, structural, non_plastic] = split_plastic(in_ex)
+                            if len(stdp) != 0:
+                                p.Projection(input_pops[model_count], output_pop[model_count],
+                                             p.FromListConnector(stdp),
+                                             receptor_type='excitatory',
+                                             synapse_type=stdp_model)
+                            if len(structural) != 0:
+                                p.Projection(input_pops[model_count], output_pop[model_count],
+                                             p.FromListConnector(structural),
+                                             receptor_type='excitatory',
+                                             synapse_type=return_struct_model(outputs, stdp_model))
+                            if len(non_plastic) != 0:
+                                p.Projection(input_pops[model_count], output_pop[model_count],
+                                             p.FromListConnector(non_plastic),
+                                             receptor_type='excitatory')
+                        if len(in_in) != 0:
+                            [stdp, structural, non_plastic] = split_plastic(in_in)
+                            if len(stdp) != 0:
+                                p.Projection(input_pops[model_count], output_pop[model_count],
+                                             p.FromListConnector(stdp),
+                                             receptor_type='inhibitory',
+                                             synapse_type=stdp_model)
+                            if len(structural) != 0:
+                                p.Projection(input_pops[model_count], output_pop[model_count],
+                                             p.FromListConnector(structural),
+                                             receptor_type='inhibitory',
+                                             synapse_type=return_struct_model(outputs, stdp_model))
+                            if len(non_plastic) != 0:
+                                p.Projection(input_pops[model_count], output_pop[model_count],
+                                             p.FromListConnector(non_plastic),
+                                             receptor_type='inhibitory')
+                    if len(e2e) != 0:
+                        [stdp, structural, non_plastic] = split_plastic(e2e)
                         if len(stdp) != 0:
-                            p.Projection(input_pops[model_count], excite[excite_count], 
+                            p.Projection(excite[excite_count], excite[excite_count],
                                          p.FromListConnector(stdp),
-                                         receptor_type='excitatory', 
+                                         receptor_type='excitatory',
                                          synapse_type=stdp_model)
                         if len(structural) != 0:
-                            p.Projection(input_pops[model_count], excite[excite_count],
+                            p.Projection(excite[excite_count], excite[excite_count],
                                          p.FromListConnector(structural),
                                          receptor_type='excitatory',
                                          synapse_type=return_struct_model(e_size, stdp_model))
                         if len(non_plastic) != 0:
-                            p.Projection(input_pops[model_count], excite[excite_count], 
+                            p.Projection(excite[excite_count], excite[excite_count],
                                          p.FromListConnector(non_plastic),
                                          receptor_type='excitatory')
-                    if len(in_in) != 0:
-                        [stdp, structural, non_plastic] = split_plastic(in_in)
+                    if len(e2i) != 0:
+                        [stdp, structural, non_plastic] = split_plastic(e2i)
                         if len(stdp) != 0:
-                            p.Projection(input_pops[model_count], excite[excite_count], 
+                            p.Projection(excite[excite_count], inhib[inhib_count],
                                          p.FromListConnector(stdp),
-                                         receptor_type='inhibitory', 
+                                         receptor_type='excitatory',
                                          synapse_type=stdp_model)
                         if len(structural) != 0:
-                            p.Projection(input_pops[model_count], excite[excite_count],
+                            p.Projection(excite[excite_count], inhib[inhib_count],
+                                         p.FromListConnector(structural),
+                                         receptor_type='excitatory',
+                                         synapse_type=return_struct_model(i_size, stdp_model))
+                        if len(non_plastic) != 0:
+                            p.Projection(excite[excite_count], inhib[inhib_count],
+                                         p.FromListConnector(non_plastic),
+                                         receptor_type='excitatory')
+                    if len(i2e) != 0:
+                        [stdp, structural, non_plastic] = split_plastic(i2e)
+                        if len(stdp) != 0:
+                            p.Projection(inhib[inhib_count], excite[excite_count],
+                                         p.FromListConnector(stdp),
+                                         receptor_type='inhibitory',
+                                         synapse_type=stdp_model)
+                        if len(structural) != 0:
+                            p.Projection(inhib[inhib_count], excite[excite_count],
                                          p.FromListConnector(structural),
                                          receptor_type='inhibitory',
                                          synapse_type=return_struct_model(e_size, stdp_model))
                         if len(non_plastic) != 0:
-                            p.Projection(input_pops[model_count], excite[excite_count], 
+                            p.Projection(inhib[inhib_count], excite[excite_count],
                                          p.FromListConnector(non_plastic),
                                          receptor_type='inhibitory')
-                if len(in2i) != 0:
-                    [in_ex, in_in] = split_ex_in(in2i)
-                    if len(in_ex) != 0:
-                        [stdp, structural, non_plastic] = split_plastic(in_ex)
+                    if len(i2i) != 0:
+                        [stdp, structural, non_plastic] = split_plastic(i2i)
                         if len(stdp) != 0:
-                            p.Projection(input_pops[model_count], inhib[inhib_count], 
+                            p.Projection(inhib[inhib_count], inhib[inhib_count],
                                          p.FromListConnector(stdp),
-                                         receptor_type='excitatory', 
+                                         receptor_type='inhibitory',
                                          synapse_type=stdp_model)
                         if len(structural) != 0:
-                            p.Projection(input_pops[model_count], inhib[inhib_count],
-                                         p.FromListConnector(structural),
-                                         receptor_type='excitatory',
-                                         synapse_type=return_struct_model(i_size, stdp_model))
-                        if len(non_plastic) != 0:
-                            p.Projection(input_pops[model_count], inhib[inhib_count], 
-                                         p.FromListConnector(non_plastic),
-                                         receptor_type='excitatory')
-                    if len(in_in) != 0:
-                        [stdp, structural, non_plastic] = split_plastic(in_in)
-                        if len(stdp) != 0:
-                            p.Projection(input_pops[model_count], inhib[inhib_count], 
-                                         p.FromListConnector(stdp),
-                                         receptor_type='inhibitory', 
-                                         synapse_type=stdp_model)
-                        if len(structural) != 0:
-                            p.Projection(input_pops[model_count], inhib[inhib_count],
+                            p.Projection(inhib[inhib_count], inhib[inhib_count],
                                          p.FromListConnector(structural),
                                          receptor_type='inhibitory',
                                          synapse_type=return_struct_model(i_size, stdp_model))
                         if len(non_plastic) != 0:
-                            p.Projection(input_pops[model_count], inhib[inhib_count], 
+                            p.Projection(inhib[inhib_count], inhib[inhib_count],
                                          p.FromListConnector(non_plastic),
                                          receptor_type='inhibitory')
-                if len(in2out) != 0:
-                    [in_ex, in_in] = split_ex_in(in2out)
-                    if len(in_ex) != 0:
-                        [stdp, structural, non_plastic] = split_plastic(in_ex)
+                    if len(e2out) != 0:
+                        [stdp, structural, non_plastic] = split_plastic(e2out)
                         if len(stdp) != 0:
-                            p.Projection(input_pops[model_count], output_pop[model_count], 
+                            p.Projection(excite[excite_count], output_pop[model_count],
                                          p.FromListConnector(stdp),
-                                         receptor_type='excitatory', 
+                                         receptor_type='excitatory',
                                          synapse_type=stdp_model)
                         if len(structural) != 0:
-                            p.Projection(input_pops[model_count], output_pop[model_count],
+                            p.Projection(excite[excite_count], output_pop[model_count],
                                          p.FromListConnector(structural),
                                          receptor_type='excitatory',
                                          synapse_type=return_struct_model(outputs, stdp_model))
                         if len(non_plastic) != 0:
-                            p.Projection(input_pops[model_count], output_pop[model_count], 
+                            p.Projection(excite[excite_count], output_pop[model_count],
                                          p.FromListConnector(non_plastic),
                                          receptor_type='excitatory')
-                    if len(in_in) != 0:
-                        [stdp, structural, non_plastic] = split_plastic(in_in)
+                    if len(i2out) != 0:
+                        [stdp, structural, non_plastic] = split_plastic(i2out)
                         if len(stdp) != 0:
-                            p.Projection(input_pops[model_count], output_pop[model_count], 
+                            p.Projection(inhib[inhib_count], output_pop[model_count],
                                          p.FromListConnector(stdp),
-                                         receptor_type='inhibitory', 
+                                         receptor_type='inhibitory',
                                          synapse_type=stdp_model)
                         if len(structural) != 0:
-                            p.Projection(input_pops[model_count], output_pop[model_count],
+                            p.Projection(inhib[inhib_count], output_pop[model_count],
                                          p.FromListConnector(structural),
                                          receptor_type='inhibitory',
                                          synapse_type=return_struct_model(outputs, stdp_model))
                         if len(non_plastic) != 0:
-                            p.Projection(input_pops[model_count], output_pop[model_count], 
+                            p.Projection(inhib[inhib_count], output_pop[model_count],
                                          p.FromListConnector(non_plastic),
                                          receptor_type='inhibitory')
-                if len(e2e) != 0:
-                    [stdp, structural, non_plastic] = split_plastic(e2e)
-                    if len(stdp) != 0:
-                        p.Projection(excite[excite_count], excite[excite_count], 
-                                     p.FromListConnector(stdp),
-                                     receptor_type='excitatory', 
-                                     synapse_type=stdp_model)
-                    if len(structural) != 0:
-                        p.Projection(excite[excite_count], excite[excite_count],
-                                     p.FromListConnector(structural),
-                                     receptor_type='excitatory',
-                                     synapse_type=return_struct_model(e_size, stdp_model))
-                    if len(non_plastic) != 0:
-                        p.Projection(excite[excite_count], excite[excite_count], 
-                                     p.FromListConnector(non_plastic),
-                                     receptor_type='excitatory')
-                if len(e2i) != 0:
-                    [stdp, structural, non_plastic] = split_plastic(e2i)
-                    if len(stdp) != 0:
-                        p.Projection(excite[excite_count], inhib[inhib_count], 
-                                     p.FromListConnector(stdp),
-                                     receptor_type='excitatory', 
-                                     synapse_type=stdp_model)
-                    if len(structural) != 0:
-                        p.Projection(excite[excite_count], inhib[inhib_count],
-                                     p.FromListConnector(structural),
-                                     receptor_type='excitatory',
-                                     synapse_type=return_struct_model(i_size, stdp_model))
-                    if len(non_plastic) != 0:
-                        p.Projection(excite[excite_count], inhib[inhib_count], 
-                                     p.FromListConnector(non_plastic),
-                                     receptor_type='excitatory')
-                if len(i2e) != 0:
-                    [stdp, structural, non_plastic] = split_plastic(i2e)
-                    if len(stdp) != 0:
-                        p.Projection(inhib[inhib_count], excite[excite_count], 
-                                     p.FromListConnector(stdp),
-                                     receptor_type='inhibitory', 
-                                     synapse_type=stdp_model)
-                    if len(structural) != 0:
-                        p.Projection(inhib[inhib_count], excite[excite_count],
-                                     p.FromListConnector(structural),
-                                     receptor_type='inhibitory',
-                                     synapse_type=return_struct_model(e_size, stdp_model))
-                    if len(non_plastic) != 0:
-                        p.Projection(inhib[inhib_count], excite[excite_count], 
-                                     p.FromListConnector(non_plastic),
-                                     receptor_type='inhibitory')
-                if len(i2i) != 0:
-                    [stdp, structural, non_plastic] = split_plastic(i2i)
-                    if len(stdp) != 0:
-                        p.Projection(inhib[inhib_count], inhib[inhib_count], 
-                                     p.FromListConnector(stdp),
-                                     receptor_type='inhibitory',
-                                     synapse_type=stdp_model)
-                    if len(structural) != 0:
-                        p.Projection(inhib[inhib_count], inhib[inhib_count],
-                                     p.FromListConnector(structural),
-                                     receptor_type='inhibitory',
-                                     synapse_type=return_struct_model(i_size, stdp_model))
-                    if len(non_plastic) != 0:
-                        p.Projection(inhib[inhib_count], inhib[inhib_count], 
-                                     p.FromListConnector(non_plastic),
-                                     receptor_type='inhibitory')
-                if len(e2out) != 0:
-                    [stdp, structural, non_plastic] = split_plastic(e2out)
-                    if len(stdp) != 0:
-                        p.Projection(excite[excite_count], output_pop[model_count], 
-                                     p.FromListConnector(stdp),
-                                     receptor_type='excitatory', 
-                                     synapse_type=stdp_model)
-                    if len(structural) != 0:
-                        p.Projection(excite[excite_count], output_pop[model_count],
-                                     p.FromListConnector(structural),
-                                     receptor_type='excitatory',
-                                     synapse_type=return_struct_model(outputs, stdp_model))
-                    if len(non_plastic) != 0:
-                        p.Projection(excite[excite_count], output_pop[model_count], 
-                                     p.FromListConnector(non_plastic),
-                                     receptor_type='excitatory')
-                if len(i2out) != 0:
-                    [stdp, structural, non_plastic] = split_plastic(i2out)
-                    if len(stdp) != 0:
-                        p.Projection(inhib[inhib_count], output_pop[model_count], 
-                                     p.FromListConnector(stdp),
-                                     receptor_type='inhibitory', 
-                                     synapse_type=stdp_model)
-                    if len(structural) != 0:
-                        p.Projection(inhib[inhib_count], output_pop[model_count],
-                                     p.FromListConnector(structural),
-                                     receptor_type='inhibitory',
-                                     synapse_type=return_struct_model(outputs, stdp_model))
-                    if len(non_plastic) != 0:
-                        p.Projection(inhib[inhib_count], output_pop[model_count], 
-                                     p.FromListConnector(non_plastic),
-                                     receptor_type='inhibitory')
-                if len(out2e) != 0:
-                    [in_ex, in_in] = split_ex_in(out2e)
-                    if len(in_ex) != 0:
-                        [stdp, structural, non_plastic] = split_plastic(in_ex)
-                        if len(stdp) != 0:
-                            p.Projection(output_pop[model_count], excite[excite_count], 
-                                         p.FromListConnector(stdp),
-                                         receptor_type='excitatory', 
-                                         synapse_type=stdp_model)
-                        if len(structural) != 0:
-                            p.Projection(output_pop[model_count], excite[excite_count],
-                                         p.FromListConnector(structural),
-                                         receptor_type='excitatory',
-                                         synapse_type=return_struct_model(e_size, stdp_model))
-                        if len(non_plastic) != 0:
-                            p.Projection(output_pop[model_count], excite[excite_count],
-                                         p.FromListConnector(non_plastic),
-                                         receptor_type='excitatory')
-                    if len(in_in) != 0:
-                        [stdp, structural, non_plastic] = split_plastic(in_in)
-                        if len(stdp) != 0:
-                            p.Projection(output_pop[model_count], excite[excite_count], 
-                                         p.FromListConnector(stdp),
-                                         receptor_type='inhibitory', 
-                                         synapse_type=stdp_model)
-                        if len(structural) != 0:
-                            p.Projection(output_pop[model_count], excite[excite_count],
-                                         p.FromListConnector(structural),
-                                         receptor_type='inhibitory',
-                                         synapse_type=return_struct_model(e_size, stdp_model))
-                        if len(non_plastic) != 0:
-                            p.Projection(output_pop[model_count], excite[excite_count], 
-                                         p.FromListConnector(non_plastic),
-                                         receptor_type='inhibitory')
-                if len(out2i) != 0:
-                    [in_ex, in_in] = split_ex_in(out2i)
-                    if len(in_ex) != 0:
-                        [stdp, structural, non_plastic] = split_plastic(in_ex)
-                        if len(stdp) != 0:
-                            p.Projection(output_pop[model_count], inhib[inhib_count],
-                                         p.FromListConnector(stdp),
-                                         receptor_type='excitatory',
-                                         synapse_type=stdp_model)
-                        if len(structural) != 0:
-                            p.Projection(output_pop[model_count], inhib[inhib_count],
-                                         p.FromListConnector(structural),
-                                         receptor_type='excitatory',
-                                         synapse_type=return_struct_model(i_size, stdp_model))
-                        if len(non_plastic) != 0:
-                            p.Projection(output_pop[model_count], inhib[inhib_count],
-                                         p.FromListConnector(non_plastic),
-                                         receptor_type='excitatory')
-                    if len(in_in) != 0:
-                        [stdp, structural, non_plastic] = split_plastic(in_in)
-                        if len(stdp) != 0:
-                            p.Projection(output_pop[model_count], inhib[inhib_count],
-                                         p.FromListConnector(stdp),
-                                         receptor_type='inhibitory',
-                                         synapse_type=stdp_model)
-                        if len(structural) != 0:
-                            p.Projection(output_pop[model_count], inhib[inhib_count],
-                                         p.FromListConnector(structural),
-                                         receptor_type='inhibitory',
-                                         synapse_type=return_struct_model(i_size, stdp_model))
-                        if len(non_plastic) != 0:
-                            p.Projection(output_pop[model_count], inhib[inhib_count],
-                                         p.FromListConnector(non_plastic),
-                                         receptor_type='inhibitory')
-                if len(out2in) != 0 and exec_thing != 'mnist':
-                    [in_ex, in_in] = split_ex_in(out2in)
-                    if len(in_ex) != 0:
-                        [stdp, structural, non_plastic] = split_plastic(in_ex)
-                        if len(stdp) != 0:
-                            p.Projection(output_pop[model_count], input_pops[model_count],
-                                         p.FromListConnector(stdp),
-                                         receptor_type='excitatory',
-                                         synapse_type=stdp_model)
-                        if len(structural) != 0:
-                            p.Projection(output_pop[model_count], input_pops[model_count],
-                                         p.FromListConnector(structural),
-                                         receptor_type='excitatory',
-                                         synapse_type=return_struct_model(input_pop_size, stdp_model))
-                        if len(non_plastic) != 0:
-                            p.Projection(output_pop[model_count], input_pops[model_count],
-                                         p.FromListConnector(non_plastic),
-                                         receptor_type='excitatory')
-                    if len(in_in) != 0:
-                        [stdp, structural, non_plastic] = split_plastic(in_in)
-                        if len(stdp) != 0:
-                            p.Projection(output_pop[model_count], input_pops[model_count],
-                                         p.FromListConnector(stdp),
-                                         receptor_type='inhibitory',
-                                         synapse_type=stdp_model)
-                        if len(structural) != 0:
-                            p.Projection(output_pop[model_count], input_pops[model_count],
-                                         p.FromListConnector(structural),
-                                         receptor_type='inhibitory',
-                                         synapse_type=return_struct_model(input_pop_size, stdp_model))
-                        if len(non_plastic) != 0:
-                            p.Projection(output_pop[model_count], input_pops[model_count],
-                                         p.FromListConnector(non_plastic),
-                                         receptor_type='inhibitory')
-                if len(out2out) != 0:
-                    [in_ex, in_in] = split_ex_in(out2out)
-                    if len(in_ex) != 0:
-                        [stdp, structural, non_plastic] = split_plastic(in_ex)
-                        if len(stdp) != 0:
-                            p.Projection(output_pop[model_count], output_pop[model_count],
-                                         p.FromListConnector(stdp),
-                                         receptor_type='excitatory',
-                                         synapse_type=stdp_model)
-                        if len(structural) != 0:
-                            p.Projection(output_pop[model_count], output_pop[model_count],
-                                         p.FromListConnector(structural),
-                                         receptor_type='excitatory',
-                                         synapse_type=return_struct_model(outputs, stdp_model))
-                        if len(non_plastic) != 0:
-                            p.Projection(output_pop[model_count], output_pop[model_count],
-                                         p.FromListConnector(non_plastic),
-                                         receptor_type='excitatory')
-                    if len(in_in) != 0:
-                        [stdp, structural, non_plastic] = split_plastic(in_in)
-                        if len(stdp) != 0:
-                            p.Projection(output_pop[model_count], output_pop[model_count],
-                                         p.FromListConnector(stdp),
-                                         receptor_type='inhibitory',
-                                         synapse_type=stdp_model)
-                        if len(structural) != 0:
-                            p.Projection(output_pop[model_count], output_pop[model_count],
-                                         p.FromListConnector(structural),
-                                         receptor_type='inhibitory',
-                                         synapse_type=return_struct_model(outputs, stdp_model))
-                        if len(non_plastic) != 0:
-                            p.Projection(output_pop[model_count], output_pop[model_count],
-                                         p.FromListConnector(non_plastic),
-                                         receptor_type='inhibitory')
+                    if len(out2e) != 0:
+                        [in_ex, in_in] = split_ex_in(out2e)
+                        if len(in_ex) != 0:
+                            [stdp, structural, non_plastic] = split_plastic(in_ex)
+                            if len(stdp) != 0:
+                                p.Projection(output_pop[model_count], excite[excite_count],
+                                             p.FromListConnector(stdp),
+                                             receptor_type='excitatory',
+                                             synapse_type=stdp_model)
+                            if len(structural) != 0:
+                                p.Projection(output_pop[model_count], excite[excite_count],
+                                             p.FromListConnector(structural),
+                                             receptor_type='excitatory',
+                                             synapse_type=return_struct_model(e_size, stdp_model))
+                            if len(non_plastic) != 0:
+                                p.Projection(output_pop[model_count], excite[excite_count],
+                                             p.FromListConnector(non_plastic),
+                                             receptor_type='excitatory')
+                        if len(in_in) != 0:
+                            [stdp, structural, non_plastic] = split_plastic(in_in)
+                            if len(stdp) != 0:
+                                p.Projection(output_pop[model_count], excite[excite_count],
+                                             p.FromListConnector(stdp),
+                                             receptor_type='inhibitory',
+                                             synapse_type=stdp_model)
+                            if len(structural) != 0:
+                                p.Projection(output_pop[model_count], excite[excite_count],
+                                             p.FromListConnector(structural),
+                                             receptor_type='inhibitory',
+                                             synapse_type=return_struct_model(e_size, stdp_model))
+                            if len(non_plastic) != 0:
+                                p.Projection(output_pop[model_count], excite[excite_count],
+                                             p.FromListConnector(non_plastic),
+                                             receptor_type='inhibitory')
+                    if len(out2i) != 0:
+                        [in_ex, in_in] = split_ex_in(out2i)
+                        if len(in_ex) != 0:
+                            [stdp, structural, non_plastic] = split_plastic(in_ex)
+                            if len(stdp) != 0:
+                                p.Projection(output_pop[model_count], inhib[inhib_count],
+                                             p.FromListConnector(stdp),
+                                             receptor_type='excitatory',
+                                             synapse_type=stdp_model)
+                            if len(structural) != 0:
+                                p.Projection(output_pop[model_count], inhib[inhib_count],
+                                             p.FromListConnector(structural),
+                                             receptor_type='excitatory',
+                                             synapse_type=return_struct_model(i_size, stdp_model))
+                            if len(non_plastic) != 0:
+                                p.Projection(output_pop[model_count], inhib[inhib_count],
+                                             p.FromListConnector(non_plastic),
+                                             receptor_type='excitatory')
+                        if len(in_in) != 0:
+                            [stdp, structural, non_plastic] = split_plastic(in_in)
+                            if len(stdp) != 0:
+                                p.Projection(output_pop[model_count], inhib[inhib_count],
+                                             p.FromListConnector(stdp),
+                                             receptor_type='inhibitory',
+                                             synapse_type=stdp_model)
+                            if len(structural) != 0:
+                                p.Projection(output_pop[model_count], inhib[inhib_count],
+                                             p.FromListConnector(structural),
+                                             receptor_type='inhibitory',
+                                             synapse_type=return_struct_model(i_size, stdp_model))
+                            if len(non_plastic) != 0:
+                                p.Projection(output_pop[model_count], inhib[inhib_count],
+                                             p.FromListConnector(non_plastic),
+                                             receptor_type='inhibitory')
+                    if len(out2in) != 0 and exec_thing != 'mnist':
+                        [in_ex, in_in] = split_ex_in(out2in)
+                        if len(in_ex) != 0:
+                            [stdp, structural, non_plastic] = split_plastic(in_ex)
+                            if len(stdp) != 0:
+                                p.Projection(output_pop[model_count], input_pops[model_count],
+                                             p.FromListConnector(stdp),
+                                             receptor_type='excitatory',
+                                             synapse_type=stdp_model)
+                            if len(structural) != 0:
+                                p.Projection(output_pop[model_count], input_pops[model_count],
+                                             p.FromListConnector(structural),
+                                             receptor_type='excitatory',
+                                             synapse_type=return_struct_model(input_pop_size, stdp_model))
+                            if len(non_plastic) != 0:
+                                p.Projection(output_pop[model_count], input_pops[model_count],
+                                             p.FromListConnector(non_plastic),
+                                             receptor_type='excitatory')
+                        if len(in_in) != 0:
+                            [stdp, structural, non_plastic] = split_plastic(in_in)
+                            if len(stdp) != 0:
+                                p.Projection(output_pop[model_count], input_pops[model_count],
+                                             p.FromListConnector(stdp),
+                                             receptor_type='inhibitory',
+                                             synapse_type=stdp_model)
+                            if len(structural) != 0:
+                                p.Projection(output_pop[model_count], input_pops[model_count],
+                                             p.FromListConnector(structural),
+                                             receptor_type='inhibitory',
+                                             synapse_type=return_struct_model(input_pop_size, stdp_model))
+                            if len(non_plastic) != 0:
+                                p.Projection(output_pop[model_count], input_pops[model_count],
+                                             p.FromListConnector(non_plastic),
+                                             receptor_type='inhibitory')
+                    if len(out2out) != 0:
+                        [in_ex, in_in] = split_ex_in(out2out)
+                        if len(in_ex) != 0:
+                            [stdp, structural, non_plastic] = split_plastic(in_ex)
+                            if len(stdp) != 0:
+                                p.Projection(output_pop[model_count], output_pop[model_count],
+                                             p.FromListConnector(stdp),
+                                             receptor_type='excitatory',
+                                             synapse_type=stdp_model)
+                            if len(structural) != 0:
+                                p.Projection(output_pop[model_count], output_pop[model_count],
+                                             p.FromListConnector(structural),
+                                             receptor_type='excitatory',
+                                             synapse_type=return_struct_model(outputs, stdp_model))
+                            if len(non_plastic) != 0:
+                                p.Projection(output_pop[model_count], output_pop[model_count],
+                                             p.FromListConnector(non_plastic),
+                                             receptor_type='excitatory')
+                        if len(in_in) != 0:
+                            [stdp, structural, non_plastic] = split_plastic(in_in)
+                            if len(stdp) != 0:
+                                p.Projection(output_pop[model_count], output_pop[model_count],
+                                             p.FromListConnector(stdp),
+                                             receptor_type='inhibitory',
+                                             synapse_type=stdp_model)
+                            if len(structural) != 0:
+                                p.Projection(output_pop[model_count], output_pop[model_count],
+                                             p.FromListConnector(structural),
+                                             receptor_type='inhibitory',
+                                             synapse_type=return_struct_model(outputs, stdp_model))
+                            if len(non_plastic) != 0:
+                                p.Projection(output_pop[model_count], output_pop[model_count],
+                                             p.FromListConnector(non_plastic),
+                                             receptor_type='inhibitory')
         print "\nfinished connections seed = ", seed, "\n"
         simulator = get_simulator()
         try:
