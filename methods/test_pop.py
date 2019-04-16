@@ -688,14 +688,14 @@ def pop_test(connections, test_data, split=4, runtime=2000, exposure_time=200, n
     scores = []
     agent_fitness = []
     fails = 0
-    excite_spike_count = [0 for i in range(len(connections))]
+    excite_spike_count = [0 for i in range(len(output_pop))]
     excite_fail = 0
-    inhib_spike_count = [0 for i in range(len(connections))]
+    inhib_spike_count = [0 for i in range(len(output_pop))]
     inhib_fail = 0
-    output_spike_count = [0 for i in range(len(connections))]
+    output_spike_count = [0 for i in range(len(output_pop))]
     print "reading the spikes of ", config, '\n', seed
-    for i in range(len(connections)):
-        print "started processing fitness of: ", i, '/', len(connections), "seed", seed
+    for i in range(len(output_pop)):
+        print "started processing fitness of: ", i, '/', len(output_pop), "seed", seed
         if i in failures:
             print "worst score for the failure"
             fails += 1
@@ -765,7 +765,7 @@ def pop_test(connections, test_data, split=4, runtime=2000, exposure_time=200, n
             agent_fitness.append(scores[i][len(scores[i]) - 1][0])
         # print i, "| e:", excite_spike_count[i], "-i:", inhib_spike_count[i], "|\t", scores[i]
     print seed, "\nThe scores for this run of {} agents are:".format(len(connections))
-    for i in range(len(connections)):
+    for i in range(len(output_pop)):
         print "c:{}, s:{}, si:{}, si0:{}".format(len(connections), len(scores), len(scores[i]), len(scores[i][0]))
         e_string = "e: {}".format(excite_spike_count[i])
         i_string = "i: {}".format(inhib_spike_count[i])
