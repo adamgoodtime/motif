@@ -192,9 +192,29 @@ def subprocess_experiments(connections, test_data_set, split=4, runtime=2000, ex
                     np.save("failed agent {} {}".format(random_key, config), connection_threads[i])
             pool_result[i] = 'fail'
         elif isinstance(pool_result[i], list):
-            print "good return"
+            if pool_result[i][0] == 'fail':
+                print "bad return"
+                if len(connection_threads) > 1:
+                    if plasticity == 'pall':
+                        split = 2
+                    elif not top:
+                        if parallel:
+                            split = agent_pop_size
+                        else:
+                            split = int(len(connection_threads[i][0]) / 8)
+                    else:
+                        split = new_split
+                    print "splitting ", len(connection_threads[i][0]), " into ", split, " pieces"
+                    problem_arms = connection_threads[i][1]
+                    pool_result[i] = subprocess_experiments(connection_threads[i][0], problem_arms, split, runtime,
+                                                            exposure_time, noise_rate, noise_weight, spike_f, top=False,
+                                                            parallel=parallel, make_action=make_action)
+                else:
+                    pool_result[i] = 'fail'
+            else:
+                print "good return"
         else:
-            print "bad return"
+            print "fully bad return"
             if len(connection_threads) > 1:
                 if plasticity == 'pall':
                     split = 2
@@ -230,9 +250,10 @@ def subprocess_experiments(connections, test_data_set, split=4, runtime=2000, ex
                     test_results.append(copy_fitness[(i * len(connections)) + j])
                 except:
                     traceback.print_exc()
-                    print "failed adding result #", i, "/", j
+                    print "\nfailed adding result #", i, "/", j
                     print "\ncopy fitness:", copy_fitness
                     print "\nresult so far:", test_results
+                    print "\npool result:", pool_result
                     raise Exception
             agent_fitness.append(test_results)
         if size_f:
