@@ -923,6 +923,8 @@ class agent_population(object):
     def save_status(self, config, iteration, best_performance_score, best_performance_fitness):
         with open('status for {}.csv'.format(config), 'w') as status_file:
             writer = csv.writer(status_file, delimiter=',', lineterminator='\n')
+            writer.writerow([time.localtime()])
+            writer.writerow([config])
             writer.writerow(['on iteration: {}'.format(iteration)])
             writer.writerow(['maximum score'])
             writer.writerow(self.max_score)
@@ -934,10 +936,6 @@ class agent_population(object):
             writer.writerow(self.average_score)
             writer.writerow(['minimum score'])
             writer.writerow(self.min_score)
-            writer.writerow([''])
-            writer.writerow([time.localtime()])
-            writer.writerow([''])
-            writer.writerow([config])
             status_file.close()
 
     def save_mutate_keys(self, iteration, config):
