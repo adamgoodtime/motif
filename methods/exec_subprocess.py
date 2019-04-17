@@ -158,6 +158,16 @@ def subprocess_experiments(connections, test_data_set, split=4, runtime=2000, ex
     for i in range(len(pool_result)):
         if isinstance(pool_result[i], str) and len(connection_threads[i][0]) > 1:
             if plasticity == 'pall':
+                # new_fail = False
+                # connection_threads[i].append(pool_result[i])
+                # while not new_fail:
+                #     random_key = np.random.random()
+                #     try:
+                #         np.load("failed pop size-{} {} {}".format(len(connection_threads[i][0]), random_key, config))
+                #     except:
+                #         new_fail = True
+                #         np.save("failed pop size-{} {} {}".format(len(connection_threads[i][0]), random_key, config), connection_threads[i])
+                # del connection_threads[i][len(connection_threads[i]) - 1]
                 split = 2
             elif not top:
                 if parallel:
@@ -181,17 +191,26 @@ def subprocess_experiments(connections, test_data_set, split=4, runtime=2000, ex
                     new_fail = True
                     np.save("failed agent {} {}".format(random_key, config), connection_threads[i])
             pool_result[i] = 'fail'
-        elif isinstance(pool_result[i], str) and plasticity == 'all':
-            new_fail = False
-            connection_threads[i].append(pool_result[i])
-            while not new_fail:
-                random_key = np.random.random()
-                try:
-                    np.load("failed pop size-{} {} {}".format(len(connection_threads[i][0]), random_key, config))
-                except:
-                    new_fail = True
-                    np.save("failed pop size-{} {} {}".format(len(connection_threads[i][0]), random_key, config), connection_threads[i])
-            pool_result[i] = 'fail'
+        elif isinstance(pool_result[i], list):
+            print "good return"
+        else:
+            print "bad return"
+            if len(connection_threads) > 1:
+                if plasticity == 'pall':
+                    split = 2
+                elif not top:
+                    if parallel:
+                        split = agent_pop_size
+                    else:
+                        split = int(len(connection_threads[i][0]) / 8)
+                else:
+                    split = new_split
+                print "splitting ", len(connection_threads[i][0]), " into ", split, " pieces"
+                problem_arms = connection_threads[i][1]
+                pool_result[i] = subprocess_experiments(connection_threads[i][0], problem_arms, split, runtime,
+                                                    exposure_time, noise_rate, noise_weight, spike_f, top=False, parallel=parallel, make_action=make_action)
+            else:
+                pool_result[i] = 'fail'
 
     agent_fitness = []
     for thread in pool_result:

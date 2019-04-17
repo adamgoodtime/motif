@@ -135,6 +135,16 @@ def pop_test(connections, test_data, split=4, runtime=2000, exposure_time=200, n
         start = time.time()
         setup_retry_time = 60
         try_count = 0
+        if isinstance(test_data[0], list):
+            if exec_thing == 'arms':
+                if len(test_data) > 2:
+                    test_data_set = test_data
+                else:
+                    test_data_set = [test_data]
+            else:
+                test_data_set = test_data
+        else:
+            test_data_set = [test_data]
         while time.time() - start < setup_retry_time:
             try:
                 p.setup(timestep=1.0, min_delay=1, max_delay=127)
@@ -168,16 +178,6 @@ def pop_test(connections, test_data, split=4, runtime=2000, exposure_time=200, n
             sub_labels = labels[starting_point: starting_point + data_size]
             mnist_spikes = mnist_poisson_gen(sub_data, 28, 28, max_freq, on_duration, off_duration)
             input_model = p.Population(28*28, p.SpikeSourceArray(spike_times=mnist_spikes), label='MNIST_input_pop')
-        if isinstance(test_data[0], list):
-            if exec_thing == 'arms':
-                if len(test_data) > 2:
-                    test_data_set = test_data
-                else:
-                    test_data_set = [test_data]
-            else:
-                test_data_set = test_data
-        else:
-            test_data_set = [test_data]
         for test_data in test_data_set:
             for i in range(len(connections)):
                 [in2e, in2i, in2in, in2out, e2in, i2in, e_size, e2e, e2i, i_size, # turned off connections to inputs except output

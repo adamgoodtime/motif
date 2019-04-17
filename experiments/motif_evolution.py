@@ -2,6 +2,7 @@ from methods.networks import motif_population
 from methods.agents import agent_population
 from methods.neurons import neuron_population
 import numpy as np
+import sys
 import itertools
 import traceback
 import threading
@@ -13,6 +14,7 @@ connections = []
 weight_max = 0.1
 
 agent_pop_size = 100
+generations = 200
 reward_shape = False
 averaging_weights = True
 noise_rate = 0
@@ -56,7 +58,7 @@ stdev_neurons = True
 neuron_type = 'IF_cond_exp'
 max_input_current = 0.8
 calcium_tau = 50
-free_label = 0
+free_label = '{}'.format(sys.argv[1])
 parallel = False
 
 #arms params
@@ -519,7 +521,7 @@ def bandit(generations):
     # connection change
     # swap motif
 
-bandit(1000)
+bandit(generations)
 
 print "done"
 
