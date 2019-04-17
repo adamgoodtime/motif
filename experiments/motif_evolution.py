@@ -407,6 +407,8 @@ def bandit(generations):
     elif read_neurons:
         config += ' readn-{}'.format(keep_reading)
 
+    print config
+
     best_performance_score = []
     best_performance_fitness = []
 
