@@ -38,7 +38,7 @@ shape_fitness = True
 viable_parents = 0.2
 elitism = 0.2
 exposure_time = 200
-io_prob = 0.75  # 1.0 - (1.0 / 11.0)
+io_prob = 0.95  # 1.0 - (1.0 / 11.0)
 read_motifs = 0
 # read_motifs = 'Dirty place/Motif pop xor pl 200 stdev_n.npy'
 # read_motifs = 'Dirty place/Motif pop xor pl 5000 stdev_n.npy'
@@ -60,6 +60,13 @@ max_input_current = 0.8
 calcium_tau = 50
 free_label = '{}'.format(sys.argv[1])
 parallel = False
+
+# '''
+constant_delays = float(sys.argv[3])
+plasticity = bool(sys.argv[4])
+develop_neurons = bool(sys.argv[5])
+stdev_neurons = bool(sys.argv[6])
+# '''
 
 #arms params
 arms_runtime = 20000
