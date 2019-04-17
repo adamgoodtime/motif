@@ -64,11 +64,11 @@ parallel = False
 # '''
 constant_delays = float(sys.argv[2])
 print "d", sys.argv[2]
-plasticity = bool(sys.argv[3])
+plasticity = bool(int(sys.argv[3]))
 print "p", sys.argv[3]
-develop_neurons = bool(sys.argv[4])
+develop_neurons = bool(int(sys.argv[4]))
 print "n", sys.argv[4]
-stdev_neurons = bool(sys.argv[5])
+stdev_neurons = bool(int(sys.argv[5]))
 print "s", sys.argv[5]
 print constant_delays
 print plasticity
