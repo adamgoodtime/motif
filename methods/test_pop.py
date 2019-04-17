@@ -120,6 +120,16 @@ def pop_test(connections, test_data, split=4, runtime=2000, exposure_time=200, n
     # time.sleep(sleep)
     max_attempts = 2
     try_except = 0
+    if isinstance(test_data[0], list):
+        if exec_thing == 'arms':
+            if len(test_data) > 2:
+                test_data_set = test_data
+            else:
+                test_data_set = [test_data]
+        else:
+            test_data_set = test_data
+    else:
+        test_data_set = [test_data]
     while try_except < max_attempts:
         input_pops = []
         model_count = -1
@@ -135,16 +145,6 @@ def pop_test(connections, test_data, split=4, runtime=2000, exposure_time=200, n
         start = time.time()
         setup_retry_time = 60
         try_count = 0
-        if isinstance(test_data[0], list):
-            if exec_thing == 'arms':
-                if len(test_data) > 2:
-                    test_data_set = test_data
-                else:
-                    test_data_set = [test_data]
-            else:
-                test_data_set = test_data
-        else:
-            test_data_set = [test_data]
         while time.time() - start < setup_retry_time:
             try:
                 p.setup(timestep=1.0, min_delay=1, max_delay=127)
