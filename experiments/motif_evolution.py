@@ -62,10 +62,10 @@ free_label = '{}'.format(sys.argv[1])
 parallel = False
 
 # '''
-constant_delays = float(sys.argv[3])
-plasticity = bool(sys.argv[4])
-develop_neurons = bool(sys.argv[5])
-stdev_neurons = bool(sys.argv[6])
+constant_delays = float(sys.argv[2])
+plasticity = bool(sys.argv[3])
+develop_neurons = bool(sys.argv[4])
+stdev_neurons = bool(sys.argv[5])
 # '''
 
 #arms params
