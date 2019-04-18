@@ -58,10 +58,10 @@ stdev_neurons = True
 neuron_type = 'IF_cond_exp'
 max_input_current = 0.8
 calcium_tau = 50
-free_label = '{}'.format(sys.argv[1])
+free_label = 0#'{}'.format(sys.argv[1])
 parallel = False
 
-# '''
+'''print "reading from input"
 constant_delays = float(sys.argv[2])
 print "d", sys.argv[2]
 plasticity = bool(int(sys.argv[3]))
@@ -79,7 +79,7 @@ print stdev_neurons
 #arms params
 arms_runtime = 20000
 constant_input = 1
-arms_stochastic = 1
+arms_stochastic = 0
 arms_rate_on = 20
 arms_rate_off = 5
 random_arms = 0

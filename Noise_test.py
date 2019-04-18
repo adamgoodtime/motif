@@ -154,7 +154,31 @@ def test_packets(rate=100, weight=0.01, probability=0.7, seed=27, pop_size=2, co
     p.end()
     print "ended"
 
-test_levels()
+def from_list_test(list_size):
+    p.setup(timestep=1, min_delay=1, max_delay=127)
+    thing = p.IF_curr_exp
+    p.set_number_of_neurons_per_core(thing, 10)
+    from_list = []
+    for i in range(list_size):
+        from_list.append((0, 0, 0.01, 12))
+
+    receive_pop = p.Population(1, thing())  # , label="receive_pop{}-{}".format(rate, weight)))
+
+    # Connect key spike injector to input population
+    spike_input = p.Population(1, p.SpikeSourcePoisson(rate=4),
+                               label="input_connect")
+    p.Projection(spike_input, receive_pop, p.FromListConnector(from_list))
+    p.Projection(spike_input, receive_pop, p.FromListConnector(from_list))
+
+    print "reached here 1"
+    runtime = 11000
+
+    p.run(runtime)
+
+    print "done"
+
+from_list_test(200)
+# test_levels()
 # test_params()
 # for prob in np.linspace(0.2,1,100):
 #     seed = np.random.randint(0,1000)

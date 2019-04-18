@@ -674,10 +674,54 @@ class agent_population(object):
         #     if child['depth'] >= new_depth:
         #         break
         return child
+
+    # def check_connections_per_node(self, connections, max_synpase_count=255):
+    #     [in2e, in2i, in2in, in2out, e2in, i2in, e_size, e2e, e2i, i_size, i2e, i2i, e2out, i2out, out2e, out2i, out2in,
+    #      out2out, excite_params, inhib_params] = connections
+    #     connections = [in2e, in2i, in2out, e2e, e2i, i2e, i2i, e2out, i2out, out2e, out2i, out2in,
+    #      out2out]
+    #     in_pre = [in2e, in2i, in2out]
+    #     e_pre = [e2e, e2i, e2out]
+    #     i_pre = [i2e, i2i, i2out]
+    #     out_pre = [out2e, out2i, out2out]
+    #     pre_connections = [in_pre, e_pre, i_pre]
+    #     in_post = [out2in]
+    #     e_post = [in2e, e2e, i2e, out2e]
+    #     i_post = [in2i, e2i, i2i, out2i]
+    #     out_post = [in2out, e2out, i2out, out2out]
+    #     post_connections = [e_post, i_post, out_post]
+    #     max_pop_size = np.max([self.inputs, self.outputs, e_size, i_size])
+    #     for pre_connection in pre_connections:
+    #         index_count = [0 for i in range(max_pop_size)]
+    #         for connection in pre_connection:
+    #             for conn in connection:
+    #                 index_count[conn[0]] += 1
+    #         if np.max(index_count) > max_synpase_count:
+    #             return False
+    #     index_count = [0 for i in range(max_pop_size)]
+    #     for connection in out_pre:
+    #         for conn in connection:
+    #             index_count[conn[0]] += 1
+    #     if np.max(index_count) > max_synpase_count - self.outputs:
+    #         return False
+    #     for post_connection in post_connections:
+    #         index_count = [0 for i in range(max_pop_size)]
+    #         for connection in post_connection:
+    #             for conn in connection:
+    #                 index_count[conn[1]] += 1
+    #         if np.max(index_count) > max_synpase_count:
+    #             return False
+    #     index_count = [0 for i in range(max_pop_size)]
+    #     for conn in out2in:
+    #         index_count[conn[1]] += 1
+    #     if np.max(index_count) > max_synpase_count:
+    #         return False
+    #     return True
     
     def valid_net(self, child):
+        connections = self.convert_agent(child)
         [in2e, in2i, in2in, in2out, e2in, i2in, e_size, e2e, e2i, i_size, i2e, i2i, e2out, i2out, out2e, out2i, out2in,
-         out2out, excite_params, inhib_params] = self.convert_agent(child)
+         out2out, excite_params, inhib_params] = connections
         if self.motifs.neurons.inputs + self.motifs.neurons.outputs == 0:
             if len(e2e) == 0 and len(e2i) == 0 and len(i2e) == 0 and len(i2i) == 0:
                 print "bad agent"
@@ -690,6 +734,9 @@ class agent_population(object):
         if len(e2out) == 0 and len(i2out) == 0 and len(in2out) == 0:
             print "out bad agent"
             return False
+        # if not self.check_connections_per_node(connections):
+        #     print "too many pre-post"
+        #     return False
         if self.strict_io:
             if len(in2out) == 0:
                 node_list = {}
