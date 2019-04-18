@@ -173,7 +173,7 @@ def subprocess_experiments(connections, test_data_set, split=4, runtime=2000, ex
                 if parallel:
                     split = agent_pop_size
                 else:
-                    split = int(len(connection_threads[i][0]) / 8)
+                    split = 8
             else:
                 split = new_split
             print "splitting ", len(connection_threads[i][0]), " into ", split, " pieces"
