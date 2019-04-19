@@ -1144,7 +1144,7 @@ class agent_population(object):
         self.min_m_depth.append(np.min(depths))
         self.average_m_depth.append(round(np.average(depths), 2))
         self.max_m_depth.append(np.max(depths))
-        self.weighted_m_depth_fitness.append(round(np.average(depths, weights=scores_list), 2))
+        self.weighted_m_depth_score.append(round(np.average(depths, weights=scores_list), 2))
         self.weighted_m_depth_fitness.append(round(np.average(depths, weights=fitness_list), 2))
         self.best_score_m_depth.append(depths[best_score_index])
         self.best_fitness_m_depth.append(depths[best_fitness_index])
