@@ -60,7 +60,7 @@ def read_results(test_length):
             pop_fitness = np.load('fitnesses {} {}.npy'.format(config, i))
             all_fitnesses.append(pop_fitness.tolist())
         except:
-            pop_fitness = ['fail']
+            pop_fitness = ['fail', 'fail']
             not_a_file.append(i)
             all_fitnesses.append(pop_fitness)
         # file_name = 'fitnesses {} {}.csv'.format(config, i)
