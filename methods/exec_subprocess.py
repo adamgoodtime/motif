@@ -159,6 +159,7 @@ def subprocess_experiments(connections, test_data_set, split=4, runtime=2000, ex
         try:
             result = pool_result[i][0]
         except:
+            print "it broke and the except caught the return failure"
             pool_result = ['fail', 'fail']
         if pool_result[i][0] == 'fail' and len(connection_threads[i][0]) > 1:
             traceback = pool_result[i][1]
