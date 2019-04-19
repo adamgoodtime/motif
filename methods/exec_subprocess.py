@@ -156,7 +156,9 @@ def subprocess_experiments(connections, test_data_set, split=4, runtime=2000, ex
     pool_result = read_results(test_id)
 
     for i in range(len(pool_result)):
-        if (isinstance(pool_result[i], str) or pool_result[i] == 'fail') and len(connection_threads[i][0]) > 1:
+        if pool_result[i][0] == 'fail' and len(connection_threads[i][0]) > 1:
+            traceback = pool_result[i][1]
+            pool_result[i] = pool_result[i][1]
             if plasticity == 'pall':
                 # new_fail = False
                 # connection_threads[i].append(pool_result[i])
@@ -180,7 +182,9 @@ def subprocess_experiments(connections, test_data_set, split=4, runtime=2000, ex
             problem_arms = connection_threads[i][1]
             pool_result[i] = subprocess_experiments(connection_threads[i][0], problem_arms, split, runtime,
                                                 exposure_time, noise_rate, noise_weight, spike_f, top=False, parallel=parallel, make_action=make_action)
-        elif (isinstance(pool_result[i], str) or pool_result[i] == 'fail') and len(connection_threads[i][0]) == 1:
+        elif pool_result[i][0] == 'fail' and len(connection_threads[i][0]) == 1:
+            traceback = pool_result[i][1]
+            pool_result[i] = pool_result[i][1]
             new_fail = False
             connection_threads[i].append(pool_result[i])
             while not new_fail:
@@ -191,31 +195,12 @@ def subprocess_experiments(connections, test_data_set, split=4, runtime=2000, ex
                     new_fail = True
                     np.save("failed agent {} {}".format(random_key, config), connection_threads[i])
             pool_result[i] = 'fail'
-        elif isinstance(pool_result[i], list):
-            if pool_result[i][0] == 'fail':
-                print "bad return"
-                if len(connection_threads[i][0]) > 1:
-                    if plasticity == 'pall':
-                        split = 2
-                    elif not top:
-                        if parallel:
-                            split = agent_pop_size
-                        else:
-                            split = int(len(connection_threads[i][0]) / 8)
-                    else:
-                        split = new_split
-                    print "splitting ", len(connection_threads[i][0]), " into ", split, " pieces"
-                    problem_arms = connection_threads[i][1]
-                    pool_result[i] = subprocess_experiments(connection_threads[i][0], problem_arms, split, runtime,
-                                                            exposure_time, noise_rate, noise_weight, spike_f, top=False,
-                                                            parallel=parallel, make_action=make_action)
-                else:
-                    pool_result[i] = 'fail'
-            else:
-                print "good return"
+        elif pool_result[i][0] == 'complete':
+            pool_result[i] = pool_result[i][1]
+            print "good return"
         else:
             print "fully bad return"
-            if len(connection_threads) > 1:
+            if len(connection_threads[i][0]) > 1:
                 if plasticity == 'pall':
                     split = 2
                 elif not top:
@@ -250,10 +235,11 @@ def subprocess_experiments(connections, test_data_set, split=4, runtime=2000, ex
                     test_results.append(copy_fitness[(i * len(connections)) + j])
                 except:
                     traceback.print_exc()
-                    print "\nfailed adding result #", i, "/", j
-                    print "\ncopy fitness:", copy_fitness
+                    print "\nfailed adding result: set", i, "/", len(test_data_set), "& agent", j, "/", len(connections)
+                    print "\ncopy fitness [", len(copy_fitness), "][", len(copy_fitness[0]), ":", copy_fitness
                     print "\nresult so far:", test_results
-                    print "\npool result:", pool_result
+                    print "\nagent data so far [", len(agent_fitness), "][", len(agent_fitness[0]), ":", agent_fitness
+                    print "\npool result [", len(pool_result), "][", len(pool_result[0]), ":", pool_result
                     raise Exception
             agent_fitness.append(test_results)
         if size_f:

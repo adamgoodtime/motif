@@ -427,7 +427,7 @@ def pop_test(connections, test_data, split=4, runtime=2000, exposure_time=200, n
             if len(connections) == len(failures):
                 p.end()
                 print "nothing to run so ending and returning fail"
-                return 'fail'
+                return ['fail', 'fail']
             p.run(runtime)
             try_except = max_attempts
             break
@@ -445,7 +445,7 @@ def pop_test(connections, test_data, split=4, runtime=2000, exposure_time=200, n
             print "failed to run on attempt ", try_except, "\n"  # . total fails: ", all_fails, "\n"
             if try_except >= max_attempts:
                 print "calling it a failed population, splitting and rerunning"
-                return failure
+                return ['fail', failure]
         # p.run(runtime)
         print "\nfinished run seed = ", seed, "\n"
 
@@ -545,7 +545,7 @@ def pop_test(connections, test_data, split=4, runtime=2000, exposure_time=200, n
     p.end()
     print "\nafter end = ", seed, "\n"
     print config
-    return agent_fitness
+    return ['complete', agent_fitness]
 
 def print_fitnesses(fitnesses):
     # with open('fitnesses {} {}.csv'.format(config, test_id), 'w') as file:
