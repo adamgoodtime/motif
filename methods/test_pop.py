@@ -106,24 +106,24 @@ def connect_to_arms(pre_pop, from_list, arms, r_type, plastic, stdp_model):
                 p.Projection(pre_pop, arms[i], p.FromListConnector(arm_conn_list[i]),
                              receptor_type=r_type)
 
-def connect_2_pops(connections, input_pop, output_pop, receptor_type, pre_pop_size, stdp_model):
+def connect_2_pops(connections, input_pop, output_pop, receptor_type, pre_pop_size, stdp_model, max_conn=252):
     [stdp, structural, non_plastic] = split_plastic(connections)
     if len(stdp) != 0:
-        from_list_segments = [stdp[x:x+255] for x in xrange(0, len(stdp), 255)]
+        from_list_segments = [stdp[x:x+max_conn] for x in xrange(0, len(stdp), max_conn)]
         for connection in from_list_segments:
             p.Projection(input_pop, output_pop,
                          p.FromListConnector(connection),
                          receptor_type=receptor_type,
                          synapse_type=stdp_model)
     if len(structural) != 0:
-        from_list_segments = [structural[x:x+255] for x in xrange(0, len(structural), 255)]
+        from_list_segments = [structural[x:x+max_conn] for x in xrange(0, len(structural), max_conn)]
         for connection in from_list_segments:
             p.Projection(input_pop, output_pop,
                          p.FromListConnector(connection),
                          receptor_type=receptor_type,
                          synapse_type=stdp_model)
     if len(non_plastic) != 0:
-        from_list_segments = [non_plastic[x:x+255] for x in xrange(0, len(non_plastic), 255)]
+        from_list_segments = [non_plastic[x:x+max_conn] for x in xrange(0, len(non_plastic), max_conn)]
         for connection in from_list_segments:
             p.Projection(input_pop, output_pop,
                          p.FromListConnector(connection),

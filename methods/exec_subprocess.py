@@ -241,11 +241,12 @@ def subprocess_experiments(connections, test_data_set, split=4, runtime=2000, ex
                 except:
                     traceback.print_exc()
                     print "\nfailed adding result: set", i, "/", len(test_data_set), "& agent", j, "/", len(connections)
-                    print "\ncopy fitness [", len(copy_fitness), "][", len(copy_fitness[0]), ":", copy_fitness
-                    print "\nresult so far:", test_results
-                    print "\nagent data so far [", len(agent_fitness), "][", len(agent_fitness[0]), ":", agent_fitness
-                    print "\npool result [", len(pool_result), "][", len(pool_result[0]), ":", pool_result
+                    print "\ncopy fitness [", len(copy_fitness), "]x[", len(copy_fitness[0]), "]:", copy_fitness
+                    print "\nresult so far [", len(test_results), "]x[", len(test_results[0]), "]:", test_results
+                    print "\nagent data so far [", len(agent_fitness), "]x[", len(agent_fitness[0]), "]:", agent_fitness
+                    print "\npool result [", len(pool_result), "]x[", len(pool_result[0]), "]:", pool_result
                     raise Exception
+                    # maybe just run it again, it ain't worth the trouble :(
             agent_fitness.append(test_results)
         if size_f:
             test_results = []
