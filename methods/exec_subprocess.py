@@ -178,7 +178,10 @@ def subprocess_experiments(connections, test_data_set, split=4, runtime=2000, ex
                 # del connection_threads[i][len(connection_threads[i]) - 1]
                 split = 2
             elif not top:
-                split = agent_pop_size
+                if parallel:
+                    split = agent_pop_size
+                else:
+                    split = 8
             else:
                 split = new_split
             print "splitting ", len(connection_threads[i][0]), " into ", split, " pieces"
@@ -206,7 +209,10 @@ def subprocess_experiments(connections, test_data_set, split=4, runtime=2000, ex
                 if plasticity == 'pall':
                     split = 2
                 elif not top:
-                    split = agent_pop_size
+                    if parallel:
+                        split = agent_pop_size
+                    else:
+                        split = 8
                 else:
                     split = new_split
                 print "splitting ", len(connection_threads[i][0]), " into ", split, " pieces"
