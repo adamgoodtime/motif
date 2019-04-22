@@ -245,6 +245,17 @@ def subprocess_experiments(connections, test_data_set, split=4, runtime=2000, ex
                     print "\nresult so far [", len(test_results), "]x[", len(test_results[0]), "]:", test_results
                     print "\nagent data so far [", len(agent_fitness), "]x[", len(agent_fitness[0]), "]:", agent_fitness
                     print "\npool result [", len(pool_result), "]x[", len(pool_result[0]), "]:", pool_result
+                    with open('failed run {}.csv'.format(config), 'w') as file:
+                        writer = csv.writer(file, delimiter=',', lineterminator='\n')
+                        writer.writerow(['copy fitness'])
+                        writer.writerow(copy_fitness)
+                        writer.writerow(['test results'])
+                        writer.writerow(test_results)
+                        writer.writerow(['agent fitness'])
+                        writer.writerow(agent_fitness)
+                        writer.writerow(['pool results'])
+                        writer.writerow(pool_result)
+                        file.close()
                     raise Exception
                     # maybe just run it again, it ain't worth the trouble :(
             agent_fitness.append(test_results)
