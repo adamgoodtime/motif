@@ -240,6 +240,7 @@ def subprocess_experiments(connections, test_data_set, split=4, runtime=2000, ex
                     test_results.append(copy_fitness[(i * len(connections)) + j])
                 except:
                     traceback.print_exc()
+                    error = traceback.format_exc()
                     print "\nfailed adding result: set", i, "/", len(test_data_set), "& agent", j, "/", len(connections)
                     print "\ncopy fitness [", len(copy_fitness), "]x[", len(copy_fitness[0]), "]:", copy_fitness
                     print "\nresult so far [", len(test_results), "]x[", len(test_results[0]), "]:", test_results
@@ -255,6 +256,8 @@ def subprocess_experiments(connections, test_data_set, split=4, runtime=2000, ex
                         writer.writerow(agent_fitness)
                         writer.writerow(['pool results'])
                         writer.writerow(pool_result)
+                        writer.writerow(['error'])
+                        writer.writerow([error])
                         file.close()
                     raise Exception
                     # maybe just run it again, it ain't worth the trouble :(
