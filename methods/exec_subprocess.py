@@ -199,7 +199,12 @@ def subprocess_experiments(connections, test_data_set, split=4, runtime=2000, ex
                 except:
                     new_fail = True
                     np.save("failed agent {} {}".format(random_key, config), connection_threads[i])
-            pool_result[i] = 'fail'
+            if parallel:
+                pool_result[i] = 'fail'
+            else:
+                pool_result[i] = []
+                for j in range(len(test_data_set)):
+                    pool_result[i].append('fail')
         elif pool_result[i][0] == 'complete':
             pool_result[i] = pool_result[i][1]
             print "good return"
@@ -220,7 +225,12 @@ def subprocess_experiments(connections, test_data_set, split=4, runtime=2000, ex
                 pool_result[i] = subprocess_experiments(connection_threads[i][0], problem_arms, split, runtime,
                                                     exposure_time, noise_rate, noise_weight, spike_f, top=False, parallel=parallel, make_action=make_action)
             else:
-                pool_result[i] = 'fail'
+                if parallel:
+                    pool_result[i] = 'fail'
+                else:
+                    pool_result[i] = []
+                    for j in range(len(test_data_set)):
+                        pool_result[i].append('fail')
 
     agent_fitness = []
     for thread in pool_result:
@@ -279,6 +289,7 @@ def print_fitnesses(fitnesses):
     np.save('fitnesses {}.npy'.format(config), fitnesses)
 
 if threading_tests:
+    fitnesses = 'fail'
     fitnesses = subprocess_experiments(connections, test_data_set, split, runtime, exposure_time, noise_rate, noise_weight,
                                    size_f, spike_f, make_action, True, parallel)
 else:
