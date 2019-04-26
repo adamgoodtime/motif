@@ -147,9 +147,9 @@ def subprocess_experiments(connections, test_data_set, split=4, runtime=2000, ex
 
         test_id += 1
     if exec_thing == 'erbp':
-        wait_timeout(process_list, (runtime * 15) + 600)
+        wait_timeout(process_list, (runtime * 15) + 1800)
     else:
-        wait_timeout(process_list, ((runtime / 1000) * 15) + 600)
+        wait_timeout(process_list, ((runtime / 1000) * 15) + 1800)
 
     print "all finished"
 
