@@ -60,6 +60,7 @@ def read_results(test_length):
             pop_fitness = np.load('fitnesses {} {}.npy'.format(config, i))
             all_fitnesses.append(pop_fitness.tolist())
         except:
+            print "file didn't exist"
             pop_fitness = ['fail', 'fail']
             not_a_file.append(i)
             all_fitnesses.append(pop_fitness)
@@ -81,8 +82,11 @@ def read_results(test_length):
 def remove_results(test_length, not_a_file):
     for i in range(test_length):
         if i not in not_a_file:
-            os.remove('fitnesses {} {}.npy'.format(config, i))
-            os.remove('data {} {}.npy'.format(config, i))
+            try:
+                os.remove('fitnesses {} {}.npy'.format(config, i))
+                os.remove('data {} {}.npy'.format(config, i))
+            except:
+                print "AAA OOOOHHH forget about it!"
 
 def write_globals(file_id):
     # non_modules = {}

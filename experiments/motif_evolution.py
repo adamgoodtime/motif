@@ -70,10 +70,13 @@ develop_neurons = bool(int(sys.argv[4]))
 print "n", sys.argv[4]
 stdev_neurons = bool(int(sys.argv[5]))
 print "s", sys.argv[5]
+exec_thing = sys.argv[6]
+print "e", sys.argv[6]
 print constant_delays
 print plasticity
 print develop_neurons
 print stdev_neurons
+print exec_thing
 # '''
 
 #arms params
