@@ -58,7 +58,7 @@ stdev_neurons = True
 neuron_type = 'IF_cond_exp'
 max_input_current = 0.8
 calcium_tau = 50
-free_label = 0#'{}'.format(sys.argv[1])
+free_label = 0#'t{}'.format(sys.argv[1])
 parallel = False
 
 '''print "reading from input"
@@ -131,7 +131,7 @@ tau_force = 0
 #logic params
 logic_runtime = 5000
 score_delay = 5000
-logic_stochastic = 1
+logic_stochastic = 0
 logic_rate_on = 20
 logic_rate_off = 5
 truth_table = [0, 1, 1, 0]
