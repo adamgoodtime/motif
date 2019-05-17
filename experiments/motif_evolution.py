@@ -26,8 +26,8 @@ split = 1
 new_split = 4  # agent_pop_size
 
 #motif params
-maximum_depth = [3, 10]
-no_bins = [10, 375]
+maximum_depth = [3, 7]
+no_bins = [10, 200]
 reset_pop = 0
 size_f = False
 spike_f = False#'out'
@@ -51,7 +51,7 @@ max_delay = 25.0
 base_mutate = 0
 multiple_mutates = True
 exec_thing = 'arms'
-plasticity = True
+plasticity = False
 structural = False
 develop_neurons = True
 stdev_neurons = True

@@ -155,7 +155,8 @@ def combine_graphs(data_list, save=False):
             title = 'XOR {}'.format(data_type)
             title = title.replace('_', ' ')
             plt.suptitle(title, fontsize=14)
-            plt.legend(loc='lower right')
+            # plt.legend(loc='lower right')
+            plt.legend(loc='upper left')
             plt.xlabel('Iteration')
             plt.ylabel('Score')
             plt.fill_between(ticks, data_dict[data_type][setting][1], data_dict[data_type][setting][2], color=colour[1], alpha=0.2)
@@ -272,7 +273,8 @@ def combine_tracking(data_list, save=False):
             plt.plot(ticks, data_dict[data_type][setting][0], colour[0], label=setting)
             title = 'XOR average {} over time'.format(convert_to_proper_label(data_type))
             plt.suptitle(title, fontsize=14)
-            plt.legend(loc='lower right')
+            # plt.legend(loc='lower right')
+            plt.legend(loc='upper left')
             plt.xlabel('Iteration')
             plt.ylabel(convert_to_proper_label(data_type))
             plt.fill_between(ticks, data_dict[data_type][setting][1], data_dict[data_type][setting][2], color=colour[1], alpha=0.2)
@@ -297,7 +299,7 @@ def convert_to_proper_label(label):
         proper_label = 'maximum depth of network'
     return proper_label
 
-def plot_individual_runs():
+def plot_individual_runs(save=False):
     file_location = '/home/adampcloth/Documents/Simulations/Motif/bandit/Champions/The data gathering with some gaps & failures/'
     file_location = '/home/adampcloth/Documents/Simulations/Motif/logic/Champions/Huge batch of logic/Non stoc 25 max delay/'
     key_words_no_pl_dev = ['5 ave', 'dev_n']
@@ -310,8 +312,6 @@ def plot_individual_runs():
     key_words_list['plastic with neuron development'] = key_words_pl_dev
     key_words_list['non plastic no neuron development'] = key_words_no_pl_no_dev
     key_words_list['plastic no neuron development'] = key_words_pl_no_dev
-
-    save = False
 
     data_list = {}
     for key_words in key_words_list:
@@ -465,7 +465,8 @@ colour_list = [['g', 'green'], ['r', 'red'], ['b', 'blue'], ['k', 'black']]
 iterations = 200
 ticks = [i for i in range(iterations - 1)]
 
-plot_combined_runs()
+plot_individual_runs(True)
+# plot_combined_runs()
 
 print "done"
 

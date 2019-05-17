@@ -155,20 +155,30 @@ def test_packets(rate=100, weight=0.01, probability=0.7, seed=27, pop_size=2, co
     print "ended"
 
 def from_list_test(list_size):
-    p.setup(timestep=1, min_delay=1, max_delay=127)
+    number_of_chips = 1000
+    p.setup(timestep=1, min_delay=1, max_delay=127, n_chips_required=number_of_chips)
     thing = p.IF_curr_exp
-    p.set_number_of_neurons_per_core(thing, 10)
+    p.set_number_of_neurons_per_core(thing, 15)
     from_list = []
     for i in range(list_size):
         from_list.append((0, 0, 0.01, 12))
 
-    receive_pop = p.Population(1, thing())  # , label="receive_pop{}-{}".format(rate, weight)))
+    receive_pop = p.Population(200, thing())  # , label="receive_pop{}-{}".format(rate, weight)))
+    machine = p.get_machine()
+    for i, chip in enumerate(machine.ethernet_connected_chips):
+        print "i:", i, "- chip:", chip.x, "/", chip.y
+    if not machine.is_chip_at(0, 0):
+        receive_pop.add_placement_constraint(x=1, y=1)
+    else:
+        receive_pop.add_placement_constraint(x=0, y=0)
 
     # Connect key spike injector to input population
-    spike_input = p.Population(1, p.SpikeSourcePoisson(rate=4),
+    spike_input = p.Population(100, p.SpikeSourcePoisson(rate=4),
                                label="input_connect")
-    p.Projection(spike_input, receive_pop, p.FromListConnector(from_list))
-    p.Projection(spike_input, receive_pop, p.FromListConnector(from_list))
+    # p.Projection(spike_input, receive_pop, p.FromListConnector(from_list))
+    # p.Projection(spike_input, receive_pop, p.FromListConnector(from_list))
+    p.Projection(spike_input, receive_pop, p.AllToAllConnector())
+    # p.Projection(spike_input, receive_pop, p.AllToAllConnector())
 
     print "reached here 1"
     runtime = 11000

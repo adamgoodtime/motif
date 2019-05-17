@@ -137,8 +137,37 @@ def get_scores(game_pop, simulator):
         simulator.graph_mapper, simulator.buffer_manager, simulator.machine_time_step)
     return scores.tolist()
 
+def return_chip_list(machine):
+    # chip_list = []
+    # for i in range(8):
+    #     for j in range(8):
+    #         chip_list.append([i, j])
+    # to_be_removed = []
+    # for chip in chip_list:
+    #     if chip[0] > 4 and chip[1] < 3 and chip[0] - 4 > chip[1]:
+    #         to_be_removed.append(chip)
+    #     elif chip[0] < 4 and chip[1] > 3 and chip[0] + 3 < chip[1]:
+    #         to_be_removed.append(chip)
+    #
+    # for removal in to_be_removed:
+    #     del chip_list[chip_list.index(removal)]
+    full_chip_list = []
+    for i, ethernet in enumerate(machine.ethernet_connected_chips):
+        print "i:", i, "- chip:", ethernet.x, "/", ethernet.y
+        for chip in machine.BOARD_48_CHIPS:
+            x = chip[0] + ethernet.x
+            y = chip[1] + ethernet.y
+            if machine.is_chip_at(x, y):
+                if [ethernet.x, ethernet.y] != [0, 12] and [ethernet.x, ethernet.y] != [0, 36]:
+                    full_chip_list.append([x, y])
+                else:
+                    print "removing bad board covering", x, "/", y
+            else:
+                print "chip", x, "/", y, "does not exist"
+    return full_chip_list
+
 def pop_test(connections, test_data, split=4, runtime=2000, exposure_time=200, noise_rate=100, noise_weight=0.01,
-                spike_f=False, make_action=True, exec_thing='bout', seed=0):
+                spike_f=False, make_action=True, exec_thing='bout', seed=0, placement=True):
     np.random.seed(seed)
     sleep = 10 * np.random.random()
     # time.sleep(sleep)
@@ -154,6 +183,7 @@ def pop_test(connections, test_data, split=4, runtime=2000, exposure_time=200, n
             test_data_set = test_data
     else:
         test_data_set = [test_data]
+    number_of_chips = round(len(test_data_set) * len(connections) * 1.1)
     while try_except < max_attempts:
         input_pops = []
         model_count = -1
@@ -171,7 +201,7 @@ def pop_test(connections, test_data, split=4, runtime=2000, exposure_time=200, n
         try_count = 0
         while time.time() - start < setup_retry_time:
             try:
-                p.setup(timestep=1.0, min_delay=1, max_delay=127)
+                p.setup(timestep=1.0, min_delay=1, max_delay=127, n_chips_required=number_of_chips)
                 if neuron_choice == 'IF_cond_exp':
                     neuron_type = p.IF_cond_exp
                 elif neuron_choice == 'IF_curr_exp':
@@ -195,6 +225,9 @@ def pop_test(connections, test_data, split=4, runtime=2000, exposure_time=200, n
             try_count += 1
         print "\nfinished setup seed = ", seed, "\n"
         print config
+        if placement:
+            machine = p.get_machine()
+            chip_list = return_chip_list(machine)
         if exec_thing == 'mnist':
             [data, labels] = get_train_data(mnist_pointer)
             starting_point = np.random.randint(60000 - data_size)
@@ -210,6 +243,15 @@ def pop_test(connections, test_data, split=4, runtime=2000, exposure_time=200, n
                     failures.append(i)
                     print "agent {} was not properly connected to the game".format(i)
                 else:
+                    if placement:
+                        chip_x = chip_list[0][0]
+                        chip_y = chip_list[0][1]
+                        del chip_list[0]
+                        while not machine.is_chip_at(chip_x, chip_y):
+                            print " 2nd chip", chip_x, "/", chip_y, "does not exist"
+                            chip_x = chip_list[0][0]
+                            chip_y = chip_list[0][1]
+                            del chip_list[0]
                     model_count += 1
                     if exec_thing == 'pen':
                         input_model = gym.Pendulum(encoding=encoding,
@@ -302,6 +344,8 @@ def pop_test(connections, test_data, split=4, runtime=2000, exposure_time=200, n
                         input_pops.append(p.Population(input_pop_size, input_model))
                     else:
                         input_pops.append(input_model)
+                    if placement:
+                        input_pops[model_count].add_placement_constraint(x=chip_x, y=chip_y)
                     # added to ensure that the arms and bandit are connected to and from something
                     # null_pop = p.Population(1, neuron_type(), label='null{}'.format(i))
                     # p.Projection(input_pops[model_count], null_pop, p.AllToAllConnector(), p.StaticSynapse(delay=1))
@@ -315,6 +359,8 @@ def pop_test(connections, test_data, split=4, runtime=2000, exposure_time=200, n
                     else:
                         output_pop.append(p.Population(outputs, neuron_type(),
                                                        label='output_pop_{}-{}'.format(model_count, i)))
+                    if placement:
+                        output_pop[model_count].add_placement_constraint(x=chip_x, y=chip_y)
                     if spike_f == 'out' or make_action or exec_thing == 'mnist':
                         output_pop[model_count].record('spikes')
                     if exec_thing != 'mnist':
@@ -326,10 +372,14 @@ def pop_test(connections, test_data, split=4, runtime=2000, exposure_time=200, n
                                          label='excite_pop_{}-{}'.format(excite_count, i)))
                         if noise_rate:
                             excite_noise = p.Population(e_size, p.SpikeSourcePoisson(rate=noise_rate))
+                            if placement:
+                                excite_noise.add_placement_constraint(x=chip_x, y=chip_y)
                             p.Projection(excite_noise, excite[excite_count], p.OneToOneConnector(),
                                          p.StaticSynapse(weight=noise_weight), receptor_type='excitatory')
                         if spike_f:
                             excite[excite_count].record('spikes')
+                        if placement:
+                            excite[excite_count].add_placement_constraint(x=chip_x, y=chip_y)
                         excite_marker.append(i)
                     if i_size > 0:
                         inhib_count += 1
@@ -337,10 +387,14 @@ def pop_test(connections, test_data, split=4, runtime=2000, exposure_time=200, n
                                                   label='inhib_pop_{}-{}'.format(inhib_count, i)))
                         if noise_rate:
                             inhib_noise = p.Population(i_size, p.SpikeSourcePoisson(rate=noise_rate))
+                            if placement:
+                                inhib_noise.add_placement_constraint(x=chip_x, y=chip_y)
                             p.Projection(inhib_noise, inhib[inhib_count], p.OneToOneConnector(),
                                          p.StaticSynapse(weight=noise_weight), receptor_type='excitatory')
                         if spike_f:
                             inhib[inhib_count].record('spikes')
+                        if placement:
+                            inhib[inhib_count].add_placement_constraint(x=chip_x, y=chip_y)
                         inhib_marker.append(i)
                     stdp_model = p.STDPMechanism(
                         timing_dependence=p.SpikePairRule(
