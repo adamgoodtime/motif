@@ -30,7 +30,7 @@ maximum_depth = [3, 7]
 no_bins = [10, 200]
 reset_pop = 0
 size_f = False
-spike_f = False#'out'
+spike_f = 0.3#'out'
 repeat_best_amount = 5
 # depth fitness
 make_action = True
@@ -50,7 +50,7 @@ constant_delays = 0
 max_delay = 25.0
 base_mutate = 0
 multiple_mutates = True
-exec_thing = 'arms'
+exec_thing = 'logic'
 plasticity = False
 structural = False
 develop_neurons = True
@@ -346,6 +346,12 @@ def bandit(generations):
     if free_label:
         config += '{} '.format(free_label)
 
+    fitness_weighting = []
+    for i in range(number_of_tests):
+        fitness_weighting.append(1)
+    if spike_f:
+        fitness_weighting.append(spike_f)
+
     neurons = neuron_population(inputs=inputs,
                                 outputs=outputs,
                                 pop_size=inputs+outputs+200+agent_pop_size*3,
@@ -493,7 +499,7 @@ def bandit(generations):
             best_performance_score.append(np.average(test_scores))
             best_performance_fitness.append(np.average(test_fitness))
 
-        agents.pass_fitnesses(fitnesses, max_fail_score, fitness_shaping=shape_fitness)
+        agents.pass_fitnesses(fitnesses, max_fail_score, fitness_weighting, fitness_shaping=shape_fitness)
 
         [best_score_connections, best_fitness_connections] = agents.status_update(fitnesses, gen, config, number_of_tests, connections, best_performance_score, best_performance_fitness)
 

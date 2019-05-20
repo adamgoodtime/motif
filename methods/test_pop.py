@@ -540,10 +540,17 @@ def pop_test(connections, test_data, split=4, runtime=2000, exposure_time=200, n
                     for neuron in spikes:
                         for spike in neuron:
                             output_spike_count[i] += 1
-                            make_action = True
+                            made_action = True
                             break
-                        if make_action:
+                        if made_action:
                             break
+                if isinstance(spike_f, int):
+                    if spike_f > 0:
+                        output_spike_count[i] = 0
+                        spikes = output_pop[i - fails].get_data('spikes').segments[0].spiketrains
+                        for neuron in spikes:
+                            for spike in neuron:
+                                output_spike_count[i] += 1
                 if i in excite_marker and spike_f:
                     # print "counting excite spikes"
                     spikes = excite[i - excite_fail - fails].get_data('spikes').segments[0].spiketrains
@@ -578,7 +585,7 @@ def pop_test(connections, test_data, split=4, runtime=2000, exposure_time=200, n
             # pop[i].stats = {'fitness': scores[i][len(scores[i]) - 1][0]}  # , 'steps': 0}
         # print "\nfinished spikes", seed
         if spike_f or make_action:
-            agent_fitness.append([scores[i][len(scores[i]) - 1][0], excite_spike_count[i] + inhib_spike_count[i], output_spike_count[i]])
+            agent_fitness.append([scores[i][len(scores[i]) - 1][0], excite_spike_count[i] + inhib_spike_count[i] + output_spike_count[i], output_spike_count[i]])
         else:
             agent_fitness.append(scores[i][len(scores[i]) - 1][0])
         # print i, "| e:", excite_spike_count[i], "-i:", inhib_spike_count[i], "|\t", scores[i]
