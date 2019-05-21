@@ -51,7 +51,7 @@ max_delay = 25.0
 base_mutate = 0
 multiple_mutates = True
 exec_thing = 'logic'
-plasticity = False
+plasticity = True
 structural = False
 develop_neurons = True
 stdev_neurons = True
@@ -311,8 +311,8 @@ def bandit(generations):
         config += 'strc '
     if averaging_weights:
         config += 'ave '
-    if make_action:
-        config += 'action '
+    # if make_action:
+    #     config += 'action '
     if spike_f:
         if spike_f == 'out':
             config += 'out-spikes '

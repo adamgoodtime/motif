@@ -167,7 +167,7 @@ def subprocess_experiments(connections, test_data_set, split=4, runtime=2000, ex
             traceback.print_exc()
             print "it broke and the except caught the return failure"
             pool_result[i] = ['fail', 'fail']
-        if pool_result[i][0] == 'fail' and len(connection_threads[i][0]) > 1:
+        if pool_result[i][1] == 'fail' and len(connection_threads[i][0]) > 1:
             pool_result[i] = pool_result[i][1]
             if plasticity == 'pall':
                 # new_fail = False
@@ -192,8 +192,8 @@ def subprocess_experiments(connections, test_data_set, split=4, runtime=2000, ex
             problem_arms = connection_threads[i][1]
             pool_result[i] = subprocess_experiments(connection_threads[i][0], problem_arms, split, runtime,
                                                 exposure_time, noise_rate, noise_weight, spike_f, top=False, parallel=parallel, make_action=make_action)
-        elif pool_result[i][0] == 'fail' and len(connection_threads[i][0]) == 1:
-            pool_result[i] = pool_result[i][1]
+        elif pool_result[i][1] == 'fail' and len(connection_threads[i][0]) == 1:
+            pool_result[i] = pool_result[i][0]
             new_fail = False
             connection_threads[i].append(pool_result[i])
             while not new_fail:
@@ -209,8 +209,8 @@ def subprocess_experiments(connections, test_data_set, split=4, runtime=2000, ex
                 pool_result[i] = []
                 for j in range(len(test_data_set)):
                     pool_result[i].append('fail')
-        elif pool_result[i][0] == 'complete':
-            pool_result[i] = pool_result[i][1]
+        elif pool_result[i][1] == 'complete':
+            pool_result[i] = pool_result[i][0]
             print "good return"
         else:
             print "fully bad return"

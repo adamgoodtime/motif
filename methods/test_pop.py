@@ -10,7 +10,7 @@ import traceback
 import csv
 from spinn_front_end_common.utilities import globals_variables
 from ast import literal_eval
-from poisson.poisson_tools import *
+# from poisson.poisson_tools import *
 
 mnist_pointer = '../../NE16/poisson'
 
@@ -138,23 +138,23 @@ def get_scores(game_pop, simulator):
     return scores.tolist()
 
 def return_chip_list(machine):
-    # chip_list = []
-    # for i in range(8):
-    #     for j in range(8):
-    #         chip_list.append([i, j])
-    # to_be_removed = []
-    # for chip in chip_list:
-    #     if chip[0] > 4 and chip[1] < 3 and chip[0] - 4 > chip[1]:
-    #         to_be_removed.append(chip)
-    #     elif chip[0] < 4 and chip[1] > 3 and chip[0] + 3 < chip[1]:
-    #         to_be_removed.append(chip)
-    #
-    # for removal in to_be_removed:
-    #     del chip_list[chip_list.index(removal)]
+    chip_list = []
+    for i in range(8):
+        for j in range(8):
+            chip_list.append([i, j])
+    to_be_removed = []
+    for chip in chip_list:
+        if chip[0] > 4 and chip[1] < 3 and chip[0] - 4 > chip[1]:
+            to_be_removed.append(chip)
+        elif chip[0] < 4 and chip[1] > 3 and chip[0] + 3 < chip[1]:
+            to_be_removed.append(chip)
+
+    for removal in to_be_removed:
+        del chip_list[chip_list.index(removal)]
     full_chip_list = []
     for i, ethernet in enumerate(machine.ethernet_connected_chips):
         print "i:", i, "- chip:", ethernet.x, "/", ethernet.y
-        for chip in machine.BOARD_48_CHIPS:
+        for chip in chip_list: #machine.BOARD_48_CHIPS:
             x = chip[0] + ethernet.x
             y = chip[1] + ethernet.y
             if machine.is_chip_at(x, y):
@@ -544,7 +544,7 @@ def pop_test(connections, test_data, split=4, runtime=2000, exposure_time=200, n
                             break
                         if made_action:
                             break
-                if isinstance(spike_f, int):
+                if isinstance(spike_f, float):
                     if spike_f > 0:
                         output_spike_count[i] = 0
                         spikes = output_pop[i - fails].get_data('spikes').segments[0].spiketrains
@@ -585,7 +585,7 @@ def pop_test(connections, test_data, split=4, runtime=2000, exposure_time=200, n
             # pop[i].stats = {'fitness': scores[i][len(scores[i]) - 1][0]}  # , 'steps': 0}
         # print "\nfinished spikes", seed
         if spike_f or make_action:
-            agent_fitness.append([scores[i][len(scores[i]) - 1][0], excite_spike_count[i] + inhib_spike_count[i] + output_spike_count[i], output_spike_count[i]])
+            agent_fitness.append([scores[i][len(scores[i]) - 1][0], excite_spike_count[i] + inhib_spike_count[i], output_spike_count[i]])
         else:
             agent_fitness.append(scores[i][len(scores[i]) - 1][0])
         # print i, "| e:", excite_spike_count[i], "-i:", inhib_spike_count[i], "|\t", scores[i]
@@ -606,7 +606,7 @@ def pop_test(connections, test_data, split=4, runtime=2000, exposure_time=200, n
     p.end()
     print "\nafter end = ", seed, "\n"
     print config
-    return ['complete', agent_fitness]
+    return [agent_fitness, 'complete']
 
 def print_fitnesses(fitnesses):
     # with open('fitnesses {} {}.csv'.format(config, test_id), 'w') as file:
