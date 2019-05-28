@@ -24,13 +24,14 @@ fast_membrane = False
 threading_tests = True
 split = 1
 new_split = 4  # agent_pop_size
+max_chips_per_board = 12
 
 #motif params
 maximum_depth = [3, 7]
 no_bins = [10, 200]
 reset_pop = 0
 size_f = False
-spike_f = 0.3#'out'
+spike_f = 0.1#'out'
 repeat_best_amount = 5
 # depth fitness
 make_action = True
@@ -50,13 +51,13 @@ constant_delays = 0
 max_delay = 25.0
 base_mutate = 0
 multiple_mutates = True
-exec_thing = 'logic'
+exec_thing = 'arms'
 plasticity = True
 structural = False
 develop_neurons = True
 stdev_neurons = True
 neuron_type = 'IF_cond_exp'
-max_input_current = 0.8
+input_current_stdev = 0.3
 calcium_tau = 50
 free_label = 0#'t{}'.format(sys.argv[1])
 parallel = False
@@ -91,7 +92,7 @@ arm2 = 0.1
 arm3 = 0.1
 arm_len = 1
 arms = []
-arms_reward = 1
+arms_reward = 0
 for i in range(arm_len):
     arms.append([arm1, arm2])
     arms.append([arm2, arm1])
@@ -189,7 +190,7 @@ rate_off = 0
 
 def bandit(generations):
     print "starting"
-    global connections, arms, max_fail_score, pole_angle, inputs, outputs, config, test_data_set, encoding, runtime, maximum_depth, make_action, constant_delays, weight_max, max_input_current, stochastic, rate_on, rate_off
+    global connections, arms, max_fail_score, pole_angle, inputs, outputs, config, test_data_set, encoding, runtime, maximum_depth, make_action, constant_delays, weight_max, input_current_stdev, stochastic, rate_on, rate_off
 
     if exec_thing == 'br':
         runtime = breakout_runtime
@@ -342,7 +343,7 @@ def bandit(generations):
         config += 'dev_n '
     if stdev_neurons:
         config += 'stdev_n '
-        config += 'inc-{} '.format(max_input_current)
+        config += 'inc-{} '.format(input_current_stdev)
     if free_label:
         config += '{} '.format(free_label)
 
@@ -356,7 +357,7 @@ def bandit(generations):
                                 outputs=outputs,
                                 pop_size=inputs+outputs+200+agent_pop_size*3,
                                 io_prob=io_prob,
-                                max_input_current=max_input_current,
+                                input_current_stdev=input_current_stdev,
                                 read_population=read_neurons,
                                 neuron_type=neuron_type,
                                 default=not stdev_neurons)

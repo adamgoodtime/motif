@@ -39,7 +39,7 @@ class neuron_population(object):
                  # gsyn_exc_stdev=0,
                  # gsyn_inh=0.0,
                  # gsyn_inh_stdev=0,
-                 max_input_current=0.8,
+                 input_current_stdev=0.8,
                  calcium_tau=50,
                  neuron_type='IF_cond_exp',
                  default=False,
@@ -73,8 +73,8 @@ class neuron_population(object):
             v_thresh_stdev = 5
             v_reset = -65.0  # Reset potential after a spike in mV.
             v_reset_stdev = 5
-            i_offset = max_input_current  # Offset current in nA
-            i_offset_stdev = max_input_current / 3
+            i_offset = 0  # Offset current in nA
+            i_offset_stdev = input_current_stdev
             v = -65.0  # 'v_starting'
             v_stdev = 5
         elif neuron_type == 'IF_curr_exp':
@@ -94,8 +94,8 @@ class neuron_population(object):
             v_thresh_stdev = 5
             v_reset = -65.0  # Reset potential after a spike in mV.
             v_reset_stdev = 5
-            i_offset = max_input_current  # Offset current in nA
-            i_offset_stdev = max_input_current / 3
+            i_offset = 0  # Offset current in nA
+            i_offset_stdev = input_current_stdev
             v = -65.0  # 'v_starting'
             v_stdev = 5
         elif neuron_type == 'IF_curr_alpha':
@@ -136,8 +136,8 @@ class neuron_population(object):
             v_thresh_stdev = 5
             v_reset = -65.0  # Reset potential after a spike in mV.
             v_reset_stdev = 5
-            i_offset = max_input_current  # Offset current in nA
-            i_offset_stdev = max_input_current / 3
+            i_offset = 0  # Offset current in nA
+            i_offset_stdev = input_current_stdev
             v = -65.0  # 'v_starting'
             v_stdev = 5
             tau_ca2 = calcium_tau  # Time constant of the calcium current

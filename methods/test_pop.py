@@ -154,16 +154,20 @@ def return_chip_list(machine):
     full_chip_list = []
     for i, ethernet in enumerate(machine.ethernet_connected_chips):
         print "i:", i, "- chip:", ethernet.x, "/", ethernet.y
+        chips_from_board = 0
         for chip in chip_list: #machine.BOARD_48_CHIPS:
             x = chip[0] + ethernet.x
             y = chip[1] + ethernet.y
             if machine.is_chip_at(x, y):
-                if [ethernet.x, ethernet.y] != [0, 12] and [ethernet.x, ethernet.y] != [0, 36]:
+                if [ethernet.x, ethernet.y] != [0, 12] and [ethernet.x, ethernet.y] != [0, 24] and [ethernet.x, ethernet.y] != [0, 36]:
                     full_chip_list.append([x, y])
+                    chips_from_board += 1
                 else:
                     print "removing bad board covering", x, "/", y
             else:
                 print "chip", x, "/", y, "does not exist"
+            if chips_from_board >= max_chips_per_board:
+                break
     return full_chip_list
 
 def pop_test(connections, test_data, split=4, runtime=2000, exposure_time=200, noise_rate=100, noise_weight=0.01,
@@ -183,7 +187,7 @@ def pop_test(connections, test_data, split=4, runtime=2000, exposure_time=200, n
             test_data_set = test_data
     else:
         test_data_set = [test_data]
-    number_of_chips = round(len(test_data_set) * len(connections) * 1.1)
+    number_of_chips = round(len(test_data_set) * len(connections) * 1.2 * (48 / max_chips_per_board))
     while try_except < max_attempts:
         input_pops = []
         model_count = -1
