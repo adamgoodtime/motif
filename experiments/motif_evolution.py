@@ -48,7 +48,7 @@ read_neurons = 0
 # read_neurons = 'Dirty place/Neuron pop xor pl 5000 stdev_n.npy'
 keep_reading = 5
 constant_delays = 0
-max_delay = 25.0
+max_delay = 125.0
 base_mutate = 0
 multiple_mutates = True
 exec_thing = 'arms'
@@ -92,7 +92,7 @@ arm2 = 0.1
 arm3 = 0.1
 arm_len = 1
 arms = []
-arms_reward = 0
+arms_reward = 1
 for i in range(arm_len):
     arms.append([arm1, arm2])
     arms.append([arm2, arm1])
@@ -318,7 +318,7 @@ def bandit(generations):
         if spike_f == 'out':
             config += 'out-spikes '
         else:
-            config += 'spikes '
+            config += 'skp{} '.format(spike_f)
     if size_f:
         config += 'size '
     if reward_shape:

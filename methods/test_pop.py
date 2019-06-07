@@ -159,7 +159,7 @@ def return_chip_list(machine):
             x = chip[0] + ethernet.x
             y = chip[1] + ethernet.y
             if machine.is_chip_at(x, y):
-                if [ethernet.x, ethernet.y] != [0, 12] and [ethernet.x, ethernet.y] != [0, 24] and [ethernet.x, ethernet.y] != [0, 36]:
+                if [ethernet.x, ethernet.y] != [0, 12] and [ethernet.x, ethernet.y] != [0, 24] and [ethernet.x, ethernet.y] != [0, 36] and [x, y] != [105, 49]:
                     full_chip_list.append([x, y])
                     chips_from_board += 1
                 else:
@@ -205,7 +205,10 @@ def pop_test(connections, test_data, split=4, runtime=2000, exposure_time=200, n
         try_count = 0
         while time.time() - start < setup_retry_time:
             try:
-                p.setup(timestep=1.0, min_delay=1, max_delay=127, n_chips_required=number_of_chips)
+                if placement:
+                    p.setup(timestep=1.0, min_delay=1, max_delay=127, n_chips_required=number_of_chips)
+                else:
+                    p.setup(timestep=1.0, min_delay=1, max_delay=127)
                 if neuron_choice == 'IF_cond_exp':
                     neuron_type = p.IF_cond_exp
                 elif neuron_choice == 'IF_curr_exp':
@@ -538,29 +541,23 @@ def pop_test(connections, test_data, split=4, runtime=2000, exposure_time=200, n
                                 time_segment += 1
                             choices[time_segment][neuron_id] += 1
                         neuron_id += 1
-                made_action = False
                 if spike_f == 'out' or make_action:
                     spikes = output_pop[i - fails].get_data('spikes').segments[0].spiketrains
                     for neuron in spikes:
-                        for spike in neuron:
-                            output_spike_count[i] += 1
-                            made_action = True
-                            break
-                        if made_action:
+                        output_spike_count[i] += neuron.size
+                        if output_spike_count[i] != 0:
                             break
                 if isinstance(spike_f, float):
                     if spike_f > 0:
                         output_spike_count[i] = 0
                         spikes = output_pop[i - fails].get_data('spikes').segments[0].spiketrains
                         for neuron in spikes:
-                            for spike in neuron:
-                                output_spike_count[i] += 1
+                            output_spike_count[i] += neuron.size
                 if i in excite_marker and spike_f:
                     # print "counting excite spikes"
                     spikes = excite[i - excite_fail - fails].get_data('spikes').segments[0].spiketrains
                     for neuron in spikes:
-                        for spike in neuron:
-                            excite_spike_count[i] += 1
+                        excite_spike_count[i] += neuron.size
                 else:
                     excite_fail += 1
                     # print "had an excite failure"
@@ -568,8 +565,7 @@ def pop_test(connections, test_data, split=4, runtime=2000, exposure_time=200, n
                     # print "counting inhib spikes"
                     spikes = inhib[i - inhib_fail - fails].get_data('spikes').segments[0].spiketrains
                     for neuron in spikes:
-                        for spike in neuron:
-                            inhib_spike_count[i] += 1
+                        inhib_spike_count[i] += neuron.size
                 else:
                     inhib_fail += 1
                     # print "had an inhib failure"

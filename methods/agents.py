@@ -1070,8 +1070,8 @@ class agent_population(object):
             self.save_agent_connections(self.agent_pop[best_agent_s], iteration, 'fitness '+config)
             self.save_status(config, iteration, best_performance_score, best_performance_fitness)
             self.save_mutate_keys(iteration, config)
-        best_score_connections = self.convert_agent(self.agent_pop[best_agent])
-        best_fitness_connections = self.convert_agent(self.agent_pop[best_agent_s])
+        best_score_connections = self.convert_agent(self.agent_pop[best_agent_s])
+        best_fitness_connections = self.convert_agent(self.agent_pop[best_agent])
         return best_score_connections, best_fitness_connections
 
     def track_networks(self, connections, config):

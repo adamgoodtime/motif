@@ -103,7 +103,8 @@ def write_globals(file_id):
 
 def subprocess_experiments(connections, test_data_set, split=4, runtime=2000, exposure_time=200, noise_rate=100, noise_weight=0.01,
                   size_f=False, spike_f=False, make_action=True, top=True, parallel=True):
-    global new_split
+    global new_split, max_chips_per_board
+    max_chips_per_board = max_chips_per_board
     step_size = int(np.ceil(float(len(connections)) / float(split)))
     if step_size == 0:
         step_size = 1
@@ -151,9 +152,9 @@ def subprocess_experiments(connections, test_data_set, split=4, runtime=2000, ex
 
         test_id += 1
     if exec_thing == 'erbp':
-        wait_timeout(process_list, (runtime * 15) + 1800)
+        wait_timeout(process_list, (runtime * 15) + 3800)
     else:
-        wait_timeout(process_list, ((runtime / 1000) * 15) + 1800)
+        wait_timeout(process_list, ((runtime / 1000) * 15) + 3800)
 
     print "all finished"
 

@@ -634,37 +634,37 @@ class motif_population(object):
             if self.plasticity == 'all':
                 conn[4] = 'stdp'
             if pre_ex and post_ex:
-                e2e.append((pre_index, post_index, conn[2], conn[3], conn[4]))
+                e2e.append([pre_index, post_index, conn[2], conn[3], conn[4]])
             elif pre_ex and post_in:
-                e2i.append((pre_index, post_index, conn[2], conn[3], conn[4]))
+                e2i.append([pre_index, post_index, conn[2], conn[3], conn[4]])
             elif pre_in and post_ex:
-                i2e.append((pre_index, post_index, conn[2], conn[3], conn[4]))
+                i2e.append([pre_index, post_index, conn[2], conn[3], conn[4]])
             elif pre_in and post_in:
-                i2i.append((pre_index, post_index, conn[2], conn[3], conn[4]))
+                i2i.append([pre_index, post_index, conn[2], conn[3], conn[4]])
             elif pre_ex and in_post >= 0:
-                e2in.append((pre_index, post_index, conn[2], conn[3], conn[4]))
+                e2in.append([pre_index, post_index, conn[2], conn[3], conn[4]])
             elif pre_ex and out_post >= 0:
-                e2out.append((pre_index, post_index, conn[2], conn[3], conn[4]))
+                e2out.append([pre_index, post_index, conn[2], conn[3], conn[4]])
             elif pre_in and in_post >= 0:
-                i2in.append((pre_index, post_index, conn[2], conn[3], conn[4]))
+                i2in.append([pre_index, post_index, conn[2], conn[3], conn[4]])
             elif pre_in and out_post >= 0:
-                i2out.append((pre_index, post_index, conn[2], conn[3], conn[4]))
+                i2out.append([pre_index, post_index, conn[2], conn[3], conn[4]])
             elif in_pre >= 0 and post_ex:
-                in2e.append((pre_index, post_index, conn[2], conn[3], conn[4]))
+                in2e.append([pre_index, post_index, conn[2], conn[3], conn[4]])
             elif in_pre >= 0 and post_in:
-                in2i.append((pre_index, post_index, conn[2], conn[3], conn[4]))
+                in2i.append([pre_index, post_index, conn[2], conn[3], conn[4]])
             elif in_pre >= 0 and in_post >= 0:
-                in2in.append((pre_index, post_index, conn[2], conn[3], conn[4]))
+                in2in.append([pre_index, post_index, conn[2], conn[3], conn[4]])
             elif in_pre >= 0 and out_post >= 0:
-                in2out.append((pre_index, post_index, conn[2], conn[3], conn[4]))
+                in2out.append([pre_index, post_index, conn[2], conn[3], conn[4]])
             elif out_pre >= 0 and post_ex:
-                out2e.append((pre_index, post_index, conn[2], conn[3], conn[4]))
+                out2e.append([pre_index, post_index, conn[2], conn[3], conn[4]])
             elif out_pre >= 0 and post_in:
-                out2i.append((pre_index, post_index, conn[2], conn[3], conn[4]))
+                out2i.append([pre_index, post_index, conn[2], conn[3], conn[4]])
             elif out_pre >= 0 and in_post >= 0:
-                out2in.append((pre_index, post_index, conn[2], conn[3], conn[4]))
+                out2in.append([pre_index, post_index, conn[2], conn[3], conn[4]])
             elif out_pre >= 0 and out_post >= 0:
-                out2out.append((pre_index, post_index, conn[2], conn[3], conn[4]))
+                out2out.append([pre_index, post_index, conn[2], conn[3], conn[4]])
             else:
                 print "somethin fucky"
         excite_params = {}
@@ -690,12 +690,44 @@ class motif_population(object):
         return in2e, in2i, in2in, in2out, e2in, i2in, len(indexed_ex), e2e, e2i, len(indexed_in), \
                i2e, i2i, e2out, i2out, out2e, out2i, out2in, out2out, excite_params, inhib_params
 
+    def remove_multapses(self, all_connection_data):
+        cap = self.weight_range[1]
+        in2e, in2i, in2in, in2out, e2in, i2in, e_size, e2e, e2i, i_size, \
+        i2e, i2i, e2out, i2out, out2e, out2i, out2in, out2out, excite_params, inhib_params = all_connection_data
+        all_connections = in2e, in2i, in2in, in2out, e2in, i2in, e2e, e2i, i2e, i2i, e2out, i2out, out2e, out2i, out2in, out2out
+        processed_connections =[]
+        for connections in all_connections:
+            combined_connections = []
+            copy_connections = deepcopy(connections)
+            for connection in connections:
+                if connection in copy_connections:
+                    new_connection = deepcopy(connection)
+                    del copy_connections[copy_connections.index(connection)]
+                    to_be_deleted = []
+                    for other_connections in copy_connections:
+                        if connection[0] == other_connections[0] and connection[1] == other_connections[1] and \
+                                connection[3] == other_connections[3] and connection[4] == other_connections[4]:
+                            new_connection[2] += other_connections[2]
+                            to_be_deleted.append(other_connections)
+                    for delete in to_be_deleted:
+                        del copy_connections[copy_connections.index(delete)]
+                    if new_connection[2] > cap:
+                        # print "capped a connection weight of", new_connection[2], "to", cap
+                        new_connection[2] = cap
+                    combined_connections.append(new_connection)
+            processed_connections.append(combined_connections)
+        in2e, in2i, in2in, in2out, e2in, i2in, e2e, e2i, i2e, i2i, e2out, i2out, out2e, out2i, out2in, out2out = processed_connections
+        return in2e, in2i, in2in, in2out, e2in, i2in, e_size, e2e, e2i, i_size, i2e, i2i, \
+               e2out, i2out, out2e, out2i, out2in, out2out, excite_params, inhib_params
+
+
     def convert_individual(self, agent):
         if isinstance(agent, list):
             agent_conn = self.read_motif(agent[0])
         else:
             agent_conn = self.read_motif(agent)
         spinn_conn = self.construct_io(agent_conn)
+        spinn_conn = self.remove_multapses(spinn_conn)
         return spinn_conn
 
     '''Returns a list of the lower level motifs which comprise a higher level one'''
