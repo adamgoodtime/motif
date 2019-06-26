@@ -171,7 +171,7 @@ def return_chip_list(machine):
     return full_chip_list
 
 def pop_test(connections, test_data, split=4, runtime=2000, exposure_time=200, noise_rate=100, noise_weight=0.01,
-                spike_f=False, make_action=True, exec_thing='bout', seed=0, placement=True):
+                spike_f=False, make_action=True, exec_thing='bout', seed=0):
     np.random.seed(seed)
     sleep = 10 * np.random.random()
     # time.sleep(sleep)
@@ -187,7 +187,11 @@ def pop_test(connections, test_data, split=4, runtime=2000, exposure_time=200, n
             test_data_set = test_data
     else:
         test_data_set = [test_data]
-    number_of_chips = round(len(test_data_set) * len(connections) * 1.2 * (48 / max_chips_per_board))
+    if max_chips_per_board:
+        number_of_chips = round(len(test_data_set) * len(connections) * 1.2 * (48 / max_chips_per_board))
+        placement = True
+    else:
+        placement = False
     while try_except < max_attempts:
         input_pops = []
         model_count = -1

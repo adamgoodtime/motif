@@ -115,8 +115,8 @@ class neuron_population(object):
             v_thresh_stdev = 5
             v_reset = -65.0  # Reset potential after a spike in mV.
             v_reset_stdev = 5
-            i_offset = 3.0  # Offset current in nA 0.8 to force spikes
-            i_offset_stdev = 1
+            i_offset = 0  # Offset current in nA 0.8 to force spikes
+            i_offset_stdev = input_current_stdev
             v = -65.0  # 'v_starting'
             v_stdev = 5
         elif neuron_type == 'calcium':

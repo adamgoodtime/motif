@@ -24,14 +24,14 @@ fast_membrane = False
 threading_tests = True
 split = 1
 new_split = 4  # agent_pop_size
-max_chips_per_board = 12
+max_chips_per_board = 0
 
 #motif params
 maximum_depth = [3, 7]
 no_bins = [10, 200]
 reset_pop = 0
 size_f = False
-spike_f = 0.1#'out'
+spike_f = 0#.1#'out'
 repeat_best_amount = 5
 # depth fitness
 make_action = True
@@ -51,7 +51,7 @@ constant_delays = 0
 max_delay = 125.0
 base_mutate = 0
 multiple_mutates = True
-exec_thing = 'arms'
+exec_thing = 'logic'
 plasticity = True
 structural = False
 develop_neurons = True
@@ -59,7 +59,7 @@ stdev_neurons = True
 neuron_type = 'IF_cond_exp'
 input_current_stdev = 0.3
 calcium_tau = 50
-free_label = 0#'t{}'.format(sys.argv[1])
+free_label = '0c'#'t{}'.format(sys.argv[1])
 parallel = False
 
 '''print "reading from input"
