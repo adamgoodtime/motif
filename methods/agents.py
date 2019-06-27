@@ -999,7 +999,7 @@ class agent_population(object):
                     # print "no key for agent ", agent[0]
             key_file.close()
 
-    def status_update(self, combined_fitnesses, iteration, config, len_arms, connections, best_performance_score, best_performance_fitness):
+    def status_update(self, combined_fitnesses, iteration, config, num_tests, connections, best_performance_score, best_performance_fitness):
         total_scores = [0 for i in range(len(combined_fitnesses))]
         average_fitness = 0
         worst_score = 100000000
@@ -1023,7 +1023,7 @@ class agent_population(object):
                 worst_agent = j
             average_fitness += self.agent_pop[j][2]
             combined_score = 0
-            for i in range(len_arms):
+            for i in range(num_tests):
                 if combined_fitnesses[i][j] != 'fail':
                     combined_score += combined_fitnesses[i][j]
                     total_scores[i] += combined_fitnesses[i][j]
@@ -1038,19 +1038,23 @@ class agent_population(object):
         for i in range(1, len(combined_fitnesses)):
             best_scores += ', {:3}'.format(combined_fitnesses[i][best_agent])
         self.track_networks(connections, config)
+        best_fitness_score = sum(np.take(combined_fitnesses[:num_tests], best_agent, axis=1))
+        worst_fitness_score = sum(np.take(combined_fitnesses[:num_tests], worst_agent, axis=1))
         print "At iteration: ", iteration, "\n"
         print "best fitness was ", best_fitness, " by agent:", best_agent, \
-            "with a score of: ", best_scores
+            "with a score of: ", best_fitness_score, "--->", best_scores
         self.max_score.append(round(best_score, 2))
         self.min_score.append(round(worst_score, 2))
         total_average = 0
-        for i in range(len_arms):
+        for i in range(num_tests):
             total_average += total_scores[i]
         total_average /= len(self.agent_pop)
         self.average_score.append(round(total_average, 2))
         # self.average_score.append(round(total_scores, 2))
-        self.max_fitness.append(round(best_fitness, 2))
-        self.min_fitness.append(round(worst_fitness, 2))
+        # self.max_fitness.append(round(best_fitness, 2))
+        # self.min_fitness.append(round(worst_fitness, 2))
+        self.max_fitness.append(round(best_fitness_score, 2))
+        self.min_fitness.append(round(worst_fitness_score, 2))
         self.average_fitness.append(round(average_fitness / len(self.agent_pop), 2))
         print "best performance fitness:", best_performance_fitness
         print "maximum fitness:", self.max_fitness
@@ -1060,7 +1064,7 @@ class agent_population(object):
         for i in range(1, len(combined_fitnesses)):
             best_scores += ', {:3}'.format(combined_fitnesses[i][best_agent_s])
         print "best score was ", best_score, " by agent:", best_agent_s, \
-            "with a score of: ", best_scores
+            "with a score of: ", round(best_score, 2), "--->", best_scores
         print "best performance score:", best_performance_score
         print "maximum score:", self.max_score
         print "average score:", self.average_score

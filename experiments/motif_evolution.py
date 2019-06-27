@@ -59,12 +59,15 @@ stdev_neurons = True
 neuron_type = 'IF_cond_exp'
 input_current_stdev = 0.3
 calcium_tau = 50
-free_label = '0c'#'t{}'.format(sys.argv[1])
+free_label = 0#'{}'.format(sys.argv[1])
 parallel = False
 
 '''print "reading from input"
 constant_delays = float(sys.argv[2])
 print "d", sys.argv[2]
+if constant_delays < 0:
+    max_delay = -constant_delays
+    constant_delays = 0
 plasticity = bool(int(sys.argv[3]))
 print "p", sys.argv[3]
 develop_neurons = bool(int(sys.argv[4]))
