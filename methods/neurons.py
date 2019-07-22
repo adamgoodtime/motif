@@ -240,6 +240,11 @@ class neuron_population(object):
         self.neuron_param_stdevs['v_reset'] = self.v_reset_stdev
         self.neuron_param_stdevs['i_offset'] = self.i_offset_stdev
         self.neuron_param_stdevs['v'] = self.v_stdev
+
+        if neuron_type == 'calcium':
+            for param in self.neuron_param_stdevs:
+                if param != 'tau_ca2':
+                    self.neuron_param_stdevs[param] = 0
         # self.neuron_param_stdevs['gsyn_exc'] = self.gsyn_exc_stdev
         # self.neuron_param_stdevs['gsyn_inh'] = self.gsyn_inh_stdev
 

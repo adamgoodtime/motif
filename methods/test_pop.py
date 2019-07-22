@@ -132,10 +132,13 @@ def connect_2_pops(connections, input_pop, output_pop, receptor_type, pre_pop_si
 
 def get_scores(game_pop, simulator):
     g_vertex = game_pop._vertex
-    scores = g_vertex.get_data(
-        'score', simulator.no_machine_time_steps, simulator.placements,
-        simulator.graph_mapper, simulator.buffer_manager, simulator.machine_time_step)
-    return scores.tolist()
+    try:
+        scores = g_vertex.get_data(
+            'score', simulator.no_machine_time_steps, simulator.placements,
+            simulator.graph_mapper, simulator.buffer_manager, simulator.machine_time_step)
+        return scores.tolist()
+    except:
+        return [[max_fail_score], [max_fail_score], [max_fail_score], [max_fail_score]]
 
 def return_chip_list(machine):
     chip_list = []
@@ -582,7 +585,11 @@ def pop_test(connections, test_data, split=4, runtime=2000, exposure_time=200, n
                 scores.append([[score]])
             elif exec_thing == 'recall':
                 score = get_scores(game_pop=input_pops[i - fails], simulator=simulator)
-                accuracy = float(score[len(score) - 2][0]) / float(score[len(score) - 1][0])
+                correct_recalls = float(score[len(score) - 2][0])
+                number_of_trials = float(score[len(score) - 1][0])
+                accuracy = correct_recalls / number_of_trials
+                # confidence
+                # accuracy *= np.sqrt(number_of_trials)
                 scores.append([[accuracy]])
             else:
                 scores.append(get_scores(game_pop=input_pops[i - fails], simulator=simulator))

@@ -39,7 +39,7 @@ shape_fitness = True
 viable_parents = 0.2
 elitism = 0.2
 exposure_time = 200
-io_prob = 0.95  # 1.0 - (1.0 / 11.0)
+io_prob = 0.5  # 1.0 - (1.0 / 11.0)
 read_motifs = 0
 # read_motifs = 'Dirty place/Motif pop xor pl 200 stdev_n.npy'
 # read_motifs = 'Dirty place/Motif pop xor pl 5000 stdev_n.npy'
@@ -51,15 +51,15 @@ constant_delays = 0
 max_delay = 125.0
 base_mutate = 0
 multiple_mutates = True
-exec_thing = 'logic'
-plasticity = True
+exec_thing = 'recall'
+plasticity = False
 structural = False
-develop_neurons = True
-stdev_neurons = True
+develop_neurons = False
+stdev_neurons = False
 neuron_type = 'IF_cond_exp'
 input_current_stdev = 0.3
-calcium_tau = 50
-free_label = 0#'{}'.format(sys.argv[1])
+calcium_tau = 2000
+free_label = '2'#'{}'.format(sys.argv[1])
 parallel = False
 
 '''print "reading from input"
@@ -153,14 +153,14 @@ for i in range(1, len(truth_table)):
     input_sequence.append(segment)
 
 #Recall params
-recall_runtime = 60000
-recall_rate_on = 50
-recall_rate_off = 0
+recall_runtime = 180000
+recall_rate_on = 100
+recall_rate_off = 10
 recall_pop_size = 1
 prob_command = 1./6.
 prob_in_change = 1./2.
 time_period = 200
-recall_stochastic = 1
+recall_stochastic = 0
 recall_reward = 0
 recall_parallel_runs = 2
 
@@ -321,7 +321,7 @@ def bandit(generations):
         if spike_f == 'out':
             config += 'out-spikes '
         else:
-            config += 'skp{} '.format(spike_f)
+            config += 'spk{} '.format(spike_f)
     if size_f:
         config += 'size '
     if reward_shape:
@@ -500,8 +500,8 @@ def bandit(generations):
                 for j in range(repeat_best_amount):
                     test_scores[j] += best_agent_repeat_score[i][j]
                     test_fitness[j] += best_agent_repeat_fitness[i][j]
-            best_performance_score.append(np.average(test_scores))
-            best_performance_fitness.append(np.average(test_fitness))
+            best_performance_score.append(round(np.average(test_scores), 2))
+            best_performance_fitness.append(round(np.average(test_fitness), 2))
 
         agents.pass_fitnesses(fitnesses, max_fail_score, fitness_weighting, fitness_shaping=shape_fitness)
 
