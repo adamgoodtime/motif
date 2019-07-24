@@ -1116,7 +1116,10 @@ class agent_population(object):
         self.min_excite_neurons.append(np.min(e_sizes))
         self.average_excite_neurons.append(round(np.average(e_sizes), 2))
         self.max_excite_neurons.append(np.max(e_sizes))
-        self.weighted_excite_score.append(round(np.average(e_sizes, weights=scores_list), 2))
+        try:
+            self.weighted_excite_score.append(round(np.average(e_sizes, weights=scores_list), 2))
+        except:
+            self.weighted_excite_score.append(round(np.average(e_sizes), 2))
         self.weighted_excite_fitness.append(round(np.average(e_sizes, weights=fitness_list), 2))
         self.best_score_excite.append(e_sizes[best_score_index])
         self.best_fitness_excite.append(e_sizes[best_fitness_index])

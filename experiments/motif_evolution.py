@@ -39,7 +39,7 @@ shape_fitness = True
 viable_parents = 0.2
 elitism = 0.2
 exposure_time = 200
-io_prob = 0.5  # 1.0 - (1.0 / 11.0)
+io_prob = 0.75  # 1.0 - (1.0 / 11.0)
 read_motifs = 0
 # read_motifs = 'Dirty place/Motif pop xor pl 200 stdev_n.npy'
 # read_motifs = 'Dirty place/Motif pop xor pl 5000 stdev_n.npy'
@@ -54,12 +54,13 @@ multiple_mutates = True
 exec_thing = 'recall'
 plasticity = False
 structural = False
-develop_neurons = False
-stdev_neurons = False
-neuron_type = 'IF_cond_exp'
+develop_neurons = True
+stdev_neurons = True
+neuron_type = 'calcium'
 input_current_stdev = 0.3
-calcium_tau = 2000
-free_label = '2'#'{}'.format(sys.argv[1])
+calcium_tau = 1000
+calcium_i_alpha = 1
+free_label = '--'#'{}'.format(sys.argv[1])
 parallel = False
 
 '''print "reading from input"
@@ -154,10 +155,10 @@ for i in range(1, len(truth_table)):
 
 #Recall params
 recall_runtime = 180000
-recall_rate_on = 100
-recall_rate_off = 10
+recall_rate_on = 27
+recall_rate_off = 0
 recall_pop_size = 1
-prob_command = 1./6.
+prob_command = 1#./6.
 prob_in_change = 1./2.
 time_period = 200
 recall_stochastic = 0
@@ -363,7 +364,9 @@ def bandit(generations):
                                 input_current_stdev=input_current_stdev,
                                 read_population=read_neurons,
                                 neuron_type=neuron_type,
-                                default=not stdev_neurons)
+                                default=not stdev_neurons,
+                                calcium_tau=calcium_tau,
+                                calcium_i_alpha=calcium_i_alpha)
 
     if neuron_type == 'IF_cond_exp':
         weight_max = 0.1
@@ -376,7 +379,7 @@ def bandit(generations):
         config += 'cura '
     elif neuron_type == 'calcium':
         weight_max = 4.8
-        config += 'calc-{} '.format(calcium_tau)
+        config += 'calc-{}-{} '.format(calcium_tau, calcium_i_alpha)
     else:
         print "incorrect neuron type"
         raise Exception
@@ -391,6 +394,7 @@ def bandit(generations):
                               global_io=('highest', 'seeded', 'in'),
                               read_entire_population=read_motifs,
                               keep_reading=keep_reading,
+                              viable_parents=viable_parents,
                               plasticity=plasticity,
                               structural=structural,
                               population_size=agent_pop_size*3+inputs+outputs)

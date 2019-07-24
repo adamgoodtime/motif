@@ -41,6 +41,7 @@ class neuron_population(object):
                  # gsyn_inh_stdev=0,
                  input_current_stdev=0.8,
                  calcium_tau=50,
+                 calcium_i_alpha=0.5,
                  neuron_type='IF_cond_exp',
                  default=False,
                  io_prob=0.5,
@@ -144,8 +145,8 @@ class neuron_population(object):
             tau_ca2_stdev = calcium_tau / 5
             i_ca2 = 0.0  # Constant calcium current
             i_ca2_stdev = 0.0
-            i_alpha = 0.1  # Amount the calcium current increases by after spiking
-            i_alpha_stdev = 0.03
+            i_alpha = calcium_i_alpha  # Amount the calcium current increases by after spiking
+            i_alpha_stdev = calcium_i_alpha / 3
             isyn_exc = 0.0  # Rise time of excitatory something?
             isyn_inh = 0.0  # Rise time of inhibitory something?
         elif neuron_type == 'izhikevich':
@@ -179,10 +180,10 @@ class neuron_population(object):
             self.e_rev_I = e_rev_I
             self.e_rev_I_stdev = e_rev_I_stdev
         elif neuron_type == 'calcium':
-            self.tau_ca2 = 50.0
-            self.tau_ca2_stdev = 5.0
-            self.i_alpha = 0.1
-            self.i_alpha_stdev = 0.03
+            self.tau_ca2 = tau_ca2
+            self.tau_ca2_stdev = tau_ca2_stdev
+            self.i_alpha = i_alpha
+            self.i_alpha_stdev = i_alpha_stdev
         self.v_thresh = v_thresh
         self.v_thresh_stdev = v_thresh_stdev
         self.v_reset = v_reset
@@ -243,7 +244,7 @@ class neuron_population(object):
 
         if neuron_type == 'calcium':
             for param in self.neuron_param_stdevs:
-                if param != 'tau_ca2':
+                if param != 'tau_ca2' and param != 'i_alpha':
                     self.neuron_param_stdevs[param] = 0
         # self.neuron_param_stdevs['gsyn_exc'] = self.gsyn_exc_stdev
         # self.neuron_param_stdevs['gsyn_inh'] = self.gsyn_inh_stdev

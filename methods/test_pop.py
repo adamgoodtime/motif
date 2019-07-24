@@ -585,11 +585,20 @@ def pop_test(connections, test_data, split=4, runtime=2000, exposure_time=200, n
                 scores.append([[score]])
             elif exec_thing == 'recall':
                 score = get_scores(game_pop=input_pops[i - fails], simulator=simulator)
-                correct_recalls = float(score[len(score) - 2][0])
+                # correct_recalls = float(score[len(score) - 2][0])
+                correct_recalls_0 = float(score[len(score) - 3][0])
+                correct_recalls_1 = float(score[len(score) - 2][0])
+                correct_recalls = correct_recalls_0 + correct_recalls_1
                 number_of_trials = float(score[len(score) - 1][0])
                 accuracy = correct_recalls / number_of_trials
-                # confidence
-                # accuracy *= np.sqrt(number_of_trials)
+                # confidence - if both -ve keep negative
+                if correct_recalls == 0:
+                    confidence = 0
+                elif prob_command > 0.5:
+                    confidence = 1
+                else:
+                    confidence = (abs(correct_recalls_0) * abs(correct_recalls_1)) / ((correct_recalls / 2)**2)
+                accuracy *= confidence
                 scores.append([[accuracy]])
             else:
                 scores.append(get_scores(game_pop=input_pops[i - fails], simulator=simulator))

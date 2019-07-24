@@ -24,6 +24,7 @@ class motif_population(object):
                  static_population=True,
                  population_seed=None,
                  read_entire_population=False,
+                 viable_parents=0.1,
                  keep_reading=0,
                  discrete_params=True,
                  plasticity=True,
@@ -55,6 +56,7 @@ class motif_population(object):
         self.static_population = static_population
         self.population_seed = population_seed
         self.read_entire_population = read_entire_population
+        self.viable_parents = viable_parents
         self.keep_reading = keep_reading
         self.discrete_params = discrete_params
         self.plasticity = plasticity
@@ -851,9 +853,12 @@ class motif_population(object):
         motif_count = {}
         neuron_count = {}
         if fitness_shaping:
+            allowed_to_mate = int(math.ceil(len(agents) * self.viable_parents))
             agents.sort(key=lambda x: x[2])#, reverse=True)
-            i = 1
+            i = 0
             for agent in agents:
+                if i < allowed_to_mate:
+                    agent[2] += 0.00001
                 component_motifs = []
                 component_motifs = self.list_motifs(agent[0], component_motifs)
                 self.update_weight(component_motifs, agent[2])
