@@ -771,7 +771,7 @@ class motif_population(object):
         if full_reset == True:
             self.total_weight = 0
             for motif_id in self.motif_configs:
-                self.motif_configs['{}'.format(motif_id)]['weight'] = 0
+                self.motif_configs['{}'.format(motif_id)]['weight'] = 0.0
             if develop_neurons:
                 self.neurons.reset_weights()
 

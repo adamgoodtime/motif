@@ -59,7 +59,9 @@ stdev_neurons = True
 neuron_type = 'calcium'
 input_current_stdev = 0.3
 calcium_tau = 1000
-calcium_i_alpha = 1
+calcium_i_alpha = 3
+allow_i2o = False
+weight_scale = 1.5
 free_label = '--'#'{}'.format(sys.argv[1])
 parallel = False
 
@@ -163,7 +165,7 @@ prob_in_change = 1./2.
 time_period = 200
 recall_stochastic = 0
 recall_reward = 0
-recall_parallel_runs = 2
+recall_parallel_runs = 5
 
 #MNIST
 max_freq = 5000
@@ -182,6 +184,11 @@ breakout_runtime = 181000
 x_factor = 8
 y_factor = 8
 bricking = 0
+
+#neuron params
+neuron_runtime = 20
+neuron_pop_size = 5
+neuron_parallel_runs = 2
 
 inputs = 0
 outputs = 0
@@ -304,6 +311,14 @@ def bandit(generations):
         test_data_set = [[0], [1]]
         number_of_tests = len(test_data_set)
         config = 'erbp {} {} '.format(runtime, maximum_depth)
+    elif exec_thing == 'neuron':
+        runtime = neuron_runtime
+        inputs = neuron_pop_size
+        outputs = neuron_pop_size
+        for j in range(neuron_parallel_runs):
+            test_data_set.append([j])
+        number_of_tests = neuron_parallel_runs
+        config = 'neuron {} '.format(neuron_pop_size)
     else:
         print "\nNot a correct test setting\n"
         raise Exception
@@ -348,6 +363,8 @@ def bandit(generations):
     if stdev_neurons:
         config += 'stdev_n '
         config += 'inc-{} '.format(input_current_stdev)
+    if not allow_i2o:
+        config += 'ni2o '
     if free_label:
         config += '{} '.format(free_label)
 
@@ -383,6 +400,9 @@ def bandit(generations):
     else:
         print "incorrect neuron type"
         raise Exception
+    if weight_scale:
+        weight_max /= float(weight_scale)
+        config += 'ws-{} '.format(weight_scale)
     motifs = motif_population(neurons,
                               max_motif_size=4,#maximum_depth[0],
                               no_weight_bins=no_bins,
@@ -410,6 +430,7 @@ def bandit(generations):
                               # sexuality=[7./20., 9./20., 4./20., 0],
                               base_mutate=base_mutate,
                               multiple_mutates=multiple_mutates,
+                              allow_i2o=allow_i2o,
                               # input_shift=0,
                               # output_shift=0,
                               maximum_depth=maximum_depth,

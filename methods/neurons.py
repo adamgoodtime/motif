@@ -142,11 +142,11 @@ class neuron_population(object):
             v = -65.0  # 'v_starting'
             v_stdev = 5
             tau_ca2 = calcium_tau  # Time constant of the calcium current
-            tau_ca2_stdev = calcium_tau / 5
+            tau_ca2_stdev = calcium_tau / 5.
             i_ca2 = 0.0  # Constant calcium current
             i_ca2_stdev = 0.0
             i_alpha = calcium_i_alpha  # Amount the calcium current increases by after spiking
-            i_alpha_stdev = calcium_i_alpha / 3
+            i_alpha_stdev = calcium_i_alpha / 3.
             isyn_exc = 0.0  # Rise time of excitatory something?
             isyn_inh = 0.0  # Rise time of inhibitory something?
         elif neuron_type == 'izhikevich':
@@ -458,7 +458,7 @@ class neuron_population(object):
     def reset_weights(self):
         self.total_weight = 0
         for neuron in self.neuron_configs:
-            self.neuron_configs[neuron]['weight'] = 0
+            self.neuron_configs[neuron]['weight'] = 0.0
 
     def update_weights(self, neuron_ids, weight):
         for neuron in neuron_ids:

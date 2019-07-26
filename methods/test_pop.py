@@ -182,7 +182,7 @@ def pop_test(connections, test_data, split=4, runtime=2000, exposure_time=200, n
     try_except = 0
     if isinstance(test_data[0], list):
         if exec_thing == 'arms':
-            if len(test_data) > 2:
+            if len(test_data) >= 2:
                 test_data_set = test_data
             else:
                 test_data_set = [test_data]
@@ -350,11 +350,16 @@ def pop_test(connections, test_data, split=4, runtime=2000, exposure_time=200, n
                     elif exec_thing == 'mnist':
                         # shared population already created
                         None
+                    elif exec_thing == 'neuron':
+                        input_model = p.IF_cond_exp()
                     else:
                         print "Incorrect input model selected"
                         raise Exception
                     if exec_thing != 'mnist':
-                        input_pop_size = input_model.neurons()
+                        if exec_thing != 'neuron':
+                            input_pop_size = input_model.neurons()
+                        else:
+                            input_pop_size = neuron_pop_size
                         input_pops.append(p.Population(input_pop_size, input_model))
                     else:
                         input_pops.append(input_model)
