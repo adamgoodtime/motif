@@ -109,7 +109,7 @@ def thread_experiments(connections, test_data_set, split=4, runtime=2000, exposu
     if isinstance(test_data_set[0], list):
         connection_threads = []
         all_configs = [[[connections[x:x + step_size], test_data, split, runtime, exposure_time, noise_rate, noise_weight,
-                         reward, spike_f, np.random.randint(1000000000)] for x in xrange(0, len(connections), step_size)] 
+                         reward, spike_f, np.random.randint(1000000000)] for x in range(0, len(connections), step_size)] 
                        for test_data in test_data_set]
         for arm in all_configs:
             for config in arm:
@@ -117,7 +117,7 @@ def thread_experiments(connections, test_data_set, split=4, runtime=2000, exposu
     else:
         connection_threads = [[connections[x:x + step_size], test_data_set, split, runtime, exposure_time, noise_rate,
                                noise_weight, reward, spike_f, np.random.randint(1000000000)] 
-                              for x in xrange(0, len(connections), step_size)]
+                              for x in range(0, len(connections), step_size)]
 
     pool = pathos.multiprocessing.Pool(processes=len(connection_threads))
 
@@ -127,7 +127,7 @@ def thread_experiments(connections, test_data_set, split=4, runtime=2000, exposu
 
     for i in range(len(pool_result)):
         if pool_result[i] == 'fail' and len(connection_threads[i][0]) > 1:
-            print "splitting ", len(connection_threads[i][0]), " into ", new_split, " pieces"
+            print("splitting ", len(connection_threads[i][0]), " into ", new_split, " pieces")
             problem_arms = connection_threads[i][1]
             pool_result[i] = thread_experiments(connection_threads[i][0], problem_arms, new_split, runtime,
                                                 exposure_time, noise_rate, noise_weight, reward, spike_f, top=False)
@@ -180,23 +180,23 @@ def pop_test(connections, test_data, split=4, runtime=2000, exposure_time=200, n
             try:
                 p.setup(timestep=1.0, min_delay=1, max_delay=127)
                 p.set_number_of_neurons_per_core(p.IF_cond_exp, 100)
-                print "\nfinished setup seed = ", seed, "\n"
-                print "test data = ", test_data
+                print("\nfinished setup seed = ", seed, "\n")
+                print("test data = ", test_data)
                 break
             except:
                 traceback.print_exc()
                 sleep = 1 * np.random.random()
                 time.sleep(sleep)
-            print "\nsetup", try_count, " seed = ", seed, "\n", "\n"
+            print("\nsetup", try_count, " seed = ", seed, "\n", "\n")
             try_count += 1
-        print "\nfinished setup seed = ", seed, "\n"
-        print config
+        print("\nfinished setup seed = ", seed, "\n")
+        print(config)
         for i in range(len(connections)):
             [in2e, in2i, in2in, in2out, e2in, i2in, e_size, e2e, e2i, i_size,
              i2e, i2i, e2out, i2out, out2e, out2i, out2in, out2out] = connections[i]
             if len(in2e) == 0 and len(in2i) == 0 and len(in2out) == 0:
                 failures.append(i)
-                print "agent {} was not properly connected to the game".format(i)
+                print("agent {} was not properly connected to the game".format(i))
             else:
                 model_count += 1
                 if exec_thing == 'pen':
@@ -456,13 +456,13 @@ def pop_test(connections, test_data, split=4, runtime=2000, exposure_time=200, n
                         if len(non_plastic) != 0:
                             p.Projection(output_pop[model_count], output_pop[model_count], p.FromListConnector(non_plastic),
                                          receptor_type='inhibitory')
-        print "\nfinished connections seed = ", seed, "\n"
+        print("\nfinished connections seed = ", seed, "\n")
         simulator = get_simulator()
         try:
-            print "\nrun seed = ", seed, "\n"
+            print("\nrun seed = ", seed, "\n")
             if len(connections) == len(failures):
                 p.end()
-                print "nothing to run so ending and returning fail"
+                print("nothing to run so ending and returning fail")
                 return 'fail'
             p.run(runtime)
             try_except = max_attempts
@@ -470,18 +470,18 @@ def pop_test(connections, test_data, split=4, runtime=2000, exposure_time=200, n
         except:
             traceback.print_exc()
             try:
-                print "\nrun 2 seed = ", seed, "\n"
+                print("\nrun 2 seed = ", seed, "\n")
                 globals_variables.unset_simulator()
-                print "end was necessary"
+                print("end was necessary")
             except:
                 traceback.print_exc()
-                print "end wasn't necessary"
+                print("end wasn't necessary")
             try_except += 1
-            print "failed to run on attempt ", try_except, "\n"  # . total fails: ", all_fails, "\n"
+            print("failed to run on attempt ", try_except, "\n")  # . total fails: ", all_fails, "\n"
             if try_except >= max_attempts:
-                print "calling it a failed population, splitting and rerunning"
+                print("calling it a failed population, splitting and rerunning")
                 return 'fail'
-        print "\nfinished run seed = ", seed, "\n"
+        print("\nfinished run seed = ", seed, "\n")
 
     scores = []
     agent_fitness = []
@@ -491,11 +491,11 @@ def pop_test(connections, test_data, split=4, runtime=2000, exposure_time=200, n
     inhib_spike_count = [0 for i in range(len(connections))]
     inhib_fail = 0
     output_spike_count = [0 for i in range(len(connections))]
-    print "reading the spikes of ", config, '\n', seed
+    print("reading the spikes of ", config, '\n', seed)
     for i in range(len(connections)):
-        print "started processing fitness of: ", i, '/', len(connections)
+        print("started processing fitness of: ", i, '/', len(connections))
         if i in failures:
-            print "worst score for the failure"
+            print("worst score for the failure")
             fails += 1
             scores.append([[max_fail_score], [max_fail_score], [max_fail_score], [max_fail_score]])
             # agent_fitness.append(scores[i])
@@ -509,44 +509,44 @@ def pop_test(connections, test_data, split=4, runtime=2000, exposure_time=200, n
                         for spike in neuron:
                             output_spike_count[i] += 1
                 if i in excite_marker:
-                    print "counting excite spikes"
+                    print("counting excite spikes")
                     spikes = excite[i - excite_fail - fails].get_data('spikes').segments[0].spiketrains
                     for neuron in spikes:
                         for spike in neuron:
                             excite_spike_count[i] += 1
                 else:
                     excite_fail += 1
-                    print "had an excite failure"
+                    print("had an excite failure")
                 if i in inhib_marker:
-                    print "counting inhib spikes"
+                    print("counting inhib spikes")
                     spikes = inhib[i - inhib_fail - fails].get_data('spikes').segments[0].spiketrains
                     for neuron in spikes:
                         for spike in neuron:
                             inhib_spike_count[i] += 1
                 else:
                     inhib_fail += 1
-                    print "had an inhib failure"
+                    print("had an inhib failure")
             scores.append(get_scores(game_pop=input_pops[i - fails], simulator=simulator))
             # pop[i].stats = {'fitness': scores[i][len(scores[i]) - 1][0]}  # , 'steps': 0}
-        print "\nfinished spikes", seed
+        print("\nfinished spikes", seed)
         if spike_f:
             agent_fitness.append([scores[i][len(scores[i]) - 1][0], excite_spike_count[i] + inhib_spike_count[i] + output_spike_count[i]])
         else:
             agent_fitness.append(scores[i][len(scores[i]) - 1][0])
         # print i, "| e:", excite_spike_count[i], "-i:", inhib_spike_count[i], "|\t", scores[i]
-    print seed, "\nThe scores for this run of {} agents are:".format(len(connections))
+    print(seed, "\nThe scores for this run of {} agents are:".format(len(connections)))
     for i in range(len(connections)):
-        print "c:{}, s:{}, si:{}, si0:{}".format(len(connections), len(scores), len(scores[i]), len(scores[i][0]))
+        print("c:{}, s:{}, si:{}, si0:{}".format(len(connections), len(scores), len(scores[i]), len(scores[i][0])))
         e_string = "e: {}".format(excite_spike_count[i])
         i_string = "i: {}".format(inhib_spike_count[i])
         score_string = ""
         for j in range(len(scores[i])):
             score_string += "{:4},".format(scores[i][j][0])
-        print "{:3} | {:8} {:8} - ".format(i, e_string, i_string), score_string
-    print "before end = ", seed
+        print("{:3} | {:8} {:8} - ".format(i, e_string, i_string), score_string)
+    print("before end = ", seed)
     p.end()
-    print "\nafter end = ", seed, "\n"
-    print config
+    print("\nafter end = ", seed, "\n")
+    print(config)
     return agent_fitness
 
 def print_fitnesses(fitnesses):

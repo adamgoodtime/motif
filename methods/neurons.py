@@ -3,11 +3,11 @@ from numpy.core import multiarray
 import math
 import itertools
 from copy import deepcopy
-import operator
-from spinn_front_end_common.utilities.globals_variables import get_simulator
-import traceback
-import csv
-from ast import literal_eval
+# import operator
+# from spinn_front_end_common.utilities.globals_variables import get_simulator
+# import traceback
+# import csv
+# from ast import literal_eval
 
 class neuron_population(object):
     def __init__(self,
@@ -99,56 +99,6 @@ class neuron_population(object):
             i_offset_stdev = input_current_stdev
             v = -65.0  # 'v_starting'
             v_stdev = 5
-        elif neuron_type == 'IF_curr_alpha':
-            v_rest = -65.0  # Resting membrane potential in mV.
-            v_rest_stdev = 5
-            cm = 1.0  # Capacity of the membrane in nF
-            cm_stdev = 0.3
-            tau_m = 20.0  # Membrane time constant in ms.
-            tau_m_stdev = 5
-            tau_refrac = 0.1  # Duration of refractory period in ms.
-            tau_refrac_stdev = 0.03
-            tau_syn_E = 0.5  # Rise time of the excitatory synaptic alpha function in ms.
-            tau_syn_E_stdev = 0.16
-            tau_syn_I = 0.5  # Rise time of the inhibitory synaptic alpha function in ms.
-            tau_syn_I_stdev = 0.16
-            v_thresh = -50.0  # Spike threshold in mV.
-            v_thresh_stdev = 5
-            v_reset = -65.0  # Reset potential after a spike in mV.
-            v_reset_stdev = 5
-            i_offset = 0  # Offset current in nA 0.8 to force spikes
-            i_offset_stdev = input_current_stdev
-            v = -65.0  # 'v_starting'
-            v_stdev = 5
-        elif neuron_type == 'calcium':
-            v_rest = -65.0  # Resting membrane potential in mV.
-            v_rest_stdev = 5
-            cm = 1.0  # Capacity of the membrane in nF
-            cm_stdev = 0.3
-            tau_m = 20.0  # Membrane time constant in ms.
-            tau_m_stdev = 5
-            tau_refrac = 0.1  # Duration of refractory period in ms.
-            tau_refrac_stdev = 0.03
-            tau_syn_E = 5  # Rise time of the excitatory synaptic alpha function in ms.
-            tau_syn_E_stdev = 1.6
-            tau_syn_I = 5  # Rise time of the inhibitory synaptic alpha function in ms.
-            tau_syn_I_stdev = 1.6
-            v_thresh = -50.0  # Spike threshold in mV.
-            v_thresh_stdev = 5
-            v_reset = -65.0  # Reset potential after a spike in mV.
-            v_reset_stdev = 5
-            i_offset = 0  # Offset current in nA
-            i_offset_stdev = input_current_stdev
-            v = -65.0  # 'v_starting'
-            v_stdev = 5
-            tau_ca2 = calcium_tau  # Time constant of the calcium current
-            tau_ca2_stdev = calcium_tau / 5.
-            i_ca2 = 0.0  # Constant calcium current
-            i_ca2_stdev = 0.0
-            i_alpha = calcium_i_alpha  # Amount the calcium current increases by after spiking
-            i_alpha_stdev = calcium_i_alpha / 3.
-            isyn_exc = 0.0  # Rise time of excitatory something?
-            isyn_inh = 0.0  # Rise time of inhibitory something?
         elif neuron_type == 'izhikevich':
             a = 0.02
             b = 0.2
@@ -157,45 +107,37 @@ class neuron_population(object):
             i_offset = 0.0 #between 3 and 4 spikes regularly
             v = -70
             u = -14
+        elif neuron_type == 'tf_basic':
+            v_thresh = 0.615
+            v_thresh_stdev = v_thresh / 5.
+            tau = 20
+            tau_stdev = tau / 5.
+            i_offset = 0
+            i_offset_stdev = 0
+        elif neuron_type == 'tf_LIF':
+            v_thresh = 0.615
+            v_thresh_stdev = v_thresh / 5.
+            tau = 20
+            tau_stdev = tau / 5.
+            i_offset = 0
+            i_offset_stdev = 0.2
         else:
-            print "incorrect neuron type selected"
+            print("incorrect neuron type selected")
             raise Exception
 
         # neuron params
-        self.v_rest = v_rest
-        self.v_rest_stdev = v_rest_stdev
-        self.cm = cm
-        self.cm_stdev = cm_stdev
-        self.tau_m = tau_m
-        self.tau_m_stdev = tau_m_stdev
-        self.tau_refrac = tau_refrac
-        self.tau_refrac_stdev = tau_refrac_stdev
-        self.tau_syn_E = tau_syn_E
-        self.tau_syn_E_stdev = tau_syn_E_stdev
-        self.tau_syn_I = tau_syn_I
-        self.tau_syn_I_stdev = tau_syn_I_stdev
-        if neuron_type == 'IF_cond_exp':
-            self.e_rev_E = e_rev_E
-            self.e_rev_E_stdev = e_rev_E_stdev
-            self.e_rev_I = e_rev_I
-            self.e_rev_I_stdev = e_rev_I_stdev
-        elif neuron_type == 'calcium':
-            self.tau_ca2 = tau_ca2
-            self.tau_ca2_stdev = tau_ca2_stdev
-            self.i_alpha = i_alpha
-            self.i_alpha_stdev = i_alpha_stdev
+        self.v_rest = 0
+        self.v_rest_stdev = 0
+        self.tau = tau
+        self.tau_stdev = tau_stdev
         self.v_thresh = v_thresh
         self.v_thresh_stdev = v_thresh_stdev
-        self.v_reset = v_reset
-        self.v_reset_stdev = v_reset_stdev
+        self.v_reset = 0
+        self.v_reset_stdev = 0
         self.i_offset = i_offset
         self.i_offset_stdev = i_offset_stdev
-        self.v = v
-        self.v_stdev = v_stdev
-        # self.gsyn_exc = gsyn_exc
-        # self.gsyn_exc_stdev = gsyn_exc_stdev
-        # self.gsyn_inh = gsyn_inh
-        # self.gsyn_inh_stdev = gsyn_inh_stdev
+        self.v = 0
+        self.v_stdev = 0
 
         self.io_prob = io_prob
         self.outputs = outputs
@@ -206,48 +148,19 @@ class neuron_population(object):
 
         self.neuron_params = {}
         self.neuron_params['v_rest'] = self.v_rest
-        self.neuron_params['cm'] = self.cm
-        self.neuron_params['tau_m'] = self.tau_m
-        self.neuron_params['tau_refrac'] = self.tau_refrac
-        self.neuron_params['tau_syn_E'] = self.tau_syn_E
-        self.neuron_params['tau_syn_I'] = self.tau_syn_I
-        if neuron_type == 'IF_cond_exp':
-            self.neuron_params['e_rev_E'] = self.e_rev_E
-            self.neuron_params['e_rev_I'] = self.e_rev_I
-        if neuron_type == 'calcium':
-            self.neuron_params['tau_ca2'] = self.tau_ca2
-            self.neuron_params['i_alpha'] = self.i_alpha
+        self.neuron_params['tau'] = self.tau
         self.neuron_params['v_thresh'] = self.v_thresh
         self.neuron_params['v_reset'] = self.v_reset
         self.neuron_params['i_offset'] = self.i_offset
         self.neuron_params['v'] = self.v
-        # self.neuron_params['gsyn_exc'] = self.gsyn_exc
-        # self.neuron_params['gsyn_inh'] = self.gsyn_inh
 
         self.neuron_param_stdevs = {}
         self.neuron_param_stdevs['v_rest'] = self.v_rest_stdev
-        self.neuron_param_stdevs['cm'] = self.cm_stdev
-        self.neuron_param_stdevs['tau_m'] = self.tau_m_stdev
-        self.neuron_param_stdevs['tau_refrac'] = self.tau_refrac_stdev
-        self.neuron_param_stdevs['tau_syn_E'] = self.tau_syn_E_stdev
-        self.neuron_param_stdevs['tau_syn_I'] = self.tau_syn_I_stdev
-        if neuron_type == 'IF_cond_exp':
-            self.neuron_param_stdevs['e_rev_E'] = self.e_rev_E_stdev
-            self.neuron_param_stdevs['e_rev_I'] = self.e_rev_I_stdev
-        if neuron_type == 'calcium':
-            self.neuron_param_stdevs['tau_ca2'] = self.tau_ca2_stdev
-            self.neuron_param_stdevs['i_alpha'] = self.i_alpha_stdev
+        self.neuron_param_stdevs['tau'] = self.tau
         self.neuron_param_stdevs['v_thresh'] = self.v_thresh_stdev
         self.neuron_param_stdevs['v_reset'] = self.v_reset_stdev
         self.neuron_param_stdevs['i_offset'] = self.i_offset_stdev
         self.neuron_param_stdevs['v'] = self.v_stdev
-
-        if neuron_type == 'calcium':
-            for param in self.neuron_param_stdevs:
-                if param != 'tau_ca2' and param != 'i_alpha':
-                    self.neuron_param_stdevs[param] = 0
-        # self.neuron_param_stdevs['gsyn_exc'] = self.gsyn_exc_stdev
-        # self.neuron_param_stdevs['gsyn_inh'] = self.gsyn_inh_stdev
 
         if self.default:
             # self.neuron_param_stdevs = {}
@@ -264,7 +177,7 @@ class neuron_population(object):
         if read_population:
             self.read_population = read_population
             self.load_neurons()
-            print "reading the population"
+            print("reading the population")
         else:
             io_choice = -1
             for i in range(self.inputs + self.outputs):
@@ -382,7 +295,7 @@ class neuron_population(object):
             while does_it_exist:
                 try:
                     does_it_exist = self.neuron_configs['{}'.format(self.neurons_generated)]
-                    print self.neurons_generated, "existed"
+                    print(self.neurons_generated, "existed")
                     self.neurons_generated -= 1
                 except:
                     # traceback.print_exc()

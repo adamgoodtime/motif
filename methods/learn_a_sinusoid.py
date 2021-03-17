@@ -25,7 +25,7 @@ def read_globals(config):
             try:
                 globals()[row[0]] = literal_eval(row[1])
             except:
-                print "",
+                print("", end=' ')
 
 def remove_plastic_combine(connections_1, connections_2):
     non_plastic = []
@@ -35,7 +35,7 @@ def remove_plastic_combine(connections_1, connections_2):
         non_plastic.append([conn[0], conn[1], conn[2], conn[3]])
     return non_plastic
 
-print "thing"
+print("thing")
 config = sys.argv[1] #literal_eval(args.config)
 test_id = sys.argv[2]#literal_eval(args.test_id)
 file_name = 'data {} {}.npy'.format(config, test_id)
@@ -345,8 +345,8 @@ for i in range(len(connections)):
 
     # Only connect to neuron '0' of readout population
     # rand_out_w.next(),
-    conn_list_exc = [[x, 0, w_rec_out_dist.next(), 1] for x in range(100)]
-    conn_list_inh = [[x, 0, w_rec_out_dist.next(), 1] for x in range(100)]
+    conn_list_exc = [[x, 0, next(w_rec_out_dist), 1] for x in range(100)]
+    conn_list_inh = [[x, 0, next(w_rec_out_dist), 1] for x in range(100)]
 
 
     # Define learning rule object
@@ -392,10 +392,10 @@ for i in range(len(connections)):
 
     # Connect excitatory fb neuron (1) to all recurrent neurons
     # rand_out_w.next()
-    exc_fb_rec_conn_list = [[1, x, w_rec_out_dist.next(), 1] for x in range(100)]
+    exc_fb_rec_conn_list = [[1, x, next(w_rec_out_dist), 1] for x in range(100)]
     # Connect inhibitory fb neuron (2) to all recurrent neurons
     # rand_out_w.next()
-    inh_fb_rec_conn_list = [[2, x, w_rec_out_dist.next(), 1] for x in range(100)]
+    inh_fb_rec_conn_list = [[2, x, next(w_rec_out_dist), 1] for x in range(100)]
 
     fb_out_rec_exc = p.Projection(
         pop_out[i], pop_rec[i], p.FromListConnector(exc_fb_rec_conn_list),
@@ -409,8 +409,8 @@ for i in range(len(connections)):
     # Now to output layer to gate plasticity on output weights
     # rand_out_w.next()
     # rand_out_w.next()
-    exc_fb_out_conn_list  = [1, 0, w_out_out_dist.next(), 1]
-    inh_fb_out_conn_list  = [2, 0, w_out_out_dist.next(), 1]
+    exc_fb_out_conn_list  = [1, 0, next(w_out_out_dist), 1]
+    inh_fb_out_conn_list  = [2, 0, next(w_out_out_dist), 1]
 
     fb_out_out_exc = p.Projection(
         pop_out[i], pop_out[i], p.FromListConnector([exc_fb_out_conn_list]),
@@ -446,5 +446,5 @@ p.end()
 
 print_fitnesses(fitnesses)
 
-print "job done"
+print("job done")
 

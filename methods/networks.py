@@ -5,12 +5,12 @@ import numpy as np
 import math
 import itertools
 from copy import deepcopy
-import operator
-from spinn_front_end_common.utilities.globals_variables import get_simulator
+# import operator
+# from spinn_front_end_common.utilities.globals_variables import get_simulator
 import traceback
-import csv
-from ast import literal_eval
-import fnmatch
+# import csv
+# from ast import literal_eval
+# import fnmatch
 
 # import random
 
@@ -101,7 +101,7 @@ class motif_population(object):
         population from scratch
         '''
         if not self.read_entire_population:
-            print "generating the population"
+            print("generating the population")
             if self.population_seed is not None:
                 for seed in self.population_seed:
                     # or just make this an insert and start = motifs_gened
@@ -122,8 +122,8 @@ class motif_population(object):
                     maximum_number_of_motifs *= math.pow(4, i)  # possible io configs
                 maximum_number_of_motifs *= math.pow(2, i)  # exit/inhib
             if self.population_size > maximum_number_of_motifs:
-                print "\nPopulation size is bigger than the full spectrum of possible motifs.\n" \
-                      "Repeats will be allowed during generation.\n"
+                print("\nPopulation size is bigger than the full spectrum of possible motifs.\n" \
+                      "Repeats will be allowed during generation.\n")
                 repeats = True
             else:
                 repeats = False
@@ -137,7 +137,7 @@ class motif_population(object):
         else:
             self.read_population()
 
-        print "done generating motif pop"
+        print("done generating motif pop")
 
     '''Reads a motif population from a npy file and inputs each motif into the set'''
     def read_population(self):
@@ -182,7 +182,7 @@ class motif_population(object):
             if self.io_config == 'fixed':
                 io_properties.append((np.random.choice(true_or_false), np.random.choice(true_or_false)))
             else:
-                print "incompatible io config"
+                print("incompatible io config")
                 # todo enable erroring out
             # connects the neurons with a 50% chance and sets random weights/delays within the allowed discrete range
             for k in range(number_of_neurons):
@@ -193,8 +193,11 @@ class motif_population(object):
                         conn.append(k)
                         bin = np.random.randint(0, self.no_weight_bins)
                         conn.append(self.weight_range[0] + (bin * self.weight_bin_width))
-                        bin = np.random.randint(0, self.no_delay_bins)
-                        conn.append(self.delay_range[0] + (bin * self.delay_bin_width))
+                        if self.constant_delays:
+                            conn.append(self.constant_delays)
+                        else:
+                            bin = np.random.randint(0, self.no_delay_bins)
+                            conn.append(self.delay_range[0] + (bin * self.delay_bin_width))
                         if self.plasticity and self.structural:
                             choice = np.random.random()
                             if choice < 1.0/3.0:
@@ -236,7 +239,7 @@ class motif_population(object):
     def permutations(self, motif):
         motif_size = len(motif['node'])
         connections = len(motif['conn'])
-        permutations = list(itertools.permutations(range(len(motif['node']))))
+        permutations = list(itertools.permutations(list(range(len(motif['node'])))))
         motif_array = []
         for i in range(len(permutations)):
             motif_array.append(deepcopy(motif))
@@ -304,7 +307,7 @@ class motif_population(object):
                 while does_it_exist:
                     try:
                         does_it_exist = self.motif_configs['{}'.format(self.motifs_generated)]
-                        print self.motifs_generated, "existed"
+                        print(self.motifs_generated, "existed")
                         self.motifs_generated += 1
                     except:
                         # traceback.print_exc()
@@ -440,9 +443,9 @@ class motif_population(object):
         if direction == 'random':
             if shift == 'linear':
                 if in_or_out == 'in':
-                    direction = np.random.choice(range(self.inputs - 1)) + 1
+                    direction = np.random.choice(list(range(self.inputs - 1))) + 1
                 else:
-                    direction = np.random.choice(range(self.outputs - 1)) + 1
+                    direction = np.random.choice(list(range(self.outputs - 1))) + 1
         if motif_id in self.neurons.neuron_configs:
             return self.neurons.shift_io(motif_id, in_or_out, direction)
         motif = self.motif_configs[motif_id]
@@ -494,7 +497,7 @@ class motif_population(object):
             motif = self.motif_configs[str(node)]
         except:
             traceback.print_exc()
-            print "mate I dunno"
+            print("mate I dunno")
         node_count = 0
         for io in motif['io']:
             local_upper = deepcopy(upper)
@@ -668,29 +671,30 @@ class motif_population(object):
             elif out_pre >= 0 and out_post >= 0:
                 out2out.append([pre_index, post_index, conn[2], conn[3], conn[4]])
             else:
-                print "somethin fucky"
-        excite_params = {}
+                print("somethin fucky")
+        # excite_params = {}
+        neuron_params = {}
         for excite_neuron in indexed_ex:
             neuron = excite_neuron[0]
             neuron = self.neurons.neuron_configs[neuron]
             for param in neuron['params']:
                 try:
-                    excite_params[param]
+                    neuron_params[param]
                 except:
-                    excite_params[param] = []
-                excite_params[param].append(neuron['params'][param])
-        inhib_params = {}
+                    neuron_params[param] = []
+                neuron_params[param].append(neuron['params'][param])
+        # inhib_params = {}
         for inhib_neuron in indexed_in:
             neuron = inhib_neuron[0]
             neuron = self.neurons.neuron_configs[neuron]
             for param in neuron['params']:
                 try:
-                    inhib_params[param]
+                    neuron_params[param]
                 except:
-                    inhib_params[param] = []
-                inhib_params[param].append(neuron['params'][param])
+                    neuron_params[param] = []
+                neuron_params[param].append(neuron['params'][param])
         return in2e, in2i, in2in, in2out, e2in, i2in, len(indexed_ex), e2e, e2i, len(indexed_in), \
-               i2e, i2i, e2out, i2out, out2e, out2i, out2in, out2out, excite_params, inhib_params
+               i2e, i2i, e2out, i2out, out2e, out2i, out2in, out2out, neuron_params #excite_params, inhib_params
 
     def remove_multapses(self, all_connection_data):
         cap = self.weight_range[1]
@@ -729,7 +733,7 @@ class motif_population(object):
         else:
             agent_conn = self.read_motif(agent)
         spinn_conn = self.construct_io(agent_conn)
-        spinn_conn = self.remove_multapses(spinn_conn)
+        # spinn_conn = self.remove_multapses(spinn_conn)
         return spinn_conn
 
     '''Returns a list of the lower level motifs which comprise a higher level one'''

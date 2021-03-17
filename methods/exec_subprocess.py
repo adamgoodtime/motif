@@ -44,7 +44,7 @@ def wait_timeout(processes, seconds):
                 finished += 1
             elif time.time() >= end:
                 process.kill()
-                print "\nhad to kill a process, it timed out\n"
+                print("\nhad to kill a process, it timed out\n")
                 fail = 'fail'
                 np.save('fitnesses {} {}.npy'.format(config, processes.index(process)), fail)
                 finished += 1
@@ -60,7 +60,7 @@ def read_results(test_length):
             pop_fitness = np.load('fitnesses {} {}.npy'.format(config, i))
             all_fitnesses.append(pop_fitness.tolist())
         except:
-            print "file didn't exist"
+            print("file didn't exist")
             pop_fitness = ['fail', 'fail']
             not_a_file.append(i)
             all_fitnesses.append(pop_fitness)
@@ -86,7 +86,7 @@ def remove_results(test_length, not_a_file):
                 os.remove('fitnesses {} {}.npy'.format(config, i))
                 os.remove('data {} {}.npy'.format(config, i))
             except:
-                print "AAA OOOOHHH forget about it!"
+                print("AAA OOOOHHH forget about it!")
 
 def write_globals(file_id):
     # non_modules = {}
@@ -112,21 +112,21 @@ def subprocess_experiments(connections, test_data_set, split=4, runtime=2000, ex
         connection_threads = []
         if parallel:
             all_configs = [[[connections[x:x + step_size], test_data, split, runtime, exposure_time, noise_rate, noise_weight,
-                             spike_f, make_action, exec_thing, np.random.randint(1000000000)] for x in xrange(0, len(connections), step_size)]
+                             spike_f, make_action, exec_thing, np.random.randint(1000000000)] for x in range(0, len(connections), step_size)]
                            for test_data in test_data_set]
             for test in all_configs:
                 for set_up in test:
                     connection_threads.append(set_up)
         else:
             all_configs = [[[connections[x:x + step_size], test_data_set, split, runtime, exposure_time, noise_rate, noise_weight,
-                             spike_f, make_action, exec_thing, np.random.randint(1000000000)] for x in xrange(0, len(connections), step_size)]]
+                             spike_f, make_action, exec_thing, np.random.randint(1000000000)] for x in range(0, len(connections), step_size)]]
             for test in all_configs:
                 for set_up in test:
                     connection_threads.append(set_up)
     else:
         connection_threads = [[connections[x:x + step_size], test_data_set, split, runtime, exposure_time, noise_rate,
                                noise_weight, spike_f, make_action, exec_thing, np.random.randint(1000000000)]
-                              for x in xrange(0, len(connections), step_size)]
+                              for x in range(0, len(connections), step_size)]
 
     write_globals(config)
     process_list = []
@@ -156,7 +156,7 @@ def subprocess_experiments(connections, test_data_set, split=4, runtime=2000, ex
     else:
         wait_timeout(process_list, ((runtime / 1000) * 15) + 3800)
 
-    print "all finished"
+    print("all finished")
 
     pool_result = read_results(test_id)
 
@@ -166,7 +166,7 @@ def subprocess_experiments(connections, test_data_set, split=4, runtime=2000, ex
             test_pool = pool_result[i][1]
         except:
             traceback.print_exc()
-            print "it broke and the except caught the return failure"
+            print("it broke and the except caught the return failure")
             pool_result[i] = ['fail', 'fail']
         if pool_result[i][1] == 'fail' and len(connection_threads[i][0]) > 1:
             pool_result[i] = pool_result[i][1]
@@ -189,7 +189,7 @@ def subprocess_experiments(connections, test_data_set, split=4, runtime=2000, ex
                     split = 8
             else:
                 split = new_split
-            print "splitting ", len(connection_threads[i][0]), " into ", split, " pieces"
+            print("splitting ", len(connection_threads[i][0]), " into ", split, " pieces")
             problem_arms = connection_threads[i][1]
             pool_result[i] = subprocess_experiments(connection_threads[i][0], problem_arms, split, runtime,
                                                 exposure_time, noise_rate, noise_weight, spike_f, top=False, parallel=parallel, make_action=make_action)
@@ -212,9 +212,9 @@ def subprocess_experiments(connections, test_data_set, split=4, runtime=2000, ex
                     pool_result[i].append('fail')
         elif pool_result[i][1] == 'complete':
             pool_result[i] = pool_result[i][0]
-            print "good return"
+            print("good return")
         else:
-            print "fully bad return"
+            print("fully bad return")
             if len(connection_threads[i][0]) > 1:
                 if plasticity == 'pall':
                     split = 2
@@ -225,7 +225,7 @@ def subprocess_experiments(connections, test_data_set, split=4, runtime=2000, ex
                         split = 8
                 else:
                     split = new_split
-                print "splitting ", len(connection_threads[i][0]), " into ", split, " pieces"
+                print("splitting ", len(connection_threads[i][0]), " into ", split, " pieces")
                 problem_arms = connection_threads[i][1]
                 pool_result[i] = subprocess_experiments(connection_threads[i][0], problem_arms, split, runtime,
                                                     exposure_time, noise_rate, noise_weight, spike_f, top=False, parallel=parallel, make_action=make_action)
@@ -256,11 +256,11 @@ def subprocess_experiments(connections, test_data_set, split=4, runtime=2000, ex
                 except:
                     traceback.print_exc()
                     error = traceback.format_exc()
-                    print "\nfailed adding result: set", i, "/", len(test_data_set), "& agent", j, "/", len(connections)
-                    print "\ncopy fitness [", len(copy_fitness), "]x[", len(copy_fitness[0]), "]:", copy_fitness
-                    print "\nresult so far [", len(test_results), "]x[", len(test_results[0]), "]:", test_results
-                    print "\nagent data so far [", len(agent_fitness), "]x[", len(agent_fitness[0]), "]:", agent_fitness
-                    print "\npool result [", len(pool_result), "]x[", len(pool_result[0]), "]:", pool_result
+                    print("\nfailed adding result: set", i, "/", len(test_data_set), "& agent", j, "/", len(connections))
+                    print("\ncopy fitness [", len(copy_fitness), "]x[", len(copy_fitness[0]), "]:", copy_fitness)
+                    print("\nresult so far [", len(test_results), "]x[", len(test_results[0]), "]:", test_results)
+                    print("\nagent data so far [", len(agent_fitness), "]x[", len(agent_fitness[0]), "]:", agent_fitness)
+                    print("\npool result [", len(pool_result), "]x[", len(pool_result[0]), "]:", pool_result)
                     with open('failed run {}.csv'.format(config), 'w') as file:
                         writer = csv.writer(file, delimiter=',', lineterminator='\n')
                         writer.writerow(['copy fitness'])

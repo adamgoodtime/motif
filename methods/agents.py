@@ -5,17 +5,17 @@ import numpy as np
 import math
 import itertools
 from copy import deepcopy
-import operator
-from spinn_front_end_common.utilities.globals_variables import get_simulator
-import traceback
+# import operator
+# from spinn_front_end_common.utilities.globals_variables import get_simulator
+# import traceback
 import math
 from methods.networks import motif_population
 import traceback
 import csv
-import threading
-import pathos.multiprocessing
-from spinn_front_end_common.utilities import globals_variables
-from ast import literal_eval
+# import threading
+# import pathos.multiprocessing
+# from spinn_front_end_common.utilities import globals_variables
+# from ast import literal_eval
 
 # max_fail_score = 0
 
@@ -188,20 +188,24 @@ class agent_population(object):
         if output is None:
             output = self.outputs
         agent_connections = []
+        spinn_conns = []
         if create:
             if create == 'reset':
                 self.agent_pop = []
             self.generate_population(max_depth)
         for agent in self.agent_pop:
-            agent_connections.append(self.convert_agent(agent))
+            conns = self.convert_agent_tf(agent)
+            agent_connections.append(conns[0])
+            spinn_conns.append(conns[1])
+            # agent_connections.append(self.convert_agent(agent))
 
-        return agent_connections
+        return agent_connections, spinn_conns
 
     '''creates the population'''
     def generate_population(self, max_depth):
         for i in range(self.pop_size):
             self.agent_pop.append(self.new_individual(max_depth))
-            print "created agent ", i + 1, "of", self.pop_size
+            print("created agent ", i + 1, "of", self.pop_size)
 
     '''creates a new individual'''
     def new_individual(self, max_depth):
@@ -216,11 +220,77 @@ class agent_population(object):
         SpiNN_connections = self.motifs.convert_individual(agent)
         if not self.allow_i2o:
             in2e, in2i, in2in, in2out, e2in, i2in, e_size, e2e, e2i, i_size, i2e, i2i, \
-            e2out, i2out, out2e, out2i, out2in, out2out, excite_params, inhib_params = SpiNN_connections
+            e2out, i2out, out2e, out2i, out2in, out2out, neuron_params = SpiNN_connections
             in2out = []
             SpiNN_connections = in2e, in2i, in2in, in2out, e2in, i2in, e_size, e2e, e2i, i_size, i2e, i2i, \
-            e2out, i2out, out2e, out2i, out2in, out2out, excite_params, inhib_params
+            e2out, i2out, out2e, out2i, out2in, out2out, neuron_params
         return SpiNN_connections
+
+    '''convert agent into connection matrix'''
+    def convert_agent_tf(self, agent):
+        SpiNN_connections = self.motifs.convert_individual(agent)
+        in2e, in2i, in2in, in2out, e2in, i2in, e_size, e2e, e2i, i_size, i2e, i2i, \
+        e2out, i2out, out2e, out2i, out2in, out2out, neuron_params = SpiNN_connections
+        connections = in2e, in2i, in2in, in2out, e2in, i2in, e2e, e2i, i2e, i2i, \
+            e2out, i2out, out2e, out2i, out2in, out2out
+        in2rec = self.convert_connections_to_matrix(in2e, self.inputs, e_size+i_size,
+                                                    inhibitory=False, in_offset=0, out_offset=0) + \
+                 self.convert_connections_to_matrix(in2i, self.inputs, e_size+i_size,
+                                                    inhibitory=False, in_offset=0, out_offset=e_size)
+        rec2rec = self.convert_connections_to_matrix(i2e, e_size+i_size, e_size+i_size,
+                                                    inhibitory=True, in_offset=e_size, out_offset=0) + \
+                  self.convert_connections_to_matrix(e2i, e_size+i_size, e_size+i_size,
+                                                    inhibitory=False, in_offset=0, out_offset=e_size) + \
+                  self.convert_connections_to_matrix(i2i, e_size+i_size, e_size+i_size,
+                                                    inhibitory=True, in_offset=e_size, out_offset=e_size) + \
+                  self.convert_connections_to_matrix(e2e, e_size+i_size, e_size+i_size,
+                                                    inhibitory=False, in_offset=0, out_offset=0)
+        rec2out = self.convert_connections_to_matrix(i2out, e_size+i_size, self.outputs,
+                                                    inhibitory=True, in_offset=e_size, out_offset=0) + \
+                  self.convert_connections_to_matrix(e2out, e_size+i_size, self.outputs,
+                                                    inhibitory=False, in_offset=0, out_offset=0)
+        in2out = self.convert_connections_to_matrix(in2out, self.inputs, self.outputs)
+
+
+        in2rec_d = self.convert_connections_to_matrix(in2e, self.inputs, e_size+i_size,
+                                                    inhibitory=False, in_offset=0, out_offset=0, delaying=True) + \
+                   self.convert_connections_to_matrix(in2i, self.inputs, e_size + i_size, inhibitory=False,
+                                                      in_offset=0, out_offset=e_size, delaying=True)
+
+        rec2rec_d = self.convert_connections_to_matrix(i2e, e_size+i_size, e_size+i_size, inhibitory=True,
+                                                       in_offset=e_size, out_offset=0, delaying=True) + \
+                    self.convert_connections_to_matrix(e2i, e_size + i_size, e_size + i_size, inhibitory=False,
+                                                       in_offset=0, out_offset=e_size, delaying=True) + \
+                    self.convert_connections_to_matrix(i2i, e_size + i_size, e_size + i_size, inhibitory=True,
+                                                       in_offset=e_size, out_offset=e_size, delaying=True) + \
+                    self.convert_connections_to_matrix(e2e, e_size + i_size, e_size + i_size, inhibitory=False,
+                                                       in_offset=0, out_offset=0, delaying=True)
+
+        return [in2rec, rec2rec, rec2out, in2out, in2rec_d, rec2rec_d, e_size+i_size, neuron_params], SpiNN_connections
+
+    def convert_connections_to_matrix(self, conn_list, in_size, out_size, inhibitory=False,
+                                      in_offset=0, out_offset=0, delaying=False):
+        connections = np.zeros([in_size, out_size])
+        delays = np.zeros([in_size, out_size])
+        conn_count = np.ones([in_size, out_size])
+        for conn in conn_list:
+            conn_count[conn[0] + in_offset][conn[1] + out_offset] += 1
+            if inhibitory:
+                connections[conn[0] + in_offset][conn[1] + out_offset] += conn[2] * -1.
+            else:
+                connections[conn[0] + in_offset][conn[1] + out_offset] += conn[2]
+            # connections[conn[0]+in_offset][conn[1]+out_offset] += conn[2]
+            delays[conn[0]+in_offset][conn[1]+out_offset] += conn[3]
+
+        for i in range(len(conn_count)):
+            for j in range(len(conn_count[0])):
+                connections[i][j] /= conn_count[i][j]
+                delays[i][j] /= conn_count[i][j]
+                delays[i][j] = int(round(delays[i][j]))
+        if delaying:
+            return delays
+        else:
+            return connections
 
     '''shapes the fitness generated by a population to make them relative to each other not absolute scores'''
     def fitness_shape(self, fitnesses, max_fail_score, spike_weighting):
@@ -276,16 +346,17 @@ class agent_population(object):
             processed_fitnesses = self.fitness_shape(fitnesses, max_fail_score, spike_weighting)
         else:
             # todo figure out what to do about fitness less than 0
-            if isinstance(fitnesses[0], list):
-                processed_fitnesses = []
-                for i in range(len(fitnesses[0])):
-                    summed_f = 0
-                    for j in range(len(fitnesses)):
-                        if fitnesses[j][i] == 'fail':
-                            summed_f = max_fail_score
-                            break
-                        summed_f += fitnesses[j][i]
-                    processed_fitnesses.append(summed_f)
+            # if isinstance(fitnesses[0], list):
+            #     processed_fitnesses = []
+            #     for i in range(len(fitnesses[0])):
+            #         summed_f = 0
+            #         for j in range(len(fitnesses)):
+            #             if fitnesses[j][i] == 'fail':
+            #                 summed_f = max_fail_score
+            #                 break
+            #             summed_f += fitnesses[j][i]
+            #         processed_fitnesses.append(summed_f)
+            processed_fitnesses = fitnesses
 
         for i in range(len(self.agent_pop)):
             self.agent_pop[i].append(processed_fitnesses[i])
@@ -337,7 +408,7 @@ class agent_population(object):
     '''forms the species and quantifies them and their separation from each other'''
     def iterate_species(self):
         self.reset()
-        print "evolve them here"
+        print("evolve them here")
         for agent in self.agent_pop:
             belongs = False
             for specie in self.species:
@@ -360,9 +431,9 @@ class agent_population(object):
         self.species[self.species.index(best_specie)].has_best = True
 
         # remove old species unless they're the best
-        self.species = filter(lambda s: s.no_improvement_age < self.stagnation_age or s.has_best, self.species)
+        self.species = [s for s in self.species if s.no_improvement_age < self.stagnation_age or s.has_best]
 
-        print "species are formed and quantified, now to add young and old age modifiers to quantify the amount of offspring generated"
+        print("species are formed and quantified, now to add young and old age modifiers to quantify the amount of offspring generated")
 
     '''performs one step of evolution'''
     def evolve(self, species=True):
@@ -589,7 +660,7 @@ class agent_population(object):
             copy_copy = deepcopy(config_copy)
         else:
             self.motifs.delete_motif(motif_id)
-            print "That just tried to recurse"
+            print("That just tried to recurse")
             copy_copy = deepcopy(motif_config)
         node_count = 0
         for node in config_copy['node']:
@@ -598,16 +669,16 @@ class agent_population(object):
                     copy_copy['node'][node_count] = self.mutate([node], mutate_key)
                 except RuntimeError as e:
                     traceback.print_exc()
-                    print mutate_key
+                    print(mutate_key)
                     if e.args[0] != 'maximum recursion depth exceeded':
                         raise
                     else:
-                        print "\nTried to mutate too many times\n"
+                        print("\nTried to mutate too many times\n")
                         return node
                 except:
                     traceback.print_exc()
-                    print mutate_key
-                    print "\nNot an RTE\n"
+                    print(mutate_key)
+                    print("\nNot an RTE\n")
                     raise
             node_count += 1
         if copy_copy != config_copy:
@@ -635,8 +706,8 @@ class agent_population(object):
             mutate_key['c_gone'] = 0
             mutate_key['param_w'] = 0
             mutate_key['param_d'] = 0
-            mutate_key['mum'] = [mum[2], mum[3]]
-            mutate_key['dad'] = [dad[2], dad[3]]
+            mutate_key['mum'] = [mum[2], mum[2]] # was [3] but removed as no secondary metric as of this re-write
+            mutate_key['dad'] = [dad[2], dad[2]]
             mutate_key['plasticity'] = 0
             mutate_key['sex'] = 1
         child_id = mum[0]
@@ -729,18 +800,18 @@ class agent_population(object):
     def valid_net(self, child):
         connections = self.convert_agent(child)
         [in2e, in2i, in2in, in2out, e2in, i2in, e_size, e2e, e2i, i_size, i2e, i2i, e2out, i2out, out2e, out2i, out2in,
-         out2out, excite_params, inhib_params] = connections
+         out2out, neuron_params] = connections
         if self.motifs.neurons.inputs + self.motifs.neurons.outputs == 0:
             if len(e2e) == 0 and len(e2i) == 0 and len(i2e) == 0 and len(i2i) == 0:
-                print "bad agent"
+                print("bad agent")
                 return False
             else:
                 return child
         if len(in2e) == 0 and len(in2i) == 0 and len(in2out) == 0:
-            print "in bad agent"
+            print("in bad agent")
             return False
         if len(e2out) == 0 and len(i2out) == 0 and len(in2out) == 0:
-            print "out bad agent"
+            print("out bad agent")
             return False
         # if not self.check_connections_per_node(connections):
         #     print "too many pre-post"
@@ -752,16 +823,16 @@ class agent_population(object):
                 node_list['inhibitory'] = []
                 check = self.check_in_2_out('input', node_list, [in2e, in2i, in2in, in2out, e2in, i2in, e_size, e2e, e2i,
                                                          i_size, i2e, i2i, e2out, i2out, out2e, out2i, out2in, out2out,
-                                                         excite_params, inhib_params])
+                                                         neuron_params])
                 if not check:
-                    print "no i2o"
+                    print("no i2o")
                     return False
-            print "good agent"
+            print("good agent")
         return child
         
     def check_in_2_out(self, pre, node_list, connections, specific=None):
         [in2e, in2i, in2in, in2out, e2in, i2in, e_size, e2e, e2i, i_size, i2e, i2i, e2out, i2out, out2e, out2i, out2in,
-         out2out, excite_params, inhib_params] = connections
+         out2out, neuron_params] = connections
         # pre_inputs = [in2e, in2i, in2out]
         # pre_excitatory = [e2e, e2i, e2out]
         # pre_inhibitory = [i2e, i2i, i2out]
@@ -841,57 +912,57 @@ class agent_population(object):
                 if fitness_shaping:
                     parent = parents[self.select_parents(parents)]
                 else:
-                    print "use a function to determine the parent based on fitness"
+                    print("use a function to determine the parent based on fitness")
                 mutate_key = {}
                 child = self.mutate(parent, mutate_key)
                 # if the child created is beyond the maximum depth allowed for an agent restart and try again
                 if self.motifs.depth_read(child) > self.maximum_depth:
                     child = False
-                    print "as3x d"
+                    print("as3x d")
                 if child:
                     if not self.valid_net(child):
                         child = False
-                        print "as3x v"
+                        print("as3x v")
             # create a child by mating 2 selected parents
             elif birthing_type - self.sexuality['asexual'] - self.sexuality['sexual'] < 0:
                 if fitness_shaping:
                     mum = parents[self.select_parents(parents)]
                     dad = parents[self.select_parents(parents)]
                 else:
-                    print "use a function to determine the parent based on fitness"
+                    print("use a function to determine the parent based on fitness")
                 mutate_key = {}
                 child = self.mate(mum, dad, mutate_key)
                 # if the child created is beyond the maximum depth allowed for an agent restart and try again
                 if self.motifs.depth_read(child) > self.maximum_depth:
                     child = False
-                    print "mate d"
+                    print("mate d")
                 if child:
                     if not self.valid_net(child):
                         child = False
-                        print "mate v"
+                        print("mate v")
             # create a child by first mating 2 parents then mutating the offspring
             elif birthing_type - self.sexuality['asexual'] - self.sexuality['sexual'] - self.sexuality['both'] < 0:
                 if fitness_shaping:
                     mum = parents[self.select_parents(parents)]
                     dad = parents[self.select_parents(parents)]
                 else:
-                    print "use a function to determine the parent based on fitness"
+                    print("use a function to determine the parent based on fitness")
                 mutate_key = {}
                 child = self.mate(mum, dad, mutate_key)
                 # if the child created is beyond the maximum depth allowed for an agent restart and try again
                 if self.motifs.depth_read(child) > self.maximum_depth:
                     child = False
-                    print "both mate d"
+                    print("both mate d")
                 if child:
                     child = self.mutate(child, mutate_key)
                     # if the child created is beyond the maximum depth allowed for an agent restart and try again
                     if self.motifs.depth_read(child) > self.maximum_depth:
                         child = False
-                        print "both as3x d"
+                        print("both as3x d")
                 if child:
                     if not self.valid_net(child):
                         child = False
-                        print "both v"
+                        print("both v")
                 mutate_key['sex'] = 2
             # create a child but creating motifs of motifs
             else:
@@ -900,20 +971,20 @@ class agent_population(object):
                 # if the child created is beyond the maximum depth allowed for an agent restart and try again
                 if self.motifs.depth_read(child) > self.maximum_depth:
                     child = False
-                    print "fresh d"
+                    print("fresh d")
                 if child:
                     if not self.valid_net(child):
                         child = False
-                        print "fresh v"
+                        print("fresh v")
             # if a child is created give it a random seed which is used to seed the random selection of inputs and
             # outputs, now a redundant fucntion giving the current mapping of IO
             if child:
                 children.append([child, np.random.randint(200)])
                 mumate_dict[child] = mutate_key
                 i += 1
-                print "created child", i, "of", birthing
+                print("created child", i, "of", birthing)
             else:
-                print "not a valid child"
+                print("not a valid child")
         return children, mumate_dict
 
     ''''''
@@ -1013,6 +1084,57 @@ class agent_population(object):
                     # print "no key for agent ", agent[0]
             key_file.close()
 
+    def new_status_update(self, agent_data, iteration, config, connections, best_performance_score, best_performance_fitness):
+        if isinstance(agent_data[0], list):
+            fitnesses = agent_data[0]
+            scores = agent_data[1]
+        else:
+            fitnesses = agent_data
+            scores = agent_data
+        print("Agent fitnesses", fitnesses)
+        best_agent_f = fitnesses.index(max(fitnesses))
+        worst_agent_f = fitnesses.index(min(fitnesses))
+        print("Agent scores", scores)
+        best_agent_s = scores.index(max(scores))
+        worst_agent_s = scores.index(min(scores))
+        best_fitness = fitnesses[best_agent_f]
+        best_score = scores[best_agent_s]
+        worst_fitness = fitnesses[worst_agent_f]
+        worst_score = scores[worst_agent_s]
+
+        self.max_score.append(round(best_score, 2))
+        self.min_score.append(round(worst_score, 2))
+        self.average_score.append(round(np.average(fitnesses), 2))
+        self.max_fitness.append(round(best_fitness, 2))
+        self.min_fitness.append(round(worst_fitness, 2))
+        self.average_fitness.append(round(np.average(fitnesses), 2))
+
+        # self.track_networks(connections, config)
+        print("\n\nBest fitness agent:", best_agent_f, "with performance", best_fitness, scores[best_agent_f])
+        print("Best score agent:", best_agent_s, "with perfromance", fitnesses[best_agent_s], best_score)
+        if best_performance_fitness:
+            print("max best performance fitness:", max(best_performance_fitness), "at iteration ", best_performance_fitness.index(max(best_performance_fitness)))
+        print("best performance fitness:", best_performance_fitness)
+        print("maximum fitness:", self.max_fitness)
+        # print "average fitness:", self.total_average
+        print("minimum fitness:", self.min_fitness)
+        best_scores = '{:3}'.format(scores[best_agent_s])
+        print("best score was ", fitnesses[best_agent_s], " by agent:", best_agent_s, "with a score of: ", fitnesses[best_agent_s], "--->", best_scores)
+        if best_performance_score:
+            print("max best performance score:", max(best_performance_score), "at iteration ", best_performance_score.index(max(best_performance_score)))
+        print("best performance score:", best_performance_score)
+        print("maximum score:", self.max_score)
+        print("average score:", self.average_score)
+        print("minimum score:", self.min_score)
+        # if config != 'test':
+        #     self.save_agent_connections(self.agent_pop[best_agent], iteration, 'score '+config)
+        #     self.save_agent_connections(self.agent_pop[best_agent_s], iteration, 'fitness '+config)
+        #     self.save_status(config, iteration, best_performance_score, best_performance_fitness)
+        #     self.save_mutate_keys(iteration, config)
+        best_score_connections = self.convert_agent_tf(self.agent_pop[best_agent_s])[0]
+        best_fitness_connections = self.convert_agent_tf(self.agent_pop[best_agent_f])[0]
+        return best_score_connections, best_fitness_connections
+
     def status_update(self, combined_fitnesses, iteration, config, num_tests, connections, best_performance_score, best_performance_fitness):
         total_scores = [0 for i in range(len(combined_fitnesses))]
         average_fitness = 0
@@ -1028,7 +1150,7 @@ class agent_population(object):
             scores = '|'
             for i in range(len(combined_fitnesses)):
                 scores += '{:8}'.format(combined_fitnesses[i][j])
-            print '{:3}'.format(j), scores
+            print('{:3}'.format(j), scores)
             if self.agent_pop[j][2] > best_fitness:
                 best_fitness = self.agent_pop[j][2]
                 best_agent = j
@@ -1054,9 +1176,9 @@ class agent_population(object):
         self.track_networks(connections, config)
         best_fitness_score = sum(np.take(combined_fitnesses[:num_tests], best_agent, axis=1))
         worst_fitness_score = sum(np.take(combined_fitnesses[:num_tests], worst_agent, axis=1))
-        print "At iteration: ", iteration, "\n"
-        print "best fitness was ", best_fitness, " by agent:", best_agent, \
-            "with a score of: ", best_fitness_score, "--->", best_scores
+        print("At iteration: ", iteration, "\n")
+        print("best fitness was ", best_fitness, " by agent:", best_agent, \
+            "with a score of: ", best_fitness_score, "--->", best_scores)
         self.max_score.append(round(best_score, 2))
         self.min_score.append(round(worst_score, 2))
         total_average = 0
@@ -1071,22 +1193,22 @@ class agent_population(object):
         self.min_fitness.append(round(worst_fitness_score, 2))
         self.average_fitness.append(round(average_fitness / len(self.agent_pop), 2))
         if best_performance_fitness:
-            print "max best performance fitness:", max(best_performance_fitness), "at iteration ", best_performance_fitness.index(max(best_performance_fitness))
-        print "best performance fitness:", best_performance_fitness
-        print "maximum fitness:", self.max_fitness
+            print("max best performance fitness:", max(best_performance_fitness), "at iteration ", best_performance_fitness.index(max(best_performance_fitness)))
+        print("best performance fitness:", best_performance_fitness)
+        print("maximum fitness:", self.max_fitness)
         # print "average fitness:", self.total_average
-        print "minimum fitness:", self.min_fitness
+        print("minimum fitness:", self.min_fitness)
         best_scores = '{:3}'.format(combined_fitnesses[0][best_agent_s])
         for i in range(1, len(combined_fitnesses)):
             best_scores += ', {:3}'.format(combined_fitnesses[i][best_agent_s])
-        print "best score was ", best_score, " by agent:", best_agent_s, \
-            "with a score of: ", round(best_score, 2), "--->", best_scores
+        print("best score was ", best_score, " by agent:", best_agent_s, \
+            "with a score of: ", round(best_score, 2), "--->", best_scores)
         if best_performance_score:
-            print "max best performance score:", max(best_performance_score), "at iteration ", best_performance_score.index(max(best_performance_score))
-        print "best performance score:", best_performance_score
-        print "maximum score:", self.max_score
-        print "average score:", self.average_score
-        print "minimum score:", self.min_score
+            print("max best performance score:", max(best_performance_score), "at iteration ", best_performance_score.index(max(best_performance_score)))
+        print("best performance score:", best_performance_score)
+        print("maximum score:", self.max_score)
+        print("average score:", self.average_score)
+        print("minimum score:", self.min_score)
         if config != 'test':
             self.save_agent_connections(self.agent_pop[best_agent], iteration, 'score '+config)
             self.save_agent_connections(self.agent_pop[best_agent_s], iteration, 'fitness '+config)
@@ -1106,9 +1228,9 @@ class agent_population(object):
         fitness_list = []
         for i in range(self.pop_size):
             [in2e, in2i, in2in, in2out, e2in, i2in, e_size, e2e, e2i, i_size, i2e, i2i, e2out, i2out, out2e, out2i,
-             out2in, out2out, excite_params, inhib_params] = connections[i]
+             out2in, out2out, neuron_params] = connections[i]
             used_connections = [in2e, in2i, in2out, e_size, e2e, e2i, i_size, i2e, i2i, e2out, i2out, out2e, out2i,
-                                out2in, out2out, excite_params, inhib_params]
+                                out2in, out2out, neuron_params]
             e_sizes.append(e_size)
             i_sizes.append(i_size)
             number_of_conns = 0
@@ -1125,7 +1247,7 @@ class agent_population(object):
             pl_ratio = pl_count / (pl_count + non_pl_count)
             number_of_connections.append(number_of_conns)
             plasticity_ratio.append(round(pl_ratio, 2))
-            scores_list.append(self.agent_pop[i][3])
+            scores_list.append(self.agent_pop[i][2]) # was [3] as before there was score too with other fitness metrics
             fitness_list.append(self.agent_pop[i][2])
             depths.append(self.motifs.motif_configs[self.agent_pop[i][0]]['depth'])
         best_score_index = scores_list.index(np.max(scores_list))
@@ -1190,47 +1312,47 @@ class agent_population(object):
             self.print_tracking(config)
 
     def print_tracking(self, config):
-        print "\nbest score excite", self.best_score_excite
-        print "best score inhib", self.best_score_inhib
-        print "best score depth", self.best_score_m_depth
-        print "best score conn", self.best_score_conn
-        print "best score pl", self.best_score_pl_ratio
+        print("\nbest score excite", self.best_score_excite)
+        print("best score inhib", self.best_score_inhib)
+        print("best score depth", self.best_score_m_depth)
+        print("best score conn", self.best_score_conn)
+        print("best score pl", self.best_score_pl_ratio)
 
-        print "\nbest fitness excite", self.best_fitness_excite
-        print "best fitness inhib", self.best_fitness_inhib
-        print "best fitness depth", self.best_fitness_m_depth
-        print "best fitness conn", self.best_fitness_conn
-        print "best fitness pl", self.best_fitness_pl_ratio
+        print("\nbest fitness excite", self.best_fitness_excite)
+        print("best fitness inhib", self.best_fitness_inhib)
+        print("best fitness depth", self.best_fitness_m_depth)
+        print("best fitness conn", self.best_fitness_conn)
+        print("best fitness pl", self.best_fitness_pl_ratio)
 
-        print "\naverage excite", self.average_excite_neurons
-        print "average inhib", self.average_inhib_neurons
-        print "average depth", self.average_m_depth
-        print "average conn", self.average_connections
-        print "average pl", self.average_pl_ratio
+        print("\naverage excite", self.average_excite_neurons)
+        print("average inhib", self.average_inhib_neurons)
+        print("average depth", self.average_m_depth)
+        print("average conn", self.average_connections)
+        print("average pl", self.average_pl_ratio)
 
-        print "\nscore ave excite", self.weighted_excite_score
-        print "score ave inhib", self.weighted_inhib_score
-        print "score ave depth", self.weighted_m_depth_score
-        print "score ave conn", self.weighted_conn_score
-        print "score ave pl", self.weighted_pl_ratio_score
+        print("\nscore ave excite", self.weighted_excite_score)
+        print("score ave inhib", self.weighted_inhib_score)
+        print("score ave depth", self.weighted_m_depth_score)
+        print("score ave conn", self.weighted_conn_score)
+        print("score ave pl", self.weighted_pl_ratio_score)
 
-        print "\nfitness ave excite", self.weighted_excite_fitness
-        print "fitness ave inhib", self.weighted_inhib_fitness
-        print "fitness ave depth", self.weighted_m_depth_fitness
-        print "fitness ave conn", self.weighted_conn_fitness
-        print "fitness ave pl", self.weighted_pl_ratio_fitness
+        print("\nfitness ave excite", self.weighted_excite_fitness)
+        print("fitness ave inhib", self.weighted_inhib_fitness)
+        print("fitness ave depth", self.weighted_m_depth_fitness)
+        print("fitness ave conn", self.weighted_conn_fitness)
+        print("fitness ave pl", self.weighted_pl_ratio_fitness)
 
-        print "\nmin excite", self.min_excite_neurons
-        print "min inhib", self.min_inhib_neurons
-        print "min depth", self.min_m_depth
-        print "min conn", self.min_connections
-        print "min pl", self.min_pl_ratio
+        print("\nmin excite", self.min_excite_neurons)
+        print("min inhib", self.min_inhib_neurons)
+        print("min depth", self.min_m_depth)
+        print("min conn", self.min_connections)
+        print("min pl", self.min_pl_ratio)
 
-        print "\nmax excite", self.max_excite_neurons
-        print "max inhib", self.max_inhib_neurons
-        print "max depth", self.max_m_depth
-        print "max conn", self.max_connections
-        print "max pl", self.max_pl_ratio, "\n"
+        print("\nmax excite", self.max_excite_neurons)
+        print("max inhib", self.max_inhib_neurons)
+        print("max depth", self.max_m_depth)
+        print("max conn", self.max_connections)
+        print("max pl", self.max_pl_ratio, "\n")
 
         with open('network tracking {}.csv'.format(config), 'w') as network_file:
             writer = csv.writer(network_file, delimiter=',', lineterminator='\n')

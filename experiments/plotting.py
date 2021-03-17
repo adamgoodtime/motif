@@ -21,7 +21,7 @@ def plot_tracking_of_scores(file_location, key_words, iterations, plot=False):
 
     list_of_files = glob.glob(file_location+things_wanted)
 
-    print list_of_files
+    print(list_of_files)
 
     # collect all csv data
     list_of_data = []
@@ -45,10 +45,10 @@ def plot_tracking_of_scores(file_location, key_words, iterations, plot=False):
                     row_heading = row[0]
                     record = True
             else:
-                data[row_heading] = map(float, row)
+                data[row_heading] = list(map(float, row))
                 record = False
         if len(data['maximum score']) < iterations:
-            print "broken run of file ", test[0]
+            print("broken run of file ", test[0])
         else:
             all_the_data.append(data)
 
@@ -186,7 +186,7 @@ def plot_tracking_of_networks(file_location, key_words, iterations, tracking):
 
     list_of_files = glob.glob(file_location+things_wanted)
 
-    print list_of_files
+    print(list_of_files)
 
     # collect all csv data
     list_of_data = []
@@ -468,5 +468,5 @@ ticks = [i for i in range(iterations - 1)]
 plot_individual_runs(True)
 # plot_combined_runs()
 
-print "done"
+print("done")
 

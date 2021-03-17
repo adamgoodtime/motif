@@ -109,21 +109,21 @@ def connect_to_arms(pre_pop, from_list, arms, r_type, plastic, stdp_model):
 def connect_2_pops(connections, input_pop, output_pop, receptor_type, pre_pop_size, stdp_model, max_conn=252):
     [stdp, structural, non_plastic] = split_plastic(connections)
     if len(stdp) != 0:
-        from_list_segments = [stdp[x:x+max_conn] for x in xrange(0, len(stdp), max_conn)]
+        from_list_segments = [stdp[x:x+max_conn] for x in range(0, len(stdp), max_conn)]
         for connection in from_list_segments:
             p.Projection(input_pop, output_pop,
                          p.FromListConnector(connection),
                          receptor_type=receptor_type,
                          synapse_type=stdp_model)
     if len(structural) != 0:
-        from_list_segments = [structural[x:x+max_conn] for x in xrange(0, len(structural), max_conn)]
+        from_list_segments = [structural[x:x+max_conn] for x in range(0, len(structural), max_conn)]
         for connection in from_list_segments:
             p.Projection(input_pop, output_pop,
                          p.FromListConnector(connection),
                          receptor_type=receptor_type,
                          synapse_type=stdp_model)
     if len(non_plastic) != 0:
-        from_list_segments = [non_plastic[x:x+max_conn] for x in xrange(0, len(non_plastic), max_conn)]
+        from_list_segments = [non_plastic[x:x+max_conn] for x in range(0, len(non_plastic), max_conn)]
         for connection in from_list_segments:
             p.Projection(input_pop, output_pop,
                          p.FromListConnector(connection),
@@ -156,7 +156,7 @@ def return_chip_list(machine):
         del chip_list[chip_list.index(removal)]
     full_chip_list = []
     for i, ethernet in enumerate(machine.ethernet_connected_chips):
-        print "i:", i, "- chip:", ethernet.x, "/", ethernet.y
+        print("i:", i, "- chip:", ethernet.x, "/", ethernet.y)
         chips_from_board = 0
         for chip in chip_list: #machine.BOARD_48_CHIPS:
             x = chip[0] + ethernet.x
@@ -166,9 +166,9 @@ def return_chip_list(machine):
                     full_chip_list.append([x, y])
                     chips_from_board += 1
                 else:
-                    print "removing bad board covering", x, "/", y
+                    print("removing bad board covering", x, "/", y)
             else:
-                print "chip", x, "/", y, "does not exist"
+                print("chip", x, "/", y, "does not exist")
             if chips_from_board >= max_chips_per_board:
                 break
     return full_chip_list
@@ -225,20 +225,20 @@ def pop_test(connections, test_data, split=4, runtime=2000, exposure_time=200, n
                 elif neuron_choice == 'calcium':
                     neuron_type = p.extra_models.IFCurrExpCa2Adaptive
                 else:
-                    print "incorrect neuron type"
+                    print("incorrect neuron type")
                     raise Exception
                 p.set_number_of_neurons_per_core(neuron_type, 32)
-                print "\nfinished setup seed = ", seed, "\n"
-                print "test data = ", test_data
+                print("\nfinished setup seed = ", seed, "\n")
+                print("test data = ", test_data)
                 break
             except:
                 traceback.print_exc()
                 sleep = 1 * np.random.random()
                 time.sleep(sleep)
-            print "\nsetup", try_count, " seed = ", seed, "\n", "\n"
+            print("\nsetup", try_count, " seed = ", seed, "\n", "\n")
             try_count += 1
-        print "\nfinished setup seed = ", seed, "\n"
-        print config
+        print("\nfinished setup seed = ", seed, "\n")
+        print(config)
         if placement:
             machine = p.get_machine()
             chip_list = return_chip_list(machine)
@@ -255,14 +255,14 @@ def pop_test(connections, test_data, split=4, runtime=2000, exposure_time=200, n
                  i2e, i2i, e2out, i2out, out2e, out2i, out2in, out2out, excite_params, inhib_params] = connections[i]
                 if len(in2e) == 0 and len(in2i) == 0 and len(in2out) == 0:
                     failures.append(i)
-                    print "agent {} was not properly connected to the game".format(i)
+                    print("agent {} was not properly connected to the game".format(i))
                 else:
                     if placement:
                         chip_x = chip_list[0][0]
                         chip_y = chip_list[0][1]
                         del chip_list[0]
                         while not machine.is_chip_at(chip_x, chip_y):
-                            print " 2nd chip", chip_x, "/", chip_y, "does not exist"
+                            print(" 2nd chip", chip_x, "/", chip_y, "does not exist")
                             chip_x = chip_list[0][0]
                             chip_y = chip_list[0][1]
                             del chip_list[0]
@@ -353,7 +353,7 @@ def pop_test(connections, test_data, split=4, runtime=2000, exposure_time=200, n
                     elif exec_thing == 'neuron':
                         input_model = p.IF_cond_exp()
                     else:
-                        print "Incorrect input model selected"
+                        print("Incorrect input model selected")
                         raise Exception
                     if exec_thing != 'mnist':
                         if exec_thing != 'neuron':
@@ -493,13 +493,13 @@ def pop_test(connections, test_data, split=4, runtime=2000, exposure_time=200, n
                         if len(in_in) != 0:
                             connect_2_pops(in_in, output_pop[model_count], output_pop[model_count],
                                            'inhibitory', outputs, stdp_model)
-        print "\nfinished connections seed = ", seed, "\n"
+        print("\nfinished connections seed = ", seed, "\n")
         simulator = get_simulator()
         try:
-            print "\nrun seed = ", seed, "\n"
+            print("\nrun seed = ", seed, "\n")
             if len(connections) == len(failures):
                 p.end()
-                print "nothing to run so ending and returning fail"
+                print("nothing to run so ending and returning fail")
                 return ['fail', 'fail']
             p.run(runtime)
             try_except = max_attempts
@@ -508,19 +508,19 @@ def pop_test(connections, test_data, split=4, runtime=2000, exposure_time=200, n
             failure = traceback.format_exc()
             traceback.print_exc()
             try:
-                print "\nrun 2 seed = ", seed, "\n"
+                print("\nrun 2 seed = ", seed, "\n")
                 globals_variables.unset_simulator()
-                print "end was necessary"
+                print("end was necessary")
             except:
                 traceback.print_exc()
-                print "end wasn't necessary"
+                print("end wasn't necessary")
             try_except += 1
-            print "failed to run on attempt ", try_except, "\n"  # . total fails: ", all_fails, "\n"
+            print("failed to run on attempt ", try_except, "\n")  # . total fails: ", all_fails, "\n"
             if try_except >= max_attempts:
-                print "calling it a failed population, splitting and rerunning"
+                print("calling it a failed population, splitting and rerunning")
                 return ['fail', failure]
         # p.run(runtime)
-        print "\nfinished run seed = ", seed, "\n"
+        print("\nfinished run seed = ", seed, "\n")
 
     scores = []
     agent_fitness = []
@@ -530,11 +530,11 @@ def pop_test(connections, test_data, split=4, runtime=2000, exposure_time=200, n
     inhib_spike_count = [0 for i in range(len(output_pop))]
     inhib_fail = 0
     output_spike_count = [0 for i in range(len(output_pop))]
-    print "reading the spikes of ", config, '\n', seed
+    print("reading the spikes of ", config, '\n', seed)
     for i in range(len(output_pop)):
-        print "started processing fitness of: ", i, '/', len(output_pop), "seed", seed
+        print("started processing fitness of: ", i, '/', len(output_pop), "seed", seed)
         if i in failures:
-            print "worst score for the failure"
+            print("worst score for the failure")
             fails += 1
             scores.append([[max_fail_score], [max_fail_score], [max_fail_score], [max_fail_score]])
             # agent_fitness.append(scores[i])
@@ -614,9 +614,9 @@ def pop_test(connections, test_data, split=4, runtime=2000, exposure_time=200, n
         else:
             agent_fitness.append(scores[i][len(scores[i]) - 1][0])
         # print i, "| e:", excite_spike_count[i], "-i:", inhib_spike_count[i], "|\t", scores[i]
-    print seed, "\nThe scores for this run of {} agents are:".format(len(connections))
+    print(seed, "\nThe scores for this run of {} agents are:".format(len(connections)))
     for i in range(len(output_pop)):
-        print "c:{}, s:{}, si:{}, si0:{}".format(len(connections), len(scores), len(scores[i]), len(scores[i][0]))
+        print("c:{}, s:{}, si:{}, si0:{}".format(len(connections), len(scores), len(scores[i]), len(scores[i][0])))
         e_string = "e: {}".format(excite_spike_count[i])
         i_string = "i: {}".format(inhib_spike_count[i])
         score_string = ""
@@ -626,11 +626,11 @@ def pop_test(connections, test_data, split=4, runtime=2000, exposure_time=200, n
         # else:
         #     score_string += "{:4},".format(scores[i][len(scores[i])-1][0])
         score_string += "{:4},".format(scores[i][len(scores[i])-1][0])
-        print "{:3} | {:8} {:8} - ".format(i, e_string, i_string), score_string
-    print "before end = ", seed
+        print("{:3} | {:8} {:8} - ".format(i, e_string, i_string), score_string)
+    print("before end = ", seed)
     p.end()
-    print "\nafter end = ", seed, "\n"
-    print config
+    print("\nafter end = ", seed, "\n")
+    print(config)
     return [agent_fitness, 'complete']
 
 def print_fitnesses(fitnesses):
@@ -652,7 +652,7 @@ def read_globals(config):
             try:
                 globals()[row[0]] = literal_eval(row[1])
             except:
-                print "",
+                print("", end=' ')
                 # try:
                 #     globals()[row[0]] = row[1]
                 # except:
@@ -660,7 +660,7 @@ def read_globals(config):
                 # traceback.print_exc()
                 # break
 
-print "thing"
+print("thing")
 # parser = argparse.ArgumentParser(
 #     description='just trying to pass a single number into here',
 # formatter_class=argparse.RawTextHelpFormatter)

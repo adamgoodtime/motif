@@ -75,13 +75,13 @@ def thread_xor(connections, arms, split=4, runtime=2000, exposure_time=200, nois
     if isinstance(arms[0], list):
         connection_threads = []
         all_configs = [[[connections[x:x + step_size], arm, split, runtime, exposure_time, noise_rate, noise_weight,
-                         reward, spike_f, np.random.randint(1000000000)] for x in xrange(0, len(connections), step_size)] for arm in arms]
+                         reward, spike_f, np.random.randint(1000000000)] for x in range(0, len(connections), step_size)] for arm in arms]
         for arm in all_configs:
             for config in arm:
                 connection_threads.append(config)
     else:
         connection_threads = [[connections[x:x + step_size], arms, split, runtime, exposure_time, noise_rate,
-                               noise_weight, reward, spike_f, np.random.randint(1000000000)] for x in xrange(0, len(connections), step_size)]
+                               noise_weight, reward, spike_f, np.random.randint(1000000000)] for x in range(0, len(connections), step_size)]
 
     pool = pathos.multiprocessing.Pool(processes=len(connection_threads))
 
@@ -91,7 +91,7 @@ def thread_xor(connections, arms, split=4, runtime=2000, exposure_time=200, nois
 
     for i in range(len(pool_result)):
         if pool_result[i] == 'fail' and len(connection_threads[i][0]) > 1:
-            print "splitting ", len(connection_threads[i][0]), " into ", new_split, " pieces"
+            print("splitting ", len(connection_threads[i][0]), " into ", new_split, " pieces")
             problem_arms = connection_threads[i][1]
             pool_result[i] = thread_xor(connection_threads[i][0], problem_arms, new_split, runtime,
                                                 exposure_time, noise_rate, noise_weight, reward, spike_f, top=False)
@@ -191,22 +191,22 @@ def xor_test(connections, arms, split=4, runtime=2000, exposure_time=200, noise_
             try:
                 p.setup(timestep=1.0, min_delay=1, max_delay=127)
                 p.set_number_of_neurons_per_core(p.IF_cond_exp, 100)
-                print "\nfinished setup seed = ", seed, "\n"
+                print("\nfinished setup seed = ", seed, "\n")
                 break
             except:
                 traceback.print_exc()
                 sleep = 1 * np.random.random()
                 time.sleep(sleep)
-            print "\nsetup", try_count, " seed = ", seed, "\n", "\n"
+            print("\nsetup", try_count, " seed = ", seed, "\n", "\n")
             try_count += 1
-        print "\nfinished setup seed = ", seed, "\n"
-        print config
+        print("\nfinished setup seed = ", seed, "\n")
+        print(config)
         for i in range(len(connections)):
             [in2e, in2i, in2in, in2out, e2in, i2in, e_size, e2e, e2i, i_size,
              i2e, i2i, e2out, i2out, out2e, out2i, out2in, out2out] = connections[i]
             if len(in2e) == 0 and len(in2i) == 0 and len(in2out) == 0:
                 failures.append(i)
-                print "agent {} was not properly connected to the game".format(i)
+                print("agent {} was not properly connected to the game".format(i))
             else:
                 input_count += 1
                 if arms[0] == 1:
@@ -350,13 +350,13 @@ def xor_test(connections, arms, split=4, runtime=2000, exposure_time=200, noise_
                         p.Projection(inhib[inhib_count], output_pop[input_count], p.FromListConnector(non_plastic),
                                      receptor_type='inhibitory')
 
-        print "\nfinished connections seed = ", seed, "\n"
+        print("\nfinished connections seed = ", seed, "\n")
         simulator = get_simulator()
         try:
-            print "\nrun seed = ", seed, "\n"
+            print("\nrun seed = ", seed, "\n")
             if len(connections) == len(failures):
                 p.end()
-                print "nothing to run so ending and returning fail"
+                print("nothing to run so ending and returning fail")
                 return 'fail'
             p.run(runtime)
             try_except = max_attempts
@@ -364,18 +364,18 @@ def xor_test(connections, arms, split=4, runtime=2000, exposure_time=200, noise_
         except:
             traceback.print_exc()
             try:
-                print "\nrun 2 seed = ", seed, "\n"
+                print("\nrun 2 seed = ", seed, "\n")
                 globals_variables.unset_simulator()
-                print "end was necessary"
+                print("end was necessary")
             except:
                 traceback.print_exc()
-                print "end wasn't necessary"
+                print("end wasn't necessary")
             try_except += 1
-            print "failed to run on attempt ", try_except, "\n"  # . total fails: ", all_fails, "\n"
+            print("failed to run on attempt ", try_except, "\n")  # . total fails: ", all_fails, "\n"
             if try_except >= max_attempts:
-                print "calling it a failed population, splitting and rerunning"
+                print("calling it a failed population, splitting and rerunning")
                 return 'fail'
-        print "\nfinished run seed = ", seed, "\n"
+        print("\nfinished run seed = ", seed, "\n")
 
     scores = []
     agent_fitness = []
@@ -384,11 +384,11 @@ def xor_test(connections, arms, split=4, runtime=2000, exposure_time=200, noise_
     excite_fail = 0
     inhib_spike_count = [0 for i in range(len(connections))]
     inhib_fail = 0
-    print "reading the spikes of ", config, '\n', seed
+    print("reading the spikes of ", config, '\n', seed)
     for i in range(len(connections)):
-        print "started processing fitness of: ", i, '/', len(connections)
+        print("started processing fitness of: ", i, '/', len(connections))
         if i in failures:
-            print "worst score for the failure"
+            print("worst score for the failure")
             fails += 1
             scores.append([0, 100000])
             # agent_fitness.append(scores[i])
@@ -397,23 +397,23 @@ def xor_test(connections, arms, split=4, runtime=2000, exposure_time=200, noise_
         else:
             if spike_f:
                 if i in excite_marker:
-                    print "counting excite spikes"
+                    print("counting excite spikes")
                     spikes = excite[i - excite_fail - fails].get_data('spikes').segments[0].spiketrains
                     for neuron in spikes:
                         for spike in neuron:
                             excite_spike_count[i] += 1
                 else:
                     excite_fail += 1
-                    print "had an excite failure"
+                    print("had an excite failure")
                 if i in inhib_marker:
-                    print "counting inhib spikes"
+                    print("counting inhib spikes")
                     spikes = inhib[i - inhib_fail - fails].get_data('spikes').segments[0].spiketrains
                     for neuron in spikes:
                         for spike in neuron:
                             inhib_spike_count[i] += 1
                 else:
                     inhib_fail += 1
-                    print "had an inhib failure"
+                    print("had an inhib failure")
             spikes = output_pop[i - fails].get_data('spikes').segments[0].spiketrains
             on_spike = 0
             off_spike = 0
@@ -452,25 +452,25 @@ def xor_test(connections, arms, split=4, runtime=2000, exposure_time=200, noise_
                     else:
                         scores.append([-1, on_spike + off_spike])
             # pop[i].stats = {'fitness': scores[i][len(scores[i]) - 1][0]}  # , 'steps': 0}
-        print "\nfinished spikes", seed
+        print("\nfinished spikes", seed)
         if spike_f:
             agent_fitness.append([scores[i][0], excite_spike_count[i] + inhib_spike_count[i] + scores[i][1]])
         else:
             agent_fitness.append(scores[i][0])
         # print i, "| e:", excite_spike_count[i], "-i:", inhib_spike_count[i], "|\t", scores[i]
-    print seed, "\nThe scores for this run of {} agents are:".format(len(connections))
+    print(seed, "\nThe scores for this run of {} agents are:".format(len(connections)))
     for i in range(len(connections)):
-        print "c:{}, s:{}".format(len(connections), len(scores))
+        print("c:{}, s:{}".format(len(connections), len(scores)))
         e_string = "e: {}".format(excite_spike_count[i])
         i_string = "i: {}".format(inhib_spike_count[i])
         score_string = ""
         for j in range(len(scores[i])):
             score_string += "{:4}".format(scores[i][j])
-        print "{:3} | {:8} {:8} - ".format(i, e_string, i_string), score_string
-    print "before end = ", seed
+        print("{:3} | {:8} {:8} - ".format(i, e_string, i_string), score_string)
+    print("before end = ", seed)
     p.end()
-    print "\nafter end = ", seed, "\n"
-    print config
+    print("\nafter end = ", seed, "\n")
+    print(config)
     return agent_fitness
 
 def print_fitnesses(fitnesses):
