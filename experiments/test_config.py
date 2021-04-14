@@ -22,17 +22,36 @@ if exec_thing == 'xor':
     inputs = 2
     outputs = 2
     exposure_time = 100
+    max_current = 6. # 0Hz @ 0.6 - 1000hz @ 13.3
+    spike_controlled = True
     config = 'xor_tf '
+elif exec_thing == 'logic':
+    truth_table = [0, 1, 1, 0] # done
+    # truth_table = [0, 0, 0, 1] # done
+    # truth_table = [0, 1, 1, 1] # done
+    # truth_table = [1, 0, 0, 1] # done
+    # truth_table = [0, 0, 0, 0, 0, 1, 1, 0, 0, 1, 1, 0, 0, 0, 0, 0]
+    # truth_table = [0, 1, 1, 0, 1, 0, 0, 1]
+    inputs = int(np.ceil(np.log2(len(truth_table))))
+    outputs = 2
+    exposure_time = 100
+    max_current = 6. # 0Hz @ 0.6 - 1000hz @ 13.3
+    spike_controlled = True
+    config = 'logic_tf '
 elif exec_thing == 'pen':
     inputs = 4
     outputs = 2
     exposure_time = 250
     receptive_fields = 2
-    receptive_width = 2.4
+    receptive_width = 4.8
+    max_current = 6. # 0Hz @ 0.6 - 1000hz @ 13.3
     max_pen_rate = 1000.
     repeat_test = 3
+    spike_controlled = True
     inputs *= receptive_fields
     velocity_info = True
+    if not velocity_info:
+        inputs /= 2
     penalise_oscillations = True
     pen_cutoff = 100
     config = 'pen_tf '
@@ -79,8 +98,13 @@ if develop_neurons:
     config += 'dev_n '
 if stdev_neurons:
     config += 'stdev_n '
-    config += 'inc-{} '.format(input_current_stdev)
-if not allow_i2o:
+if not force_i2o:
     config += 'ni2o '
+if all_io:
+    config += 'allio '
+if exec_thing == 'pen' or exec_thing == 'xor' or exec_thing == 'logic':
+    config += 'mc{} '.format(max_current)
+if exec_thing == 'logic':
+    config += '{} '.format(truth_table)
 if free_label:
     config += '{} '.format(free_label)

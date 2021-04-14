@@ -12,6 +12,7 @@ import math
 from methods.networks import motif_population
 import traceback
 import csv
+import networkx as nx
 # import threading
 # import pathos.multiprocessing
 # from spinn_front_end_common.utilities import globals_variables
@@ -28,7 +29,7 @@ class agent_population(object):
                  elitism=0.1,
                  viable_parents=0.1,
                  strict_io=True,
-                 allow_i2o=True,
+                 force_i2o=True,
                  sexuality=[1./4., 1./4., 1./4., 1./4.],  # asexual (just mutate), sexual, sexual + mutate, fresh motif construction
                  conn_param_mutate=0.1,
                  param_mutate_stdev=0.15,
@@ -61,7 +62,7 @@ class agent_population(object):
         self.elitism = elitism
         self.viable_parents = viable_parents
         self.strict_io = strict_io
-        self.allow_i2o = allow_i2o
+        self.force_i2o = force_i2o
         # self.asexual = asexual
         self.sexuality = {'asexual': sexuality[0], 'sexual': sexuality[1], 'both': sexuality[2], 'fresh': sexuality[3]}
         self.conn_param_mutate = conn_param_mutate
@@ -136,20 +137,20 @@ class agent_population(object):
         self.min_score = []
         self.total_average = []
 
-        self.min_excite_neurons = []
-        self.average_excite_neurons = []
-        self.max_excite_neurons = []
-        self.weighted_excite_score = []
-        self.weighted_excite_fitness = []
-        self.best_score_excite = []
-        self.best_fitness_excite = []
-        self.min_inhib_neurons = []
-        self.average_inhib_neurons = []
-        self.max_inhib_neurons = []
-        self.weighted_inhib_score = []
-        self.weighted_inhib_fitness = []
-        self.best_score_inhib = []
-        self.best_fitness_inhib = []
+        self.min_hidden_neurons = []
+        self.average_hidden_neurons = []
+        self.max_hidden_neurons = []
+        self.weighted_hidden_score = []
+        self.weighted_hidden_fitness = []
+        self.best_score_hidden = []
+        self.best_fitness_hidden = []
+        self.min_io_neurons = []
+        self.average_io_neurons = []
+        self.max_io_neurons = []
+        self.weighted_io_score = []
+        self.weighted_io_fitness = []
+        self.best_score_io = []
+        self.best_fitness_io = []
         self.min_connections = []
         self.average_connections = []
         self.max_connections = []
@@ -194,12 +195,10 @@ class agent_population(object):
                 self.agent_pop = []
             self.generate_population(max_depth)
         for agent in self.agent_pop:
-            conns = self.convert_agent_tf(agent)
-            agent_connections.append(conns[0])
-            spinn_conns.append(conns[1])
-            # agent_connections.append(self.convert_agent(agent))
+            agent_setup = self.convert_agent_tf(agent)
+            agent_connections.append(agent_setup)
 
-        return agent_connections, spinn_conns
+        return agent_connections
 
     '''creates the population'''
     def generate_population(self, max_depth):
@@ -217,56 +216,14 @@ class agent_population(object):
 
     '''converts an agent into a list of connections'''
     def convert_agent(self, agent):
-        SpiNN_connections = self.motifs.convert_individual(agent)
-        if not self.allow_i2o:
-            in2e, in2i, in2in, in2out, e2in, i2in, e_size, e2e, e2i, i_size, i2e, i2i, \
-            e2out, i2out, out2e, out2i, out2in, out2out, neuron_params = SpiNN_connections
-            in2out = []
-            SpiNN_connections = in2e, in2i, in2in, in2out, e2in, i2in, e_size, e2e, e2i, i_size, i2e, i2i, \
-            e2out, i2out, out2e, out2i, out2in, out2out, neuron_params
-        return SpiNN_connections
+        agent_setup = self.motifs.convert_individual(agent)
+        return agent_setup
 
     '''convert agent into connection matrix'''
     def convert_agent_tf(self, agent):
-        SpiNN_connections = self.motifs.convert_individual(agent)
-        in2e, in2i, in2in, in2out, e2in, i2in, e_size, e2e, e2i, i_size, i2e, i2i, \
-        e2out, i2out, out2e, out2i, out2in, out2out, neuron_params = SpiNN_connections
-        connections = in2e, in2i, in2in, in2out, e2in, i2in, e2e, e2i, i2e, i2i, \
-            e2out, i2out, out2e, out2i, out2in, out2out
-        in2rec = self.convert_connections_to_matrix(in2e, self.inputs, e_size+i_size,
-                                                    inhibitory=False, in_offset=0, out_offset=0) + \
-                 self.convert_connections_to_matrix(in2i, self.inputs, e_size+i_size,
-                                                    inhibitory=False, in_offset=0, out_offset=e_size)
-        rec2rec = self.convert_connections_to_matrix(i2e, e_size+i_size, e_size+i_size,
-                                                    inhibitory=True, in_offset=e_size, out_offset=0) + \
-                  self.convert_connections_to_matrix(e2i, e_size+i_size, e_size+i_size,
-                                                    inhibitory=False, in_offset=0, out_offset=e_size) + \
-                  self.convert_connections_to_matrix(i2i, e_size+i_size, e_size+i_size,
-                                                    inhibitory=True, in_offset=e_size, out_offset=e_size) + \
-                  self.convert_connections_to_matrix(e2e, e_size+i_size, e_size+i_size,
-                                                    inhibitory=False, in_offset=0, out_offset=0)
-        rec2out = self.convert_connections_to_matrix(i2out, e_size+i_size, self.outputs,
-                                                    inhibitory=True, in_offset=e_size, out_offset=0) + \
-                  self.convert_connections_to_matrix(e2out, e_size+i_size, self.outputs,
-                                                    inhibitory=False, in_offset=0, out_offset=0)
-        in2out = self.convert_connections_to_matrix(in2out, self.inputs, self.outputs)
+        conn_matrix, delay_matrix, indexed_i, indexed_o, neuron_params = self.motifs.convert_individual(agent)
 
-
-        in2rec_d = self.convert_connections_to_matrix(in2e, self.inputs, e_size+i_size,
-                                                    inhibitory=False, in_offset=0, out_offset=0, delaying=True) + \
-                   self.convert_connections_to_matrix(in2i, self.inputs, e_size + i_size, inhibitory=False,
-                                                      in_offset=0, out_offset=e_size, delaying=True)
-
-        rec2rec_d = self.convert_connections_to_matrix(i2e, e_size+i_size, e_size+i_size, inhibitory=True,
-                                                       in_offset=e_size, out_offset=0, delaying=True) + \
-                    self.convert_connections_to_matrix(e2i, e_size + i_size, e_size + i_size, inhibitory=False,
-                                                       in_offset=0, out_offset=e_size, delaying=True) + \
-                    self.convert_connections_to_matrix(i2i, e_size + i_size, e_size + i_size, inhibitory=True,
-                                                       in_offset=e_size, out_offset=e_size, delaying=True) + \
-                    self.convert_connections_to_matrix(e2e, e_size + i_size, e_size + i_size, inhibitory=False,
-                                                       in_offset=0, out_offset=0, delaying=True)
-
-        return [in2rec, rec2rec, rec2out, in2out, in2rec_d, rec2rec_d, e_size+i_size, neuron_params], SpiNN_connections
+        return conn_matrix, delay_matrix, indexed_i, indexed_o, neuron_params
 
     def convert_connections_to_matrix(self, conn_list, in_size, out_size, inhibitory=False,
                                       in_offset=0, out_offset=0, delaying=False):
@@ -441,6 +398,7 @@ class agent_population(object):
             self.iterate_species()
         else:
             self.agent_pop, self.agent_mutate_keys = self.generate_children(self.agent_pop, len(self.agent_pop))
+            print("")
 
     '''Takes in a parent motif and mutates it in various ways, all sub-motifs are added with the final motif structure/
     id being returned. A key is kept of each mutation used to generate a child for later analysis of appropriate 
@@ -798,99 +756,60 @@ class agent_population(object):
     #     return True
     
     def valid_net(self, child):
-        connections = self.convert_agent(child)
-        [in2e, in2i, in2in, in2out, e2in, i2in, e_size, e2e, e2i, i_size, i2e, i2i, e2out, i2out, out2e, out2i, out2in,
-         out2out, neuron_params] = connections
+        [conn_matrix, delay_matrix, indexed_i, indexed_o, neuron_params] = self.convert_agent(child)
+
         if self.motifs.neurons.inputs + self.motifs.neurons.outputs == 0:
-            if len(e2e) == 0 and len(e2i) == 0 and len(i2e) == 0 and len(i2i) == 0:
+            if len(np.nonzero(np.array(conn_matrix))[0]) == 0:
                 print("bad agent")
                 return False
             else:
                 return child
-        if len(in2e) == 0 and len(in2i) == 0 and len(in2out) == 0:
+        if len(indexed_i) == 0:
             print("in bad agent")
             return False
-        if len(e2out) == 0 and len(i2out) == 0 and len(in2out) == 0:
+        if len(indexed_o) == 0:
             print("out bad agent")
             return False
         # if not self.check_connections_per_node(connections):
         #     print "too many pre-post"
         #     return False
         if self.strict_io:
-            if len(in2out) == 0:
-                node_list = {}
-                node_list['excitatory'] = []
-                node_list['inhibitory'] = []
-                check = self.check_in_2_out('input', node_list, [in2e, in2i, in2in, in2out, e2in, i2in, e_size, e2e, e2i,
-                                                         i_size, i2e, i2i, e2out, i2out, out2e, out2i, out2in, out2out,
-                                                         neuron_params])
-                if not check:
-                    print("no i2o")
+            checked_inputs = [0 for i in range(self.inputs)]
+            for i in indexed_i:
+                checked_inputs[indexed_i[i]] += 1
+            checked_outputs = [0 for i in range(self.outputs)]
+            for o in indexed_o:
+                checked_outputs[indexed_o[o]] += 1
+            if not np.count_nonzero(checked_inputs) == self.inputs or \
+                    not np.count_nonzero(checked_outputs) == self.outputs:
+                print("not all io")
+                return False
+
+        if self.force_i2o:
+            graph = nx.convert_matrix.from_numpy_matrix(np.asmatrix(conn_matrix), create_using=nx.DiGraph)
+            '''
+            import networkx as nx
+            import matplotlib.pyplot as plt
+            graph = nx.convert_matrix.from_numpy_matrix(np.asmatrix(agent[0]), create_using=nx.DiGraph)
+            nx.draw(graph)
+            plt.show()
+            '''
+            shortest_paths = nx.all_pairs_shortest_path_length(graph)
+            for n_paths in shortest_paths:
+                neuron = n_paths[0]
+                paths = n_paths[1]
+                i_connected = True
+                if neuron in indexed_i:
+                    i_connected = False
+                    for o in indexed_o:
+                        if o in paths:
+                            i_connected = True
+                            break
+                if not i_connected:
+                    print("bad io")
                     return False
-            print("good agent")
+        print("good agent")
         return child
-        
-    def check_in_2_out(self, pre, node_list, connections, specific=None):
-        [in2e, in2i, in2in, in2out, e2in, i2in, e_size, e2e, e2i, i_size, i2e, i2i, e2out, i2out, out2e, out2i, out2in,
-         out2out, neuron_params] = connections
-        # pre_inputs = [in2e, in2i, in2out]
-        # pre_excitatory = [e2e, e2i, e2out]
-        # pre_inhibitory = [i2e, i2i, i2out]
-        # pre_outputs = [out2e, out2i, out2out]
-        if pre == 'input':
-            for conn in in2e:
-                new_node_list = node_list
-                new_node_list['excitatory'].append(conn[1])
-                check = self.check_in_2_out('excitatory', new_node_list, connections, conn[1])
-                if check:
-                    return True
-            for conn in in2i:
-                new_node_list = node_list
-                new_node_list['inhibitory'].append(conn[1])
-                check = self.check_in_2_out('inhibitory', new_node_list, connections, conn[1])
-                if check:
-                    return True
-        elif pre == 'excitatory':
-            for conn in e2out:
-                if conn[0] == specific:
-                    return True
-            for conn in e2e:
-                if conn[0] == specific:
-                    if conn[1] not in node_list['excitatory']:
-                        new_node_list = node_list
-                        new_node_list['excitatory'].append(conn[1])
-                        check = self.check_in_2_out('excitatory', new_node_list, connections, conn[1])
-                        if check:
-                            return True
-            for conn in e2i:
-                if conn[0] == specific:
-                    if conn[1] not in node_list['inhibitory']:
-                        new_node_list = node_list
-                        new_node_list['inhibitory'].append(conn[1])
-                        check = self.check_in_2_out('inhibitory', new_node_list, connections, conn[1])
-                        if check:
-                            return True
-        elif pre == 'inhibitory':
-            for conn in i2out:
-                if conn[0] == specific:
-                    return True
-            for conn in i2e:
-                if conn[0] == specific:
-                    if conn[1] not in node_list['excitatory']:
-                        new_node_list = node_list
-                        new_node_list['excitatory'].append(conn[1])
-                        check = self.check_in_2_out('excitatory', new_node_list, connections, conn[1])
-                        if check:
-                            return True
-            for conn in i2i:
-                if conn[0] == specific:
-                    if conn[1] not in node_list['inhibitory']:
-                        new_node_list = node_list
-                        new_node_list['inhibitory'].append(conn[1])
-                        check = self.check_in_2_out('inhibitory', new_node_list, connections, conn[1])
-                        if check:
-                            return True
-        return False
 
     '''here is where the children (the next generation of the population) are created for both a species and for the 
     entire population if required'''
@@ -1109,9 +1028,10 @@ class agent_population(object):
         self.min_fitness.append(round(worst_fitness, 2))
         self.average_fitness.append(round(np.average(fitnesses), 2))
 
-        # self.track_networks(connections, config)
+        self.track_networks(connections, config)
         print("\n\nBest fitness agent:", best_agent_f, "with performance", best_fitness, scores[best_agent_f])
         print("Best score agent:", best_agent_s, "with perfromance", fitnesses[best_agent_s], best_score)
+        self.print_agent_net(connections[best_agent_s])
         if best_performance_fitness:
             print("max best performance fitness:", max(best_performance_fitness), "at iteration ", best_performance_fitness.index(max(best_performance_fitness)))
         print("best performance fitness:", best_performance_fitness)
@@ -1126,6 +1046,9 @@ class agent_population(object):
         print("maximum score:", self.max_score)
         print("average score:", self.average_score)
         print("minimum score:", self.min_score)
+        print("\n\nBest fitness agent:", best_agent_f, "with performance", best_fitness, scores[best_agent_f])
+        print("Best score agent:", best_agent_s, "with perfromance", fitnesses[best_agent_s], best_score)
+        self.print_agent_net(connections[best_agent_s])
         # if config != 'test':
         #     self.save_agent_connections(self.agent_pop[best_agent], iteration, 'score '+config)
         #     self.save_agent_connections(self.agent_pop[best_agent_s], iteration, 'fitness '+config)
@@ -1179,6 +1102,7 @@ class agent_population(object):
         print("At iteration: ", iteration, "\n")
         print("best fitness was ", best_fitness, " by agent:", best_agent, \
             "with a score of: ", best_fitness_score, "--->", best_scores)
+        self.print_agent_net(connections[best_agent])
         self.max_score.append(round(best_score, 2))
         self.min_score.append(round(worst_score, 2))
         total_average = 0
@@ -1209,6 +1133,10 @@ class agent_population(object):
         print("maximum score:", self.max_score)
         print("average score:", self.average_score)
         print("minimum score:", self.min_score)
+        print("At iteration: ", iteration, "\n")
+        print("best fitness was ", best_fitness, " by agent:", best_agent, \
+            "with a score of: ", best_fitness_score, "--->", best_scores)
+        self.print_agent_net(connections[best_agent])
         if config != 'test':
             self.save_agent_connections(self.agent_pop[best_agent], iteration, 'score '+config)
             self.save_agent_connections(self.agent_pop[best_agent_s], iteration, 'fitness '+config)
@@ -1218,34 +1146,54 @@ class agent_population(object):
         best_fitness_connections = self.convert_agent(self.agent_pop[best_agent])
         return best_score_connections, best_fitness_connections
 
+    def print_agent_net(self, agent, draw_graph=False):
+        if isinstance(agent, str):
+            agent = self.convert_agent_tf(agent)
+        conn_matrix = agent[0]
+        indexed_i = agent[2]
+        indexed_o = agent[3]
+        print("Agent has:")
+        print(len(conn_matrix) - len(indexed_i) - len(indexed_o), "hidden neurons")
+        print(len(indexed_i), "input neurons")
+        print(len(indexed_o), "output neurons")
+        print(np.count_nonzero(conn_matrix), "connections")
+
+        if draw_graph:
+            import networkx as nx
+            import matplotlib.pyplot as plt
+            graph = nx.convert_matrix.from_numpy_matrix(np.asmatrix(conn_matrix, dtype=[('weight', float)]), create_using=nx.DiGraph)
+            edge_labs = [w for u, v, w in graph.edges(data="weight")]
+            labels = {}
+            for i in range(len(conn_matrix)):
+                if i in indexed_i:
+                    labels[i] = 'i{}'.format(indexed_i[i])
+                elif i in indexed_o:
+                    labels[i] = 'o{}'.format(indexed_o[i])
+                else:
+                    labels[i] = 'h'
+            pos = [[10.*np.cos(2.*np.pi*float(i) / float(len(conn_matrix))), 10.*np.sin(2.*np.pi*float(i) / float(len(conn_matrix)))]
+                   for i in range(len(conn_matrix))]
+            nx.draw_networkx_edges(graph, pos=pos, width=edge_labs, edge_color=edge_labs)
+            nx.draw(graph, pos=pos, with_labels=True, labels=labels)
+            plt.show()
+
+
     def track_networks(self, connections, config):
-        e_sizes = []
-        i_sizes = []
+        hidden_sizes = []
+        io_sizes = []
         number_of_connections = []
         plasticity_ratio = []
         depths = []
         scores_list = []
         fitness_list = []
         for i in range(self.pop_size):
-            [in2e, in2i, in2in, in2out, e2in, i2in, e_size, e2e, e2i, i_size, i2e, i2i, e2out, i2out, out2e, out2i,
-             out2in, out2out, neuron_params] = connections[i]
-            used_connections = [in2e, in2i, in2out, e_size, e2e, e2i, i_size, i2e, i2i, e2out, i2out, out2e, out2i,
-                                out2in, out2out, neuron_params]
-            e_sizes.append(e_size)
-            i_sizes.append(i_size)
-            number_of_conns = 0
-            pl_count = 0.
-            non_pl_count = 0.
-            for conn in used_connections:
-                if isinstance(conn, list):
-                    number_of_conns += len(conn)
-                    for element in conn:
-                        if element[4] == 'stdp':
-                            pl_count += 1.
-                        else:
-                            non_pl_count += 1.
-            pl_ratio = pl_count / (pl_count + non_pl_count)
-            number_of_connections.append(number_of_conns)
+            conn_matrix = connections[i][0]
+            indexed_i = connections[i][2]
+            indexed_o = connections[i][3]
+            hidden_sizes.append(len(conn_matrix) - len(indexed_i) - len(indexed_o))
+            io_sizes.append(len(indexed_i) + len(indexed_o))
+            pl_ratio = 0#pl_count / (pl_count + non_pl_count)
+            number_of_connections.append(np.count_nonzero(conn_matrix))
             plasticity_ratio.append(round(pl_ratio, 2))
             scores_list.append(self.agent_pop[i][2]) # was [3] as before there was score too with other fitness metrics
             fitness_list.append(self.agent_pop[i][2])
@@ -1253,27 +1201,27 @@ class agent_population(object):
         best_score_index = scores_list.index(np.max(scores_list))
         best_fitness_index = fitness_list.index(np.max(fitness_list))
 
-        self.min_excite_neurons.append(np.min(e_sizes))
-        self.average_excite_neurons.append(round(np.average(e_sizes), 2))
-        self.max_excite_neurons.append(np.max(e_sizes))
+        self.min_hidden_neurons.append(np.min(hidden_sizes))
+        self.average_hidden_neurons.append(round(np.average(hidden_sizes), 2))
+        self.max_hidden_neurons.append(np.max(hidden_sizes))
         try:
-            self.weighted_excite_score.append(round(np.average(e_sizes, weights=scores_list), 2))
+            self.weighted_hidden_score.append(round(np.average(hidden_sizes, weights=scores_list), 2))
         except:
-            self.weighted_excite_score.append(round(np.average(e_sizes), 2))
-        self.weighted_excite_fitness.append(round(np.average(e_sizes, weights=fitness_list), 2))
-        self.best_score_excite.append(e_sizes[best_score_index])
-        self.best_fitness_excite.append(e_sizes[best_fitness_index])
+            self.weighted_hidden_score.append(round(np.average(hidden_sizes), 2))
+        self.weighted_hidden_fitness.append(round(np.average(hidden_sizes, weights=fitness_list), 2))
+        self.best_score_hidden.append(hidden_sizes[best_score_index])
+        self.best_fitness_hidden.append(hidden_sizes[best_fitness_index])
 
-        self.min_inhib_neurons.append(np.min(i_sizes))
-        self.average_inhib_neurons.append(round(np.average(i_sizes), 2))
-        self.max_inhib_neurons.append(np.max(i_sizes))
+        self.min_io_neurons.append(np.min(io_sizes))
+        self.average_io_neurons.append(round(np.average(io_sizes), 2))
+        self.max_io_neurons.append(np.max(io_sizes))
         try:
-            self.weighted_inhib_score.append(round(np.average(i_sizes, weights=scores_list), 2))
+            self.weighted_io_score.append(round(np.average(io_sizes, weights=scores_list), 2))
         except:
-            self.weighted_inhib_score.append(round(np.average(i_sizes), 2))
-        self.weighted_inhib_fitness.append(round(np.average(i_sizes, weights=fitness_list), 2))
-        self.best_score_inhib.append(i_sizes[best_score_index])
-        self.best_fitness_inhib.append(i_sizes[best_fitness_index])
+            self.weighted_io_score.append(round(np.average(io_sizes), 2))
+        self.weighted_io_fitness.append(round(np.average(io_sizes, weights=fitness_list), 2))
+        self.best_score_io.append(io_sizes[best_score_index])
+        self.best_fitness_io.append(io_sizes[best_fitness_index])
 
         self.min_connections.append(np.min(number_of_connections))
         self.average_connections.append(round(np.average(number_of_connections), 2))
@@ -1312,130 +1260,130 @@ class agent_population(object):
             self.print_tracking(config)
 
     def print_tracking(self, config):
-        print("\nbest score excite", self.best_score_excite)
-        print("best score inhib", self.best_score_inhib)
+        print("\nbest score hidden", self.best_score_hidden)
+        print("best score io", self.best_score_io)
         print("best score depth", self.best_score_m_depth)
         print("best score conn", self.best_score_conn)
         print("best score pl", self.best_score_pl_ratio)
 
-        print("\nbest fitness excite", self.best_fitness_excite)
-        print("best fitness inhib", self.best_fitness_inhib)
+        print("\nbest fitness hidden", self.best_fitness_hidden)
+        print("best fitness io", self.best_fitness_io)
         print("best fitness depth", self.best_fitness_m_depth)
         print("best fitness conn", self.best_fitness_conn)
         print("best fitness pl", self.best_fitness_pl_ratio)
 
-        print("\naverage excite", self.average_excite_neurons)
-        print("average inhib", self.average_inhib_neurons)
+        print("\naverage hidden", self.average_hidden_neurons)
+        print("average io", self.average_io_neurons)
         print("average depth", self.average_m_depth)
         print("average conn", self.average_connections)
         print("average pl", self.average_pl_ratio)
 
-        print("\nscore ave excite", self.weighted_excite_score)
-        print("score ave inhib", self.weighted_inhib_score)
+        print("\nscore ave hidden", self.weighted_hidden_score)
+        print("score ave io", self.weighted_io_score)
         print("score ave depth", self.weighted_m_depth_score)
         print("score ave conn", self.weighted_conn_score)
         print("score ave pl", self.weighted_pl_ratio_score)
 
-        print("\nfitness ave excite", self.weighted_excite_fitness)
-        print("fitness ave inhib", self.weighted_inhib_fitness)
+        print("\nfitness ave hidden", self.weighted_hidden_fitness)
+        print("fitness ave io", self.weighted_io_fitness)
         print("fitness ave depth", self.weighted_m_depth_fitness)
         print("fitness ave conn", self.weighted_conn_fitness)
         print("fitness ave pl", self.weighted_pl_ratio_fitness)
 
-        print("\nmin excite", self.min_excite_neurons)
-        print("min inhib", self.min_inhib_neurons)
+        print("\nmin hidden", self.min_hidden_neurons)
+        print("min io", self.min_io_neurons)
         print("min depth", self.min_m_depth)
         print("min conn", self.min_connections)
         print("min pl", self.min_pl_ratio)
 
-        print("\nmax excite", self.max_excite_neurons)
-        print("max inhib", self.max_inhib_neurons)
+        print("\nmax hidden", self.max_hidden_neurons)
+        print("max io", self.max_io_neurons)
         print("max depth", self.max_m_depth)
         print("max conn", self.max_connections)
         print("max pl", self.max_pl_ratio, "\n")
 
-        with open('network tracking {}.csv'.format(config), 'w') as network_file:
-            writer = csv.writer(network_file, delimiter=',', lineterminator='\n')
-
-            writer.writerow([config])
-            writer.writerow(["\nbest score excite", self.best_score_excite])
-            writer.writerow(["best score inhib", self.best_score_inhib])
-            writer.writerow(["best score depth", self.best_score_m_depth])
-            writer.writerow(["best score conn", self.best_score_conn])
-            writer.writerow(["best score pl", self.best_score_pl_ratio])
-
-            writer.writerow(["\nbest fitness excite", self.best_fitness_excite])
-            writer.writerow(["best fitness inhib", self.best_fitness_inhib])
-            writer.writerow(["best fitness depth", self.best_fitness_m_depth])
-            writer.writerow(["best fitness conn", self.best_fitness_conn])
-            writer.writerow(["best fitness pl", self.best_fitness_pl_ratio])
-
-            writer.writerow(["\naverage excite", self.average_excite_neurons])
-            writer.writerow(["average inhib", self.average_inhib_neurons])
-            writer.writerow(["average depth", self.average_m_depth])
-            writer.writerow(["average conn", self.average_connections])
-            writer.writerow(["average pl", self.average_pl_ratio])
-
-            writer.writerow(["\nscore ave excite", self.weighted_excite_score])
-            writer.writerow(["score ave inhib", self.weighted_inhib_score])
-            writer.writerow(["score ave depth", self.weighted_m_depth_score])
-            writer.writerow(["score ave conn", self.weighted_conn_score])
-            writer.writerow(["score ave pl", self.weighted_pl_ratio_score])
-
-            writer.writerow(["\nfitness ave excite", self.weighted_excite_fitness])
-            writer.writerow(["fitness ave inhib", self.weighted_inhib_fitness])
-            writer.writerow(["fitness ave depth", self.weighted_m_depth_fitness])
-            writer.writerow(["fitness ave conn", self.weighted_conn_fitness])
-            writer.writerow(["fitness ave pl", self.weighted_pl_ratio_fitness])
-
-            writer.writerow(["\nmin excite", self.min_excite_neurons])
-            writer.writerow(["min inhib", self.min_inhib_neurons])
-            writer.writerow(["min depth", self.min_m_depth])
-            writer.writerow(["min conn", self.min_connections])
-            writer.writerow(["min pl", self.min_pl_ratio])
-
-            writer.writerow(["\nmax excite", self.max_excite_neurons])
-            writer.writerow(["max inhib", self.max_inhib_neurons])
-            writer.writerow(["max depth", self.max_m_depth])
-            writer.writerow(["max conn", self.max_connections])
-            writer.writerow(["max pl", self.max_pl_ratio, "\n"])
-
-            # writer.writerow(["min excite", self.min_excite_neurons])
-            # writer.writerow(["average excite", self.average_excite_neurons])
-            # writer.writerow(["max excite", self.max_excite_neurons])
-            # writer.writerow(["score ave excite", self.weighted_excite_score])
-            # writer.writerow(["fitness ave excite", self.weighted_excite_fitness])
-            # writer.writerow(["best score excite", self.best_score_excite])
-            # writer.writerow(["best fitness excite", self.best_fitness_excite])
-            # writer.writerow([""])
-            #
-            # writer.writerow(["min inhib", self.min_inhib_neurons])
-            # writer.writerow(["average inhib", self.average_inhib_neurons])
-            # writer.writerow(["max inhib", self.max_inhib_neurons])
-            # writer.writerow(["score ave inhib", self.weighted_inhib_score])
-            # writer.writerow(["fitness ave inhib", self.weighted_inhib_fitness])
-            # writer.writerow(["best score inhib", self.best_score_inhib])
-            # writer.writerow(["best fitness inhib", self.best_fitness_inhib])
-            # writer.writerow([""])
-            #
-            # writer.writerow(["min conn", self.min_connections])
-            # writer.writerow(["average conn", self.average_connections])
-            # writer.writerow(["max conn", self.max_connections])
-            # writer.writerow(["score ave conn", self.weighted_conn_score])
-            # writer.writerow(["fitness ave conn", self.weighted_conn_fitness])
-            # writer.writerow(["best score conn", self.best_score_conn])
-            # writer.writerow(["best fitness conn", self.best_fitness_conn])
-            # writer.writerow([""])
-            #
-            # writer.writerow(["min pl", self.min_pl_ratio])
-            # writer.writerow(["average pl", self.average_pl_ratio])
-            # writer.writerow(["max pl", self.max_pl_ratio])
-            # writer.writerow(["score ave pl", self.weighted_pl_ratio_score])
-            # writer.writerow(["fitness ave pl", self.weighted_pl_ratio_fitness])
-            # writer.writerow(["best score pl", self.best_score_pl_ratio])
-            # writer.writerow(["best fitness pl", self.best_fitness_pl_ratio])
-
-            network_file.close()
+        # with open('network tracking {}.csv'.format(config), 'w') as network_file:
+        #     writer = csv.writer(network_file, delimiter=',', lineterminator='\n')
+        #
+        #     writer.writerow([config])
+        #     writer.writerow(["\nbest score hidden", self.best_score_hidden])
+        #     writer.writerow(["best score io", self.best_score_io])
+        #     writer.writerow(["best score depth", self.best_score_m_depth])
+        #     writer.writerow(["best score conn", self.best_score_conn])
+        #     writer.writerow(["best score pl", self.best_score_pl_ratio])
+        #
+        #     writer.writerow(["\nbest fitness hidden", self.best_fitness_hidden])
+        #     writer.writerow(["best fitness io", self.best_fitness_io])
+        #     writer.writerow(["best fitness depth", self.best_fitness_m_depth])
+        #     writer.writerow(["best fitness conn", self.best_fitness_conn])
+        #     writer.writerow(["best fitness pl", self.best_fitness_pl_ratio])
+        #
+        #     writer.writerow(["\naverage hidden", self.average_hidden_neurons])
+        #     writer.writerow(["average io", self.average_io_neurons])
+        #     writer.writerow(["average depth", self.average_m_depth])
+        #     writer.writerow(["average conn", self.average_connections])
+        #     writer.writerow(["average pl", self.average_pl_ratio])
+        #
+        #     writer.writerow(["\nscore ave hidden", self.weighted_hidden_score])
+        #     writer.writerow(["score ave io", self.weighted_io_score])
+        #     writer.writerow(["score ave depth", self.weighted_m_depth_score])
+        #     writer.writerow(["score ave conn", self.weighted_conn_score])
+        #     writer.writerow(["score ave pl", self.weighted_pl_ratio_score])
+        #
+        #     writer.writerow(["\nfitness ave hidden", self.weighted_hidden_fitness])
+        #     writer.writerow(["fitness ave io", self.weighted_io_fitness])
+        #     writer.writerow(["fitness ave depth", self.weighted_m_depth_fitness])
+        #     writer.writerow(["fitness ave conn", self.weighted_conn_fitness])
+        #     writer.writerow(["fitness ave pl", self.weighted_pl_ratio_fitness])
+        #
+        #     writer.writerow(["\nmin hidden", self.min_hidden_neurons])
+        #     writer.writerow(["min io", self.min_io_neurons])
+        #     writer.writerow(["min depth", self.min_m_depth])
+        #     writer.writerow(["min conn", self.min_connections])
+        #     writer.writerow(["min pl", self.min_pl_ratio])
+        #
+        #     writer.writerow(["\nmax hidden", self.max_hidden_neurons])
+        #     writer.writerow(["max io", self.max_io_neurons])
+        #     writer.writerow(["max depth", self.max_m_depth])
+        #     writer.writerow(["max conn", self.max_connections])
+        #     writer.writerow(["max pl", self.max_pl_ratio, "\n"])
+        #
+        #     # writer.writerow(["min hidden", self.min_hidden_neurons])
+        #     # writer.writerow(["average hidden", self.average_hidden_neurons])
+        #     # writer.writerow(["max hidden", self.max_hidden_neurons])
+        #     # writer.writerow(["score ave hidden", self.weighted_hidden_score])
+        #     # writer.writerow(["fitness ave hidden", self.weighted_hidden_fitness])
+        #     # writer.writerow(["best score hidden", self.best_score_hidden])
+        #     # writer.writerow(["best fitness hidden", self.best_fitness_hidden])
+        #     # writer.writerow([""])
+        #     #
+        #     # writer.writerow(["min io", self.min_io_neurons])
+        #     # writer.writerow(["average io", self.average_io_neurons])
+        #     # writer.writerow(["max io", self.max_io_neurons])
+        #     # writer.writerow(["score ave io", self.weighted_io_score])
+        #     # writer.writerow(["fitness ave io", self.weighted_io_fitness])
+        #     # writer.writerow(["best score io", self.best_score_io])
+        #     # writer.writerow(["best fitness io", self.best_fitness_io])
+        #     # writer.writerow([""])
+        #     #
+        #     # writer.writerow(["min conn", self.min_connections])
+        #     # writer.writerow(["average conn", self.average_connections])
+        #     # writer.writerow(["max conn", self.max_connections])
+        #     # writer.writerow(["score ave conn", self.weighted_conn_score])
+        #     # writer.writerow(["fitness ave conn", self.weighted_conn_fitness])
+        #     # writer.writerow(["best score conn", self.best_score_conn])
+        #     # writer.writerow(["best fitness conn", self.best_fitness_conn])
+        #     # writer.writerow([""])
+        #     #
+        #     # writer.writerow(["min pl", self.min_pl_ratio])
+        #     # writer.writerow(["average pl", self.average_pl_ratio])
+        #     # writer.writerow(["max pl", self.max_pl_ratio])
+        #     # writer.writerow(["score ave pl", self.weighted_pl_ratio_score])
+        #     # writer.writerow(["fitness ave pl", self.weighted_pl_ratio_fitness])
+        #     # writer.writerow(["best score pl", self.best_score_pl_ratio])
+        #     # writer.writerow(["best fitness pl", self.best_fitness_pl_ratio])
+        #
+        #     network_file.close()
 
 
     def read_fitnesses(self, config, worst_score, make_action):

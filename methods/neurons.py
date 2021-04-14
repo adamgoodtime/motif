@@ -11,103 +11,19 @@ from copy import deepcopy
 
 class neuron_population(object):
     def __init__(self,
-                 # v_rest=-65.0,  # Resting membrane potential in mV.
-                 # v_rest_stdev=0,
-                 # cm=1.0,  # Capacity of the membrane in nF
-                 # cm_stdev=0,
-                 # tau_m=20.0,  # Membrane time constant in ms.
-                 # tau_m_stdev=0,
-                 # tau_refrac=0.1,  # Duration of refractory period in ms.
-                 # tau_refrac_stdev=0,
-                 # tau_syn_E=5,  # Rise time of the excitatory synaptic alpha function in ms.
-                 # tau_syn_E_stdev=0,
-                 # tau_syn_I=5,  # Rise time of the inhibitory synaptic alpha function in ms.
-                 # tau_syn_I_stdev=0,
-                 # e_rev_E=0.0,  # Reversal potential for excitatory input in mV
-                 # e_rev_E_stdev=0,
-                 # e_rev_I=-70.0,  # Reversal potential for inhibitory input in mV
-                 # e_rev_I_stdev=0,
-                 # v_thresh=-50.0,  # Spike threshold in mV.
-                 # v_thresh_stdev=0,
-                 # v_reset=-65.0,  # Reset potential after a spike in mV.
-                 # v_reset_stdev=0,
-                 # i_offset=0.0,  # Offset current in nA
-                 # i_offset_stdev=0,
-                 # v=-65.0,  # 'v_starting'
-                 # v_stdev=0,
-                 # gsyn_exc=0.0,
-                 # gsyn_exc_stdev=0,
-                 # gsyn_inh=0.0,
-                 # gsyn_inh_stdev=0,
-                 input_current_stdev=0.8,
-                 calcium_tau=50,
-                 calcium_i_alpha=0.5,
                  neuron_type='IF_cond_exp',
                  default=False,
                  io_prob=0.5,
                  inputs=0,
                  outputs=0,
+                 non_spiking_out=True,
                  ex_prob=0.5,
                  read_population=False,
                  keep_reading=0,
                  pop_size=200
                  ):
 
-        if neuron_type == 'IF_cond_exp':
-            v_rest = -65.0  # Resting membrane potential in mV.
-            v_rest_stdev = 5
-            cm = 1.0  # Capacity of the membrane in nF
-            cm_stdev = 0.3
-            tau_m = 20.0  # Membrane time constant in ms.
-            tau_m_stdev = 5
-            tau_refrac = 0.1  # Duration of refractory period in ms.
-            tau_refrac_stdev = 0.03
-            tau_syn_E = 5  # Rise time of the excitatory synaptic alpha function in ms.
-            tau_syn_E_stdev = 1.6
-            tau_syn_I = 5  # Rise time of the inhibitory synaptic alpha function in ms.
-            tau_syn_I_stdev = 1.6
-            e_rev_E = 0.0  # Reversal potential for excitatory input in mV
-            e_rev_E_stdev = 0
-            e_rev_I = -70.0  # Reversal potential for inhibitory input in mV
-            e_rev_I_stdev = 3
-            v_thresh = -50.0  # Spike threshold in mV.
-            v_thresh_stdev = 5
-            v_reset = -65.0  # Reset potential after a spike in mV.
-            v_reset_stdev = 5
-            i_offset = 0  # Offset current in nA
-            i_offset_stdev = input_current_stdev
-            v = -65.0  # 'v_starting'
-            v_stdev = 5
-        elif neuron_type == 'IF_curr_exp':
-            v_rest = -65.0  # Resting membrane potential in mV.
-            v_rest_stdev = 5
-            cm = 1.0  # Capacity of the membrane in nF
-            cm_stdev = 0.3
-            tau_m = 20.0  # Membrane time constant in ms.
-            tau_m_stdev = 5
-            tau_refrac = 0.1  # Duration of refractory period in ms.
-            tau_refrac_stdev = 0.03
-            tau_syn_E = 5  # Rise time of the excitatory synaptic alpha function in ms.
-            tau_syn_E_stdev = 1.6
-            tau_syn_I = 5  # Rise time of the inhibitory synaptic alpha function in ms.
-            tau_syn_I_stdev = 1.6
-            v_thresh = -50.0  # Spike threshold in mV.
-            v_thresh_stdev = 5
-            v_reset = -65.0  # Reset potential after a spike in mV.
-            v_reset_stdev = 5
-            i_offset = 0  # Offset current in nA
-            i_offset_stdev = input_current_stdev
-            v = -65.0  # 'v_starting'
-            v_stdev = 5
-        elif neuron_type == 'izhikevich':
-            a = 0.02
-            b = 0.2
-            c = -65.0
-            d = 2.0
-            i_offset = 0.0 #between 3 and 4 spikes regularly
-            v = -70
-            u = -14
-        elif neuron_type == 'tf_basic':
+        if neuron_type == 'tf_basic':
             v_thresh = 0.615
             v_thresh_stdev = v_thresh / 5.
             tau = 20
@@ -117,9 +33,9 @@ class neuron_population(object):
         elif neuron_type == 'tf_LIF':
             v_thresh = 0.615
             v_thresh_stdev = v_thresh / 5.
-            tau = 20
+            tau = 20.
             tau_stdev = tau / 5.
-            i_offset = 0
+            i_offset = 0.
             i_offset_stdev = 0.2
         else:
             print("incorrect neuron type selected")
@@ -145,6 +61,7 @@ class neuron_population(object):
         self.ex_prob = ex_prob
         self.pop_size = pop_size
         self.default = default
+        self.non_spiking_out = non_spiking_out
 
         self.neuron_params = {}
         self.neuron_params['v_rest'] = self.v_rest
@@ -156,7 +73,7 @@ class neuron_population(object):
 
         self.neuron_param_stdevs = {}
         self.neuron_param_stdevs['v_rest'] = self.v_rest_stdev
-        self.neuron_param_stdevs['tau'] = self.tau
+        self.neuron_param_stdevs['tau'] = self.tau_stdev
         self.neuron_param_stdevs['v_thresh'] = self.v_thresh_stdev
         self.neuron_param_stdevs['v_reset'] = self.v_reset_stdev
         self.neuron_param_stdevs['i_offset'] = self.i_offset_stdev
@@ -168,7 +85,7 @@ class neuron_population(object):
             self.neuron_params['i_offset'] = 0
             for param in self.neuron_param_stdevs:
                 self.neuron_param_stdevs[param] = 0
-            self.pop_size = self.inputs + self.outputs + 2
+            self.pop_size = self.inputs + self.outputs + 1
 
         self.neuron_configs = {}
         self.neurons_generated = -1  # counting backwards to avoid any confusion with motifs
@@ -179,11 +96,18 @@ class neuron_population(object):
             self.load_neurons()
             print("reading the population")
         else:
+            if not self.default:
+                neurons_to_create = int(self.pop_size * self.io_prob)
+            else:
+                neurons_to_create = self.inputs + self.outputs
             io_choice = -1
-            for i in range(self.inputs + self.outputs):
+            for i in range(neurons_to_create):
                 neuron = {}
                 neuron['id'] = '{}'.format(self.neurons_generated)
-                io_choice += 1
+                if not self.default:
+                    io_choice = np.random.randint(0, self.inputs + self.outputs)
+                else:
+                    io_choice += 1
                 if io_choice - self.inputs < 0:
                     neuron['type'] = 'input'
                     neuron['io'] = io_choice
@@ -195,35 +119,26 @@ class neuron_population(object):
                 else:
                     neuron['weight'] = float(self.pop_size) / float(self.inputs + self.outputs)
                     neuron['weight'] *= self.io_prob
-                #     neuron['type'] = 'input'
-                #     neuron['io'] = io_choice
-                #     if self.default:
-                #         neuron['weight'] = (0.5 / float(self.inputs)) * self.io_prob
-                #     else:
-                #         neuron['weight'] = (float(self.pop_size) / 2.0) / float(self.inputs)
-                #         neuron['weight'] *= self.io_prob
-                # else:
-                #     neuron['type'] = 'output'
-                #     neuron['io'] = io_choice - self.inputs
-                #     if self.default:
-                #         neuron['weight'] = (0.5 / float(self.outputs)) * self.io_prob
-                #     else:
-                #         neuron['weight'] = (float(self.pop_size) / 2.0) / float(self.outputs)
-                #         neuron['weight'] *= self.io_prob
                 neuron['params'] = {}
-                # for param in self.neuron_params:
-                #     neuron['params'][param] = np.random.normal(self.neuron_params[param], self.neuron_param_stdevs[param])
+                if not self.default:
+                    for param in self.neuron_params:
+                        if neuron['type'] == 'output' and self.non_spiking_out and param == 'v_thresh':
+                            neuron['params'][param] = self.non_spiking_out
+                        else:
+                            neuron['params'][param] = np.random.normal(self.neuron_params[param],
+                                                                       self.neuron_param_stdevs[param])
                 self.insert_neuron(neuron, check=False, weight=neuron['weight'])
-            for i in range(self.inputs + self.outputs, self.pop_size):
+            if not self.default:
+                neurons_to_create = int(self.pop_size * (1. - self.io_prob))
+            else:
+                neurons_to_create = self.pop_size - (self.inputs + self.outputs)
+            for i in range(neurons_to_create):
                 not_new = True
                 while not_new:
                     neuron = {}
                     neuron['id'] = '{}'.format(self.neurons_generated)
                     neuron['io'] = False
-                    if np.random.random() < self.ex_prob:
-                        neuron['type'] = 'excitatory'
-                    else:
-                        neuron['type'] = 'inhibitory'
+                    neuron['type'] = 'hidden'
                     neuron['params'] = {}
                     if not self.default:
                         for param in self.neuron_params:
@@ -234,18 +149,9 @@ class neuron_population(object):
                     else:
                         base_weight = 1
                     if self.default:
-                        if -self.neurons_generated - 1 == self.inputs + self.outputs:
-                            neuron['type'] = 'excitatory'
-                            neuron['weight'] = 1. * self.ex_prob * (1. - self.io_prob)
-                        else:
-                            neuron['type'] = 'inhibitory'
-                            neuron['weight'] = 1. * (1. - self.ex_prob) * (1. - self.io_prob)
+                        neuron['weight'] = 1. - self.io_prob
                     else:
                         neuron['weight'] = base_weight
-                        if np.random.random() < self.ex_prob:
-                            neuron['type'] = 'excitatory'
-                        else:
-                            neuron['type'] = 'inhibitory'
 
                     not_new = self.check_neuron(neuron)
                 self.insert_neuron(neuron, check=False, weight=neuron['weight'])
@@ -258,7 +164,6 @@ class neuron_population(object):
         while not found_new:
             neuron = {}
             if np.random.random() < self.io_prob:
-                neuron['params'] = {}
                 io_choice = np.random.randint(self.inputs + self.outputs)
                 if io_choice - self.inputs < 0:
                     neuron['type'] = 'input'
@@ -268,13 +173,14 @@ class neuron_population(object):
                     neuron['io'] = io_choice - self.inputs
             else:
                 neuron['io'] = False
-                if np.random.random() < self.ex_prob:
-                    neuron['type'] = 'excitatory'
+                neuron['type'] = 'hidden'
+            neuron['params'] = {}
+            for param in self.neuron_params:
+                if neuron['type'] == 'output' and self.non_spiking_out and param == 'v_thresh':
+                    neuron['params'][param] = self.non_spiking_out
                 else:
-                    neuron['type'] = 'inhibitory'
-                neuron['params'] = {}
-                for param in self.neuron_params:
-                    neuron['params'][param] = np.random.normal(self.neuron_params[param], self.neuron_param_stdevs[param])
+                    neuron['params'][param] = np.random.normal(self.neuron_params[param],
+                                                               self.neuron_param_stdevs[param])
             neuron['weight'] = weight
             neuron['id'] = '{}'.format(self.neurons_generated)
             if not self.check_neuron(neuron):

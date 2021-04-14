@@ -290,11 +290,12 @@ class CustomALIF(Cell):
 
 
 class LIF(Cell):
-    def __init__(self, n_in, n_rec, weights_in=[], weights_rec=[], delays_in=[], delays_rec=[], tau=20., thr=0.03,
+    def __init__(self, n_in, n_rec, weights_rec=[], delays_rec=[], tau=20., thr=0.03,
                  dt=1., n_refractory=0, i_offset=None, dtype=tf.float32, n_delay=1,
                  in_neuron_sign=None, rec_neuron_sign=None,
                  dampening_factor=0.3,
                  injected_noise_current=0.,
+                 reset_to_rest=True,
                  V0=1.):
         """
         Tensorflow cell object that simulates a LIF neuron with an approximation of the spike derivatives.
@@ -337,6 +338,7 @@ class LIF(Cell):
             self.i_offset = tf.Variable(i_offset, dtype=dtype, name='i_offset')
 
         self.V0 = V0
+        self.reset_to_rest = reset_to_rest
         self.injected_noise_current = injected_noise_current
 
         # self.rewiring_connectivity = rewiring_connectivity
@@ -344,12 +346,12 @@ class LIF(Cell):
         self.rec_neuron_sign = rec_neuron_sign
 
     # with tf.variable_scope('InputWeights'):
-        self.w_in_var = tf.Variable(weights_in, dtype=dtype, name="InputWeight")
-        self.w_in_val = self.w_in_var
-
-        self.w_in_val = self.V0 * self.w_in_val
-        self.w_in_delay = tf.Variable(delays_in, dtype=tf.int64, name="InDelays", trainable=False)
-        self.W_in = weight_matrix_with_delay_dimension(self.w_in_val, self.w_in_delay, self.n_delay)
+    #     self.w_in_var = tf.Variable(weights_in, dtype=dtype, name="InputWeight")
+    #     self.w_in_val = self.w_in_var
+    #
+    #     self.w_in_val = self.V0 * self.w_in_val
+    #     self.w_in_delay = tf.Variable(delays_in, dtype=tf.int64, name="InDelays", trainable=False)
+    #     self.W_in = weight_matrix_with_delay_dimension(self.w_in_val, self.w_in_delay, self.n_delay)
 
     # with tf.variable_scope('RecWeights'):
         self.w_rec_var = tf.Variable(weights_rec, dtype=dtype, name='RecurrentWeight')
@@ -390,12 +392,12 @@ class LIF(Cell):
             z_buffer=z_buff0
         )
 
-    def __call__(self, inputs, state, scope=None, dtype=tf.float32):
+    def __call__(self, state, scope=None, dtype=tf.float32):
 
         i_future_buffer = state.i_future_buffer
-        i_in = einsum_bi_ijk_to_bjk(inputs, self.W_in)
+        # i_in = einsum_bi_ijk_to_bjk(inputs, self.W_in)
         i_rec = einsum_bi_ijk_to_bjk(state.z, self.W_rec)
-        i_future_buffer += i_in + i_rec
+        i_future_buffer += i_rec
 
         new_v, new_z = self.LIF_dynamic(
             v=state.v,

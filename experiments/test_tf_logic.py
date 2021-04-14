@@ -1,24 +1,26 @@
-from experiments.tf_xor import xor_env
+from experiments.tf_logic import logic_env
 from methods.basic_tf_neuron import BasicLIF
 from methods.tf_neurons import LIF
 import tensorflow as tf
 import matplotlib.pyplot as plt
 from experiments.test_config import *
 
-def test_xor(connections):
+def test_logic(connections):
     agent_scores = []
     agent_test_result = []
     for agent in connections:
-        score, result = agent_xor_test(agent)
+        score, result = agent_logic_test(agent)
 
         agent_test_result.append(sum(result))
+        if agent_test_result[-1] == len(truth_table):
+            print("completed test")
         agent_scores.append(score)  # cumulative_reward.tolist())
         print("\nfinished agent", len(agent_scores), "\nfinal score", agent_scores[-1])
         print("correct tests = ", result, agent_test_result[-1], "\n\n")
     print("test conns")
     return agent_test_result#[agent_scores, agent_test_result]
 
-def agent_xor_test(agent):
+def agent_logic_test(agent):
     conn_matrix, delay_matrix, indexed_i, indexed_o, neuron_params = agent
     hidden_size = len(conn_matrix)
 
@@ -31,10 +33,11 @@ def agent_xor_test(agent):
         v_thresh = 0.615
         i_offset = 0.
 
-    environment = xor_env(spike_rates_off_on=[rate_off, rate_on],
-                          stochastic=stochastic,
-                          exposure_time=exposure_time,
-                          negative=negative_reward)
+    environment = logic_env(spike_rates_off_on=[rate_off, rate_on],
+                            stochastic=stochastic,
+                            exposure_time=exposure_time,
+                            truth_table=truth_table,
+                            negative=negative_reward)
     time_step = environment.reset()
     print(time_step)
     cumulative_reward = time_step.reward
@@ -59,7 +62,7 @@ def agent_xor_test(agent):
 
     all_z = []
     all_v = []
-    for _ in range(exposure_time * 4):
+    for _ in range(exposure_time * len(truth_table)):
         # query env to get SNN input
         # spike_inputs = environment.generate_spikes_out()
         # query SNN to get spikes out

@@ -19,7 +19,7 @@ class motif_population(object):
     def __init__(self,
                  neurons,
                  max_motif_size=4,
-                 min_motif_size=2,
+                 min_motif_size=1,
                  population_size=200,
                  static_population=True,
                  population_seed=None,
@@ -183,7 +183,7 @@ class motif_population(object):
                 io_properties.append((np.random.choice(true_or_false), np.random.choice(true_or_false)))
             else:
                 print("incompatible io config")
-                # todo enable erroring out
+                Exception
             # connects the neurons with a 50% chance and sets random weights/delays within the allowed discrete range
             for k in range(number_of_neurons):
                 if np.random.choice(true_or_false):
@@ -559,6 +559,80 @@ class motif_population(object):
             node_count += 1
         return all_connections
 
+    def construct_matrices(self, agent_connections, remove_island=False):
+        indexed_i = []
+        i_config = {}
+        indexed_o = []
+        o_config = {}
+        indexed_n = []
+        h2h = []
+        for conn in agent_connections:
+            pre = conn[0]
+            post = conn[1]
+            weight = conn[2]
+            delay = conn[3]
+            if pre not in indexed_n:
+                indexed_n.append(pre)
+            if self.neurons.neuron_configs[conn[0][0]]['type'] == 'input':
+                if indexed_n.index(pre) not in indexed_i:
+                    io = self.neurons.neuron_configs[conn[0][0]]['io']
+                    indexed_i.append(indexed_n.index(pre))
+                    i_config[indexed_n.index(pre)] = io
+            if self.neurons.neuron_configs[conn[0][0]]['type'] == 'output':
+                if indexed_n.index(pre) not in indexed_o:
+                    io = self.neurons.neuron_configs[conn[0][0]]['io']
+                    indexed_o.append(indexed_n.index(pre))
+                    o_config[indexed_n.index(pre)] = io
+            if post not in indexed_n:
+                indexed_n.append(post)
+            if self.neurons.neuron_configs[conn[1][0]]['type'] == 'input':
+                if indexed_n.index(post) not in indexed_i:
+                    io = self.neurons.neuron_configs[conn[1][0]]['io']
+                    indexed_i.append(indexed_n.index(post))
+                    i_config[indexed_n.index(post)] = io
+            if self.neurons.neuron_configs[conn[1][0]]['type'] == 'output':
+                if indexed_n.index(post) not in indexed_o:
+                    io = self.neurons.neuron_configs[conn[1][0]]['io']
+                    indexed_o.append(indexed_n.index(post))
+                    o_config[indexed_n.index(post)] = io
+            h2h.append([indexed_n.index(pre), indexed_n.index(post), weight, delay])
+
+        hidden_size = len(indexed_n)
+        conn_matrix = [[0. for i in range(hidden_size)] for j in range(hidden_size)]
+        delay_matrix = [[0. for i in range(hidden_size)] for j in range(hidden_size)]
+        conn_count = [[1 for i in range(hidden_size)] for j in range(hidden_size)]
+        for conn in h2h:
+            pre = conn[0]
+            post = conn[1]
+            conn_matrix[pre][post] += conn[2]
+            delay_matrix[pre][post] += conn[3]
+            conn_count[pre][post] += 1
+        for i in range(hidden_size):
+            for j in range(hidden_size):
+                conn_matrix[i][j] /= conn_count[i][j]
+                delay_matrix[i][j] /= conn_count[i][j]
+                delay_matrix[i][j] = int(round(delay_matrix[i][j]))
+        if remove_island and len(conn_matrix):
+            import networkx as nx
+            graph = nx.convert_matrix.from_numpy_matrix(np.asmatrix(conn_matrix), create_using=nx.DiGraph)
+            shortest_paths = nx.all_pairs_shortest_path_length(graph)
+            for n_paths in shortest_paths:
+                neuron = n_paths[0]
+                paths = n_paths[1]
+
+        neuron_params = {}
+        for n in indexed_n:
+            neuron = n[0]
+            neuron = self.neurons.neuron_configs[neuron]
+            for param in neuron['params']:
+                if param not in neuron_params:
+                    neuron_params[param] = []
+                neuron_params[param].append(neuron['params'][param])
+        if neuron_params:
+            if len(neuron_params[param]) != len(conn_matrix):
+                print("I'm sorry wtf?")
+        return conn_matrix, delay_matrix, i_config, o_config, neuron_params
+
     def construct_io(self, agent_connections):
         indexed_ex = []
         indexed_in = []
@@ -732,9 +806,10 @@ class motif_population(object):
             agent_conn = self.read_motif(agent[0])
         else:
             agent_conn = self.read_motif(agent)
-        spinn_conn = self.construct_io(agent_conn)
+        # spinn_conn = self.construct_io(agent_conn)
+        matrix_conn = self.construct_matrices(agent_conn)
         # spinn_conn = self.remove_multapses(spinn_conn)
-        return spinn_conn
+        return matrix_conn
 
     '''Returns a list of the lower level motifs which comprise a higher level one'''
     def list_motifs(self, motif_id, list):

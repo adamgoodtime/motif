@@ -13,7 +13,9 @@ from experiments.evolution_config import *
 from experiments.test_config import *
 from experiments.test_tf_xor import test_xor
 from experiments.test_tf_pen import test_pen
+from experiments.test_tf_logic import test_logic
 
+np.random.seed(27)
 
 if __name__ == '__main__':
     print("starting")
@@ -27,28 +29,14 @@ if __name__ == '__main__':
 
     neurons = neuron_population(inputs=inputs,
                                 outputs=outputs,
-                                pop_size=inputs+outputs+200+agent_pop_size*3,
+                                pop_size=inputs*outputs*agent_pop_size*3,
                                 io_prob=io_prob,
-                                input_current_stdev=input_current_stdev,
                                 read_population=read_neurons,
                                 neuron_type=neuron_type,
-                                default=not stdev_neurons,
-                                calcium_tau=calcium_tau,
-                                calcium_i_alpha=calcium_i_alpha)
+                                non_spiking_out=non_spiking_threshold,
+                                default=not stdev_neurons)
 
-    if neuron_type == 'IF_cond_exp':
-        weight_max = 0.1
-        config += 'cond '
-    elif neuron_type == 'IF_curr_exp':
-        weight_max = 4.8
-        config += 'cure '
-    elif neuron_type == 'IF_curr_alpha':
-        weight_max = 23.5
-        config += 'cura '
-    elif neuron_type == 'calcium':
-        weight_max = 4.8
-        config += 'calc-{}-{} '.format(calcium_tau, calcium_i_alpha)
-    elif neuron_type == 'tf_basic':
+    if neuron_type == 'tf_basic':
         weight_max = 5.05
         config += "tfb "
     elif neuron_type == 'tf_LIF':
@@ -64,7 +52,7 @@ if __name__ == '__main__':
                               max_motif_size=4,#maximum_depth[0],
                               no_weight_bins=no_bins,
                               no_delay_bins=no_bins,
-                              weight_range=(0.005, weight_max),
+                              weight_range=(-weight_max, weight_max),
                               constant_delays=constant_delays,
                               delay_range=(1., max_delay),
                               neuron_types=(['excitatory', 'inhibitory']),
@@ -74,7 +62,7 @@ if __name__ == '__main__':
                               viable_parents=viable_parents,
                               plasticity=plasticity,
                               structural=structural,
-                              population_size=agent_pop_size*3+inputs+outputs)
+                              population_size=agent_pop_size*3*inputs*outputs)
 
     # todo :add number of different motifs to the fitness function to promote regularity
 
@@ -87,7 +75,8 @@ if __name__ == '__main__':
                               # sexuality=[7./20., 9./20., 4./20., 0],
                               base_mutate=base_mutate,
                               multiple_mutates=multiple_mutates,
-                              allow_i2o=allow_i2o,
+                              strict_io=all_io,
+                              force_i2o=force_i2o,
                               # input_shift=0,
                               # output_shift=0,
                               maximum_depth=maximum_depth,
@@ -120,12 +109,12 @@ if __name__ == '__main__':
         print(config)
 
         if gen == 0:
-            connections, spinn_conn = agents.generate_spinn_nets(input=inputs, output=outputs, max_depth=maximum_depth[0])
+            agent_setup = agents.generate_spinn_nets(input=inputs, output=outputs, max_depth=maximum_depth[0])
         elif reset_pop:
             if not gen % reset_pop:
-                connections, spinn_conn = agents.generate_spinn_nets(input=inputs, output=outputs, max_depth=maximum_depth[0], create='reset')
+                agent_setup = agents.generate_spinn_nets(input=inputs, output=outputs, max_depth=maximum_depth[0], create='reset')
         else:
-            connections, spinn_conn = agents.generate_spinn_nets(input=inputs, output=outputs, max_depth=maximum_depth[0], create=False)
+            agent_setup = agents.generate_spinn_nets(input=inputs, output=outputs, max_depth=maximum_depth[0], create=False)
 
         # if gen != 0: # to check repeatability
         #     for i in range(repeat_best_amount):
@@ -138,50 +127,21 @@ if __name__ == '__main__':
             # globals()['exec_thing'] = exec_thing
             # exec(compile(open("../methods/exec_subprocess.py", "rb").read(), "../methods/exec_subprocess.py", 'exec'), globals())
             if exec_thing == 'xor':
-                fitnesses = test_xor(connections)
+                fitnesses = test_xor(agent_setup)
             elif exec_thing == 'pen':
-                fitnesses = test_pen(connections)
-
-        print("returned")
-
-        # fitnesses = agents.read_fitnesses(config, max_fail_score, make_action)
+                fitnesses = test_pen(agent_setup)
+            elif exec_thing == 'logic':
+                fitnesses = test_logic(agent_setup)
+            else:
+                print("not an accepted test")
+                Exception
 
         print("1", motifs.total_weight)
-
-        # agent_spikes = []
-        # for k in range(len(connections)):
-        #     spike_total = 0
-        #     for j in range(number_of_tests):
-        #         if isinstance(fitnesses[j][k], list):
-        #             spike_total -= fitnesses[j][k][1] + fitnesses[j][k][2]
-        #             fitnesses[j][k] = fitnesses[j][k][0]
-        #         else:
-        #             spike_total -= 1000000
-        #     agent_spikes.append(spike_total)
-        # if spike_f:
-        #     fitnesses.append(agent_spikes)
-
-        # if gen != 0:
-        #     best_agent_repeat_score = []
-        #     best_agent_repeat_fitness = []
-        #     for i in range(len(fitnesses)):
-        #         print(fitnesses[i][agent_pop_size:agent_pop_size+repeat_best_amount])
-        #         best_agent_repeat_score.append(fitnesses[i][agent_pop_size:agent_pop_size+repeat_best_amount])
-        #         best_agent_repeat_fitness.append(fitnesses[i][agent_pop_size+repeat_best_amount:agent_pop_size+(2*repeat_best_amount)])
-        #         fitnesses[i] = fitnesses[i][0:agent_pop_size]
-        #     test_scores = [0 for i in range(repeat_best_amount)]
-        #     test_fitness = [0 for i in range(repeat_best_amount)]
-        #     for i in range(number_of_tests):
-        #         for j in range(repeat_best_amount):
-        #             test_scores[j] += best_agent_repeat_score[i][j]
-        #             test_fitness[j] += best_agent_repeat_fitness[i][j]
-        #     best_performance_score.append(round(np.average(test_scores), 2))
-        #     best_performance_fitness.append(round(np.average(test_fitness), 2))
 
         agents.pass_fitnesses(fitnesses, max_fail_score, fitness_weighting, fitness_shaping=shape_fitness)
 
         # [best_score_connections, best_fitness_connections] = agents.status_update(fitnesses, gen, config, number_of_tests, connections, best_performance_score, best_performance_fitness)
-        [best_score_connections, best_fitness_connections] = agents.new_status_update(fitnesses, gen, config, spinn_conn, best_performance_score, best_performance_fitness)
+        [best_score_connections, best_fitness_connections] = agents.new_status_update(fitnesses, gen, config, agent_setup, best_performance_score, best_performance_fitness)
 
         print("\nFINISHED - ", gen, "\n\n")
 
@@ -201,7 +161,9 @@ if __name__ == '__main__':
         if gen % 10 == 0:
             print("stop")
 
-        motifs.adjust_weights(agents.agent_pop, reward_shape=reward_shape, iteration=gen, average=averaging_weights, develop_neurons=develop_neurons)
+        motifs.adjust_weights(agents.agent_pop, reward_shape=reward_shape,
+                              iteration=gen, average=averaging_weights,
+                              develop_neurons=develop_neurons)
 
         print("3", motifs.total_weight)
 
